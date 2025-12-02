@@ -14,7 +14,45 @@ from bs4 import BeautifulSoup
 # Load environment variables from .env file
 load_dotenv()
 
-app = Flask(__name__, static_folder='../Frontend/frontend/dist', static_url_path='/')
+# Determine static folder path - try multiple locations
+static_folder_path = None
+possible_paths = [
+    'dist',  # If copied to Backend/dist (Render build)
+    '../Frontend/frontend/dist',  # Local development
+    '../../Frontend/frontend/dist',  # Alternative
+    'Frontend/frontend/dist',  # Another alternative
+]
+
+for path in possible_paths:
+    full_path = os.path.join(os.path.dirname(__file__), path) if not os.path.isabs(path) else path
+    if os.path.exists(full_path) and os.path.isdir(full_path):
+        static_folder_path = full_path
+        break
+
+# If no dist folder found, create a placeholder
+if static_folder_path is None:
+    static_folder_path = os.path.join(os.path.dirname(__file__), 'static')
+    os.makedirs(static_folder_path, exist_ok=True)
+    # Create a simple index.html placeholder
+    index_file = os.path.join(static_folder_path, 'index.html')
+    if not os.path.exists(index_file):
+        with open(index_file, 'w') as f:
+            f.write('''<!DOCTYPE html>
+<html>
+<head><title>Rates Dashboard</title></head>
+<body>
+<h1>Frontend not built</h1>
+<p>Backend API is running. Please deploy frontend separately as a static site.</p>
+<p>API endpoints are available at:</p>
+<ul>
+<li><a href="/api/fedwatch">/api/fedwatch</a></li>
+<li><a href="/api/rates">/api/rates</a></li>
+<li><a href="/api/macro">/api/macro</a></li>
+</ul>
+</body>
+</html>''')
+
+app = Flask(__name__, static_folder=static_folder_path, static_url_path='/')
 CORS(app)  # Allow React to talk to Flask in dev
 
 # --- CONFIGURATION ---
@@ -543,10 +581,21 @@ def fedwatch_data():
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    if path != "" and os.path.exists(app.static_folder + '/' + path):
+    # Don't serve API routes as static files
+    if path.startswith('api/'):
+        return jsonify({"error": "API endpoint not found"}), 404
+    
+    # Check if file exists
+    file_path = os.path.join(app.static_folder, path) if path else os.path.join(app.static_folder, 'index.html')
+    if path and os.path.exists(file_path) and os.path.isfile(file_path):
         return send_from_directory(app.static_folder, path)
     else:
-        return send_from_directory(app.static_folder, 'index.html')
+        # Serve index.html for SPA routing
+        index_path = os.path.join(app.static_folder, 'index.html')
+        if os.path.exists(index_path):
+            return send_from_directory(app.static_folder, 'index.html')
+        else:
+            return jsonify({"error": "Frontend not found. Please deploy frontend separately."}), 404
 
 def prewarm_cache():
     """Pre-warm cache on server start"""
