@@ -35,61 +35,71 @@ def calculate_dv01(face_value, duration, yield_percent):
 
 def handler(request):
     """Fetch rates data"""
-    yields = get_yield_curve()
-    
-    if not yields:
+    try:
+        yields = get_yield_curve()
+        
+        if not yields:
+            return {
+                "statusCode": 500,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*"
+                },
+                "body": json.dumps({"error": "Failed to fetch yields"})
+            }
+
+        # Curve Shape Analysis
+        spread_2s10s = yields.get('10Y', 0) - yields.get('13W', 0)
+        spread_5s30s = yields.get('30Y', 0) - yields.get('5Y', 0)
+        
+        curve_shape = "Normal"
+        trade_pitch = "Bear Flattener (Rates rising)"
+        
+        if spread_2s10s < 0:
+            curve_shape = "Inverted"
+            trade_pitch = "Bull Steepener (Expecting cuts)"
+
+        # DV01 Calculation
+        dv01 = calculate_dv01(10_000_000, 8.0, yields.get('10Y', 4.0))
+
+        # Sort yields by maturity
+        sorted_yields = dict(sorted(yields.items(), key=lambda x: maturity_to_years(x[0])))
+        
+        # Create yield curve data for charting
+        yield_curve_data = [
+            {"maturity": k, "years": maturity_to_years(k), "yield": v}
+            for k, v in sorted_yields.items()
+        ]
+
+        response_data = {
+            "yields": sorted_yields,
+            "yield_curve": yield_curve_data,
+            "analysis": {
+                "spread_2s10s": round(spread_2s10s, 2),
+                "spread_5s30s": round(spread_5s30s, 2),
+                "curve_shape": curve_shape,
+                "trade_pitch": trade_pitch,
+                "dv01_10m_position": f"${dv01:,.2f}"
+            }
+        }
+        
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type"
+            },
+            "body": json.dumps(response_data)
+        }
+    except Exception as e:
         return {
             "statusCode": 500,
             "headers": {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
             },
-            "body": json.dumps({"error": "Failed to fetch yields"})
+            "body": json.dumps({"error": str(e)})
         }
-
-    # Curve Shape Analysis
-    spread_2s10s = yields.get('10Y', 0) - yields.get('13W', 0)
-    spread_5s30s = yields.get('30Y', 0) - yields.get('5Y', 0)
-    
-    curve_shape = "Normal"
-    trade_pitch = "Bear Flattener (Rates rising)"
-    
-    if spread_2s10s < 0:
-        curve_shape = "Inverted"
-        trade_pitch = "Bull Steepener (Expecting cuts)"
-
-    # DV01 Calculation
-    dv01 = calculate_dv01(10_000_000, 8.0, yields.get('10Y', 4.0))
-
-    # Sort yields by maturity
-    sorted_yields = dict(sorted(yields.items(), key=lambda x: maturity_to_years(x[0])))
-    
-    # Create yield curve data for charting
-    yield_curve_data = [
-        {"maturity": k, "years": maturity_to_years(k), "yield": v}
-        for k, v in sorted_yields.items()
-    ]
-
-    response_data = {
-        "yields": sorted_yields,
-        "yield_curve": yield_curve_data,
-        "analysis": {
-            "spread_2s10s": round(spread_2s10s, 2),
-            "spread_5s30s": round(spread_5s30s, 2),
-            "curve_shape": curve_shape,
-            "trade_pitch": trade_pitch,
-            "dv01_10m_position": f"${dv01:,.2f}"
-        }
-    }
-    
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type"
-        },
-        "body": json.dumps(response_data)
-    }
 
