@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "Frontend/frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "api/**/*.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/macro",
+      "dest": "/api/macro.py"
+    },
+    {
+      "src": "/api/rates",
+      "dest": "/api/rates.py"
+    },
+    {
+      "src": "/api/fedwatch",
+      "dest": "/api/fedwatch.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/Frontend/frontend/dist/$1"
+    }
+  ],
+  "buildCommand": "cd Frontend/frontend && npm install && npm run build"
+}
