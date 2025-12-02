@@ -1,27 +1,40 @@
 {
   "version": 2,
-  "buildCommand": "cd Frontend/frontend && npm install && npm run build && cd ../.. && mkdir -p public && cp -r Frontend/frontend/dist/* public/",
-  "outputDirectory": "public",
-  "rewrites": [
+  "builds": [
     {
-      "source": "/api/test",
-      "destination": "/api/test.py"
+      "src": "Frontend/frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     },
     {
-      "source": "/api/macro",
-      "destination": "/api/macro.py"
-    },
-    {
-      "source": "/api/rates",
-      "destination": "/api/rates.py"
-    },
-    {
-      "source": "/api/fedwatch",
-      "destination": "/api/fedwatch.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "api/**/*.py",
+      "use": "@vercel/python"
     }
-  ]
+  ],
+  "routes": [
+    {
+      "src": "/api/test",
+      "dest": "/api/test.py"
+    },
+    {
+      "src": "/api/macro",
+      "dest": "/api/macro.py"
+    },
+    {
+      "src": "/api/rates",
+      "dest": "/api/rates.py"
+    },
+    {
+      "src": "/api/fedwatch",
+      "dest": "/api/fedwatch.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/Frontend/frontend/$1"
+    }
+  ],
+  "buildCommand": "cd Frontend/frontend && npm install && npm run build && cd ../.. && mkdir -p public && cp -r Frontend/frontend/dist/* public/",
+  "outputDirectory": "public"
 }
