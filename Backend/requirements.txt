@@ -1,0 +1,11 @@
+flask
+flask-cors
+pandas
+pandas_datareader
+yfinance
+gunicorn
+numpy
+setuptools
+python-dotenv
+requests
+beautifulsoup4
