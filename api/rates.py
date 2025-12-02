@@ -36,6 +36,7 @@ def calculate_dv01(face_value, duration, yield_percent):
 def handler(request):
     """Fetch rates data"""
     try:
+        import yfinance as yf
         yields = get_yield_curve()
         
         if not yields:
