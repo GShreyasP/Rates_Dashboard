@@ -4,8 +4,20 @@
   "outputDirectory": "public",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1.py"
+      "source": "/api/test",
+      "destination": "/api/test.py"
+    },
+    {
+      "source": "/api/macro",
+      "destination": "/api/macro.py"
+    },
+    {
+      "source": "/api/rates",
+      "destination": "/api/rates.py"
+    },
+    {
+      "source": "/api/fedwatch",
+      "destination": "/api/fedwatch.py"
     },
     {
       "source": "/(.*)",
