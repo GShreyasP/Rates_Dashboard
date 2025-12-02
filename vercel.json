@@ -31,8 +31,12 @@
       "dest": "/api/fedwatch.py"
     },
     {
+      "src": "/(.*\\.(js|css|ico|png|jpg|svg|woff|woff2|json))",
+      "dest": "/public/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/Frontend/frontend/$1"
+      "dest": "/public/index.html"
     }
   ],
   "buildCommand": "cd Frontend/frontend && npm install && npm run build && cd ../.. && mkdir -p public && cp -r Frontend/frontend/dist/* public/",
