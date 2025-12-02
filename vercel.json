@@ -28,7 +28,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/Frontend/frontend/$1"
+      "dest": "/$1"
     }
   ],
   "buildCommand": "cd Frontend/frontend && npm install && npm run build"
