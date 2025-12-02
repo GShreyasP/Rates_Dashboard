@@ -1,0 +1,23 @@
+services:
+  # Backend Flask API
+  - type: web
+    name: rates-dashboard-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: FRED_API_KEY
+        sync: false
+    plan: free
+
+  # Frontend Static Site
+  - type: web
+    name: rates-dashboard-frontend
+    env: static
+    buildCommand: cd Frontend/frontend && npm install && npm run build
+    staticPublishPath: Frontend/frontend/dist
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://rates-dashboard-api.onrender.com
+    plan: free
+

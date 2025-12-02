@@ -562,4 +562,5 @@ def prewarm_cache():
 if __name__ == '__main__':
     # Pre-warm cache in background thread
     threading.Thread(target=prewarm_cache, daemon=True).start()
-    app.run(debug=True, port=5001)
+    port = int(os.environ.get('PORT', 5001))
+    app.run(debug=True, host='0.0.0.0', port=port)

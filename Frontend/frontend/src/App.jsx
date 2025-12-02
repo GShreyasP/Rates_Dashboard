@@ -46,8 +46,10 @@ function App() {
     }))
   }
 
-  // Determine API URL (Localhost for dev, relative path for prod)
-  const API_URL = import.meta.env.DEV ? 'http://localhost:5001/api' : '/api';
+  // Determine API URL (Localhost for dev, env variable for prod, or relative path)
+  const API_URL = import.meta.env.DEV 
+    ? 'http://localhost:5001/api' 
+    : (import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api');
 
   useEffect(() => {
     const fetchData = async () => {
