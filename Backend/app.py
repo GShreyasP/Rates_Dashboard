@@ -253,31 +253,30 @@ def rates_analysis():
     return jsonify(response_data)
 
 def fetch_fedwatch_data():
-    """Fetch FedWatch interest rate cut odds using FREE sources
+    """Fetch FedWatch interest rate cut odds - hardcoded data"""
+    from datetime import datetime, timedelta
     
-    This function tries multiple free sources:
-    1. Federal Reserve Bank of Atlanta Market Probability Tracker
-    2. Calculated probabilities based on current Fed Funds rate
-    3. Falls back to estimated probabilities if other sources fail
-    """
-    # Try Atlanta Fed Market Probability Tracker first
-    try:
-        atlanta_fed_data = fetch_atlanta_fed_probabilities()
-        if atlanta_fed_data and not atlanta_fed_data.get('error'):
-            return atlanta_fed_data
-    except Exception as e:
-        print(f"Atlanta Fed source failed: {e}")
+    # Calculate next FOMC meeting date (December 10, 2025 based on image)
+    next_meeting = datetime(2025, 12, 10)
     
-    # Try calculating from current rates
-    try:
-        calculated_data = calculate_fed_probabilities_from_rates()
-        if calculated_data and not calculated_data.get('error'):
-            return calculated_data
-    except Exception as e:
-        print(f"Rate calculation failed: {e}")
+    # Hardcoded target rate probabilities from image
+    # 350-375: 87.2%, 375-400: 12.8%
+    target_rate_probabilities = {
+        "350-375": 87.2,
+        "375-400": 12.8
+    }
     
-    # Final fallback
-    return fetch_fedwatch_fallback()
+    most_likely = max(target_rate_probabilities.items(), key=lambda x: x[1])
+    
+    return {
+        "next_meeting_date": next_meeting.strftime("%B %d, %Y"),
+        "target_rate_probabilities": target_rate_probabilities,
+        "most_likely_change": most_likely[0],
+        "most_likely_probability": round(most_likely[1], 1),
+        "current_target_rate": "375-400",
+        "current_fed_rate": 3.75,
+        "source": "FedWatch Data"
+    }
 
 def fetch_atlanta_fed_probabilities():
     """Fetch probabilities from Atlanta Fed Market Probability Tracker (FREE)"""
@@ -297,21 +296,39 @@ def fetch_atlanta_fed_probabilities():
         
         # Parse Atlanta Fed data structure
         if isinstance(data, dict) and 'probabilities' in data:
-            probabilities = {}
+            change_probs = {}
+            # Get current rate if available
+            current_rate_bps = data.get('currentRate', 400) * 100  # Default to 4% if not available
+            
             for item in data.get('probabilities', []):
                 rate_change = item.get('rateChange', 0)
                 prob = item.get('probability', 0)
-                probabilities[str(int(rate_change))] = prob
+                change_probs[str(int(rate_change))] = prob
             
-            if probabilities:
-                most_likely = max(probabilities.items(), key=lambda x: x[1])
+            if change_probs:
+                # Convert to target rate ranges
+                target_rate_probs = {}
+                for change_str, prob in change_probs.items():
+                    change_bps = int(change_str)
+                    target_rate_lower = current_rate_bps + change_bps - 12.5
+                    target_rate_upper = current_rate_bps + change_bps + 12.5
+                    target_rate_lower = round(target_rate_lower / 25) * 25
+                    target_rate_upper = round(target_rate_upper / 25) * 25
+                    range_key = f"{int(target_rate_lower)}-{int(target_rate_upper)}"
+                    target_rate_probs[range_key] = prob
+                
+                sorted_target_rates = dict(sorted(target_rate_probs.items(), key=lambda x: int(x[0].split('-')[0])))
+                most_likely = max(sorted_target_rates.items(), key=lambda x: x[1])
+                
                 return {
                     "next_meeting_date": data.get('meetingDate', 'N/A'),
-                    "probabilities": probabilities,
+                    "probabilities": change_probs,
+                    "target_rate_probabilities": {k: round(v * 100, 2) for k, v in sorted_target_rates.items()},
                     "most_likely_change": most_likely[0],
                     "most_likely_probability": round(most_likely[1] * 100, 2),
-                    "all_probabilities": {k: round(v * 100, 2) for k, v in probabilities.items()},
-                    "source": "Atlanta Fed Market Probability Tracker"
+                    "all_probabilities": {k: round(v * 100, 2) for k, v in change_probs.items()},
+                    "source": "Atlanta Fed Market Probability Tracker",
+                    "current_target_rate": f"{int(current_rate_bps - 12.5)}-{int(current_rate_bps + 12.5)}"
                 }
     except Exception as e:
         print(f"Error fetching Atlanta Fed data: {e}")
@@ -345,32 +362,56 @@ def calculate_fed_probabilities_from_rates():
                         # Simple probability calculation based on spread
                         # This is a simplified model - real FedWatch uses futures prices
                         # If spread is positive (current rate > market yield), market expects cuts
-                        probabilities = {}
+                        change_probs = {}
                         
                         if spread > 0.15:  # Market expects cuts (yield below Fed Funds)
                             cut_prob = min(0.75, 0.4 + spread * 1.5)
                             hike_prob = max(0.05, 0.3 - spread * 1.0)
                             no_change_prob = 1.0 - cut_prob - hike_prob
-                            probabilities["-25"] = max(0.1, cut_prob)
-                            probabilities["0"] = max(0.1, no_change_prob)
-                            probabilities["25"] = max(0.05, hike_prob)
+                            change_probs["-25"] = max(0.1, cut_prob)
+                            change_probs["0"] = max(0.1, no_change_prob)
+                            change_probs["25"] = max(0.05, hike_prob)
                         elif spread < -0.15:  # Market expects hikes (yield above Fed Funds)
                             hike_prob = min(0.75, 0.4 + abs(spread) * 1.5)
                             cut_prob = max(0.05, 0.3 - abs(spread) * 1.0)
                             no_change_prob = 1.0 - cut_prob - hike_prob
-                            probabilities["-25"] = max(0.05, cut_prob)
-                            probabilities["0"] = max(0.1, no_change_prob)
-                            probabilities["25"] = max(0.1, hike_prob)
+                            change_probs["-25"] = max(0.05, cut_prob)
+                            change_probs["0"] = max(0.1, no_change_prob)
+                            change_probs["25"] = max(0.1, hike_prob)
                         else:  # Neutral
-                            probabilities["-25"] = 0.3
-                            probabilities["0"] = 0.5
-                            probabilities["25"] = 0.2
+                            change_probs["-25"] = 0.3
+                            change_probs["0"] = 0.5
+                            change_probs["25"] = 0.2
                         
                         # Normalize probabilities
-                        total = sum(probabilities.values())
-                        probabilities = {k: v/total for k, v in probabilities.items()}
+                        total = sum(change_probs.values())
+                        change_probs = {k: v/total for k, v in change_probs.items()}
                         
-                        most_likely = max(probabilities.items(), key=lambda x: x[1])
+                        # Convert to target rate ranges (in basis points)
+                        # Current rate is in percentage, convert to bps
+                        current_rate_bps = current_rate * 100
+                        
+                        # Calculate target rate ranges
+                        target_rate_probs = {}
+                        for change_str, prob in change_probs.items():
+                            change_bps = int(change_str)
+                            # Fed rates are typically in 25bp increments
+                            # Calculate the target rate range
+                            target_rate_lower = current_rate_bps + change_bps - 12.5
+                            target_rate_upper = current_rate_bps + change_bps + 12.5
+                            
+                            # Round to nearest 25bp boundaries
+                            target_rate_lower = round(target_rate_lower / 25) * 25
+                            target_rate_upper = round(target_rate_upper / 25) * 25
+                            
+                            # Format as range string
+                            range_key = f"{int(target_rate_lower)}-{int(target_rate_upper)}"
+                            target_rate_probs[range_key] = prob
+                        
+                        # Sort by target rate (ascending)
+                        sorted_target_rates = dict(sorted(target_rate_probs.items(), key=lambda x: int(x[0].split('-')[0])))
+                        
+                        most_likely = max(sorted_target_rates.items(), key=lambda x: x[1])
                         
                         # Calculate next FOMC meeting (rough estimate)
                         today = datetime.now()
@@ -378,12 +419,14 @@ def calculate_fed_probabilities_from_rates():
                         
                         return {
                             "next_meeting_date": next_meeting.strftime("%B %d, %Y"),
-                            "probabilities": probabilities,
+                            "probabilities": change_probs,
+                            "target_rate_probabilities": {k: round(v * 100, 2) for k, v in sorted_target_rates.items()},
                             "most_likely_change": most_likely[0],
                             "most_likely_probability": round(most_likely[1] * 100, 2),
-                            "all_probabilities": {k: round(v * 100, 2) for k, v in probabilities.items()},
+                            "all_probabilities": {k: round(v * 100, 2) for k, v in change_probs.items()},
                             "source": "Calculated from Market Rates",
-                            "current_fed_rate": round(current_rate, 2)
+                            "current_fed_rate": round(current_rate, 2),
+                            "current_target_rate": f"{int(current_rate_bps - 12.5)}-{int(current_rate_bps + 12.5)}"
                         }
             except Exception as e:
                 print(f"Error calculating from rates: {e}")
@@ -408,25 +451,40 @@ def fetch_fedwatch_fallback():
                 current_rate_df = web.DataReader('DFF', 'fred', datetime.now() - timedelta(days=5), datetime.now(), api_key=FRED_API_KEY)
                 if not current_rate_df.empty:
                     current_rate = float(current_rate_df.iloc[-1]['DFF'])
+                    current_rate_bps = current_rate * 100
                     
                     # Simple heuristic: if rate is high (>4%), more likely to cut; if low (<3%), more likely to hike
                     if current_rate > 4.5:
-                        probabilities = {"-25": 0.6, "0": 0.3, "25": 0.1}
+                        change_probs = {"-25": 0.6, "0": 0.3, "25": 0.1}
                     elif current_rate < 3.0:
-                        probabilities = {"-25": 0.1, "0": 0.3, "25": 0.6}
+                        change_probs = {"-25": 0.1, "0": 0.3, "25": 0.6}
                     else:
-                        probabilities = {"-25": 0.3, "0": 0.4, "25": 0.3}
+                        change_probs = {"-25": 0.3, "0": 0.4, "25": 0.3}
                     
-                    most_likely = max(probabilities.items(), key=lambda x: x[1])
+                    # Convert to target rate ranges
+                    target_rate_probs = {}
+                    for change_str, prob in change_probs.items():
+                        change_bps = int(change_str)
+                        target_rate_lower = current_rate_bps + change_bps - 12.5
+                        target_rate_upper = current_rate_bps + change_bps + 12.5
+                        target_rate_lower = round(target_rate_lower / 25) * 25
+                        target_rate_upper = round(target_rate_upper / 25) * 25
+                        range_key = f"{int(target_rate_lower)}-{int(target_rate_upper)}"
+                        target_rate_probs[range_key] = prob
+                    
+                    sorted_target_rates = dict(sorted(target_rate_probs.items(), key=lambda x: int(x[0].split('-')[0])))
+                    most_likely = max(sorted_target_rates.items(), key=lambda x: x[1])
                     
                     return {
                         "next_meeting_date": next_meeting.strftime("%B %d, %Y"),
-                        "probabilities": probabilities,
+                        "probabilities": change_probs,
+                        "target_rate_probabilities": {k: round(v * 100, 2) for k, v in sorted_target_rates.items()},
                         "most_likely_change": most_likely[0],
                         "most_likely_probability": round(most_likely[1] * 100, 2),
-                        "all_probabilities": {k: round(v * 100, 2) for k, v in probabilities.items()},
+                        "all_probabilities": {k: round(v * 100, 2) for k, v in change_probs.items()},
                         "source": "Estimated from Current Rates",
                         "current_fed_rate": round(current_rate, 2),
+                        "current_target_rate": f"{int(current_rate_bps - 12.5)}-{int(current_rate_bps + 12.5)}",
                         "note": "Probabilities estimated from current Fed Funds rate. For precise probabilities, visit: https://www.atlantafed.org/cenfis/market-probability-tracker"
                     }
             except:
@@ -435,16 +493,33 @@ def fetch_fedwatch_fallback():
         pass
     
     # Final fallback with neutral probabilities
-    probabilities = {"-25": 0.35, "0": 0.4, "25": 0.25}
-    most_likely = max(probabilities.items(), key=lambda x: x[1])
+    # Assume current rate around 4.0% (400 bps) for fallback
+    current_rate_bps = 400
+    change_probs = {"-25": 0.35, "0": 0.4, "25": 0.25}
+    
+    # Convert to target rate ranges
+    target_rate_probs = {}
+    for change_str, prob in change_probs.items():
+        change_bps = int(change_str)
+        target_rate_lower = current_rate_bps + change_bps - 12.5
+        target_rate_upper = current_rate_bps + change_bps + 12.5
+        target_rate_lower = round(target_rate_lower / 25) * 25
+        target_rate_upper = round(target_rate_upper / 25) * 25
+        range_key = f"{int(target_rate_lower)}-{int(target_rate_upper)}"
+        target_rate_probs[range_key] = prob
+    
+    sorted_target_rates = dict(sorted(target_rate_probs.items(), key=lambda x: int(x[0].split('-')[0])))
+    most_likely = max(sorted_target_rates.items(), key=lambda x: x[1])
     
     return {
         "next_meeting_date": next_meeting.strftime("%B %d, %Y"),
-        "probabilities": probabilities,
+        "probabilities": change_probs,
+        "target_rate_probabilities": {k: round(v * 100, 2) for k, v in sorted_target_rates.items()},
         "most_likely_change": most_likely[0],
         "most_likely_probability": round(most_likely[1] * 100, 2),
-        "all_probabilities": {k: round(v * 100, 2) for k, v in probabilities.items()},
+        "all_probabilities": {k: round(v * 100, 2) for k, v in change_probs.items()},
         "source": "Estimated Probabilities",
+        "current_target_rate": f"{int(current_rate_bps - 12.5)}-{int(current_rate_bps + 12.5)}",
         "note": "Using estimated probabilities. For real-time data, visit: https://www.atlantafed.org/cenfis/market-probability-tracker"
     }
 

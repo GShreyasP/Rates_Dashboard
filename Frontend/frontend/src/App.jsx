@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import './App.css'
 
 function App() {
@@ -213,62 +213,86 @@ function App() {
         {/* FEDWATCH DATA */}
         {fedwatchData && !fedwatchData.error && (
           <div className="fedwatch-card">
-            <h3>FedWatch Interest Rate Cut Odds</h3>
+            <h3>Target Rate Probabilities for {fedwatchData.next_meeting_date || 'Next Fed Meeting'}</h3>
+            {fedwatchData.current_target_rate && (
+              <div className="fedwatch-note" style={{background: 'rgba(74, 158, 255, 0.15)', borderColor: 'rgba(74, 158, 255, 0.4)'}}>
+                <span className="note-icon">📊</span>
+                <span>Current target rate is {fedwatchData.current_target_rate} bps</span>
+              </div>
+            )}
             {fedwatchData.note && (
               <div className="fedwatch-note">
                 <span className="note-icon">ℹ️</span>
                 <span>{fedwatchData.note}</span>
               </div>
             )}
-            {fedwatchData.source && fedwatchData.source.includes("Calculated") && (
-              <div className="fedwatch-note" style={{background: 'rgba(74, 222, 128, 0.1)', borderColor: 'rgba(74, 222, 128, 0.3)'}}>
-                <span className="note-icon">✓</span>
-                <span>Using free calculated probabilities from current market rates</span>
-              </div>
-            )}
             <div className="fedwatch-content">
-              {fedwatchData.next_meeting_date && (
-                <div className="fedwatch-meeting">
-                  <span className="fedwatch-label">Next FOMC Meeting:</span>
-                  <span className="fedwatch-value">{fedwatchData.next_meeting_date}</span>
-                </div>
-              )}
               {fedwatchData.current_fed_rate !== undefined && (
                 <div className="fedwatch-meeting">
                   <span className="fedwatch-label">Current Fed Funds Rate:</span>
                   <span className="fedwatch-value">{fedwatchData.current_fed_rate}%</span>
                 </div>
               )}
-              {fedwatchData.most_likely_change && fedwatchData.most_likely_probability !== undefined && (
-                <div className="fedwatch-probability">
-                  <span className="fedwatch-label">Most Likely Outcome:</span>
-                  <span className="fedwatch-value highlight">
-                    {fedwatchData.most_likely_change === "No Change" || fedwatchData.most_likely_change === "0"
-                      ? "No Change" 
-                      : `${parseFloat(fedwatchData.most_likely_change) > 0 ? '+' : ''}${fedwatchData.most_likely_change} bps`}
-                    <span className="probability-badge">{fedwatchData.most_likely_probability}%</span>
-                  </span>
+              {fedwatchData.target_rate_probabilities && Object.keys(fedwatchData.target_rate_probabilities).length > 0 && (
+                <div className="fedwatch-chart-wrapper">
+                  <ResponsiveContainer width="100%" height={350}>
+                    <BarChart 
+                      data={Object.entries(fedwatchData.target_rate_probabilities)
+                        .sort((a, b) => {
+                          const aVal = parseInt(a[0].split('-')[0]);
+                          const bVal = parseInt(b[0].split('-')[0]);
+                          return aVal - bVal;
+                        })
+                        .map(([range, prob]) => ({
+                          range: range,
+                          probability: prob
+                        }))}
+                      margin={{ top: 20, right: 50, left: 20, bottom: 80 }}
+                      barCategoryGap="30%"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
+                      <XAxis 
+                        dataKey="range" 
+                        stroke="#8b95b2"
+                        tick={{ fill: '#8b95b2', fontSize: 12 }}
+                        label={{ value: 'Target Rate (in bps)', position: 'insideBottom', offset: -5, fill: '#8b95b2' }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis 
+                        domain={[0, 100]}
+                        stroke="#8b95b2"
+                        tick={{ fill: '#8b95b2', fontSize: 12 }}
+                        label={{ value: 'Probability', angle: -90, position: 'insideLeft', fill: '#8b95b2' }}
+                        tickFormatter={(value) => `${value}%`}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#141b2d', 
+                          border: '1px solid #1e2746',
+                          color: '#e0e0e0'
+                        }}
+                        labelStyle={{ color: '#4a9eff' }}
+                        formatter={(value) => [`${value}%`, 'Probability']}
+                      />
+                      <Bar 
+                        dataKey="probability" 
+                        fill="#4a9eff"
+                        radius={[4, 4, 0, 0]}
+                        label={{ position: 'top', fill: '#fff', fontSize: 14, fontWeight: 'bold' }}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               )}
-              {fedwatchData.all_probabilities && Object.keys(fedwatchData.all_probabilities).length > 0 && (
-                <div className="fedwatch-breakdown">
-                  <div className="fedwatch-label">All Probabilities:</div>
-                  <div className="probability-grid">
-                    {Object.entries(fedwatchData.all_probabilities)
-                      .sort((a, b) => {
-                        const aVal = parseFloat(a[0]) || 0;
-                        const bVal = parseFloat(b[0]) || 0;
-                        return bVal - aVal;
-                      })
-                      .map(([change, prob]) => (
-                        <div key={change} className="probability-item">
-                          <span className="change-label">
-                            {change === "0" || change === "No Change" ? "No Change" : `${parseFloat(change) > 0 ? '+' : ''}${change} bps`}
-                          </span>
-                          <span className="probability-value">{prob}%</span>
-                        </div>
-                      ))}
-                  </div>
+              {fedwatchData.most_likely_change && fedwatchData.most_likely_probability !== undefined && (
+                <div className="fedwatch-probability">
+                  <span className="fedwatch-label">Most Likely Target Rate:</span>
+                  <span className="fedwatch-value highlight">
+                    {fedwatchData.most_likely_change} bps
+                    <span className="probability-badge">{fedwatchData.most_likely_probability}%</span>
+                  </span>
                 </div>
               )}
             </div>

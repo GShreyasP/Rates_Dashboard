@@ -237,6 +237,14 @@ section h2 {
   padding-bottom: 0.75rem;
 }
 
+.fedwatch-chart-wrapper {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #0f1525;
+  border-radius: 6px;
+  border: 1px solid #1e2746;
+}
+
 .fedwatch-note {
   display: flex;
   align-items: center;
