@@ -200,7 +200,9 @@ def fetch_macro_data():
     pmi_alternatives = ["MANPMI", "UMCSENT"]  # Manufacturing PMI alternatives
     
     response_data = {}
-    start_date = datetime(2022, 1, 1)
+    # Reduce date range to last 6 months for fastest API calls (was 2022/1 year, now 6 months)
+    # This significantly speeds up FRED API calls while still providing good historical context
+    start_date = datetime.now() - timedelta(days=180)
     
     if FRED_API_KEY == "YOUR_API_KEY_HERE":
         return {"error": "Missing FRED API Key"}
@@ -208,7 +210,7 @@ def fetch_macro_data():
     try:
         # Get data up to today + 1 month to ensure we capture the latest available data
         # FRED data is typically released mid-month for the previous month
-        end_date = datetime.now() + timedelta(days=60)  # Look ahead to catch latest releases
+        end_date = datetime.now() + timedelta(days=30)  # Reduced from 60 to 30 days
         
         def fetch_series(name, series_id):
             """Helper function to fetch a single series"""
@@ -976,13 +978,20 @@ def update_data_worker():
             time.sleep(3600)
 
 if __name__ == '__main__':
-    # Pre-warm cache in background thread
-    threading.Thread(target=prewarm_cache, daemon=True).start()
+    # Pre-warm cache BEFORE starting server to ensure first request is fast
+    # Run in background but don't start server until cache is at least partially ready
+    print("Pre-warming cache before server start...")
+    prewarm_thread = threading.Thread(target=prewarm_cache, daemon=True)
+    prewarm_thread.start()
     
-    # Start background worker to update data every 3 days
+    # Give cache a few seconds to start loading (non-blocking for server start)
+    # But this ensures cache starts loading immediately
+    time.sleep(2)  # Allow 2 seconds for cache to start loading
+    
+    # Start background worker to update data every 7 days
     update_thread = threading.Thread(target=update_data_worker, daemon=True)
     update_thread.start()
-    print("Background data update worker started (will update every 3 days)")
+    print("Background data update worker started (will update every 7 days)")
     
     port = int(os.environ.get('PORT', 5001))
     app.run(debug=True, host='0.0.0.0', port=port)
