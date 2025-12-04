@@ -195,8 +195,10 @@ def fetch_macro_data():
         "CPI": "CPIAUCSL",  # Consumer Price Index
         "PCE": "PCEPI",     # Personal Consumption Expenditures Price Index
         "PPI": "PPIACO",    # Producer Price Index
-        "Payrolls": "PAYEMS",  # Non-Farm Payrolls
+        "Non-Farm Payrolls": "PAYEMS",  # Non-Farm Payrolls (Total Nonfarm)
+        "Unemployment Rate": "UNRATE",  # Unemployment Rate
         "Unemployment Claims": "ICSA",  # Initial Jobless Claims, Seasonally Adjusted
+        "JOLTS": "JTSJOL",  # Job Openings: Total Nonfarm (JOLTS)
         "PMI": "NAPM",  # ISM Manufacturing PMI - will try alternative if this fails
     }
     
@@ -284,7 +286,7 @@ def fetch_macro_data():
                 return None
         
         # Fetch all series in parallel for much faster loading
-        with ThreadPoolExecutor(max_workers=6) as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:
             futures = {executor.submit(fetch_series, name, series_id): name 
                       for name, series_id in series_map.items()}
             

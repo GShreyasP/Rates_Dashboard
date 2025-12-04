@@ -27,15 +27,25 @@ function App() {
       goodScore: "Stable or moderate increases (1-3%) indicate balanced supply chains. Sharp increases suggest cost pressures; declines may signal weak demand.",
       future: "Rising PPI often precedes CPI increases, signaling future consumer price inflation. Falling PPI may indicate deflationary pressures ahead."
     },
-    "Payrolls": {
+    "Non-Farm Payrolls": {
       what: "Total number of paid U.S. workers in non-farm establishments, excluding government, private households, and non-profit employees.",
       goodScore: "Consistent monthly growth (150K-250K) indicates healthy job market. Declines signal economic weakness; very high growth may indicate overheating.",
       future: "Strong payroll growth supports consumer spending and economic expansion. Weak growth suggests potential recession and Fed easing."
+    },
+    "Unemployment Rate": {
+      what: "Percentage of the labor force that is unemployed and actively seeking employment. A key measure of labor market slack.",
+      goodScore: "Lower is generally better. Rates below 4% indicate tight labor market. Rates above 6% suggest economic weakness. The Fed targets 'full employment' around 4-5%.",
+      future: "Falling unemployment supports wage growth and consumer spending, potentially leading to rate hikes. Rising unemployment signals economic weakness and potential rate cuts."
     },
     "Unemployment Claims": {
       what: "Number of individuals filing for unemployment insurance benefits, indicating layoffs and labor market health.",
       goodScore: "Lower is better. Claims below 250K indicate strong job market. Above 300K suggests labor market weakness.",
       future: "Rising claims signal economic slowdown and potential Fed easing. Falling claims support economic strength and potential rate hikes."
+    },
+    "JOLTS": {
+      what: "Job Openings and Labor Turnover Survey (JOLTS) measures job openings, hires, and separations. Job openings indicate labor demand.",
+      goodScore: "Higher job openings relative to unemployed workers (ratio >1.0) indicates tight labor market. Declining openings suggest weakening labor demand.",
+      future: "High job openings support wage growth and economic strength, potentially leading to rate hikes. Declining openings signal economic slowdown and potential rate cuts."
     },
     "PMI": {
       what: "Purchasing Managers' Index measuring manufacturing activity. Values above 50 indicate expansion; below 50 indicates contraction.",
@@ -54,8 +64,8 @@ function App() {
         description: "Measures of consumer price inflation and spending patterns"
       },
       "Employment Indicators": {
-        indicators: ["Unemployment Claims", "Payrolls"].filter(key => data[key]),
-        description: "Labor market health and job creation metrics"
+        indicators: ["Non-Farm Payrolls", "Unemployment Rate", "Unemployment Claims", "JOLTS"].filter(key => data[key]),
+        description: "Labor market health, job creation, and labor turnover metrics"
       },
       "Producer Price Indicators": {
         indicators: ["PPI"].filter(key => data[key]),
