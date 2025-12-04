@@ -200,9 +200,8 @@ def fetch_macro_data():
     pmi_alternatives = ["MANPMI", "UMCSENT"]  # Manufacturing PMI alternatives
     
     response_data = {}
-    # Reduce date range to last 6 months for fastest API calls (was 2022/1 year, now 6 months)
-    # This significantly speeds up FRED API calls while still providing good historical context
-    start_date = datetime.now() - timedelta(days=180)
+    # Full historical data from 2022 for complete context (may take 10-15 seconds on first load)
+    start_date = datetime(2022, 1, 1)
     
     if FRED_API_KEY == "YOUR_API_KEY_HERE":
         return {"error": "Missing FRED API Key"}
@@ -210,7 +209,7 @@ def fetch_macro_data():
     try:
         # Get data up to today + 1 month to ensure we capture the latest available data
         # FRED data is typically released mid-month for the previous month
-        end_date = datetime.now() + timedelta(days=30)  # Reduced from 60 to 30 days
+        end_date = datetime.now() + timedelta(days=60)  # Look ahead to catch latest releases
         
         def fetch_series(name, series_id):
             """Helper function to fetch a single series"""
