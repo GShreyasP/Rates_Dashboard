@@ -757,22 +757,6 @@ def clear_cache_endpoint():
             'timestamp': datetime.now().isoformat()
         }), 500
 
-@app.route('/api/clear-cache')
-def clear_cache_endpoint():
-    """Clear all caches - forces fresh data fetch on next request"""
-    from cache_manager import clear_cache
-    try:
-        clear_cache()  # Clear all caches
-        return jsonify({
-            'message': 'All caches cleared successfully',
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({
-            'error': str(e),
-            'timestamp': datetime.now().isoformat()
-        }), 500
-
 # --- SERVE FRONTEND ---
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
