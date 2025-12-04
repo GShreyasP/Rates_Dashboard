@@ -17,6 +17,11 @@ function App() {
       goodScore: "Moderate increases (2-3% annually) indicate healthy inflation. Too high (>5%) suggests overheating; too low (<1%) may signal weak demand.",
       future: "Rising CPI suggests higher costs and potential Fed rate hikes. Falling CPI may indicate economic slowdown and potential rate cuts."
     },
+    "PCE": {
+      what: "Personal Consumption Expenditures Price Index measures changes in prices paid by consumers for goods and services. The Fed's preferred inflation gauge.",
+      goodScore: "Moderate increases (2-3% annually) indicate healthy inflation. The Fed targets 2% PCE inflation. Too high (>3%) suggests overheating; too low (<1%) may signal weak demand.",
+      future: "Rising PCE is the Fed's primary inflation metric for policy decisions. Higher PCE typically leads to rate hikes; lower PCE may prompt rate cuts."
+    },
     "PPI": {
       what: "Measures average changes in selling prices received by domestic producers for their output, tracking inflation at the wholesale level.",
       goodScore: "Stable or moderate increases (1-3%) indicate balanced supply chains. Sharp increases suggest cost pressures; declines may signal weak demand.",
@@ -27,15 +32,39 @@ function App() {
       goodScore: "Consistent monthly growth (150K-250K) indicates healthy job market. Declines signal economic weakness; very high growth may indicate overheating.",
       future: "Strong payroll growth supports consumer spending and economic expansion. Weak growth suggests potential recession and Fed easing."
     },
-    "PMI": {
-      what: "Purchasing Managers' Index measuring manufacturing activity. Values above 50 indicate expansion; below 50 indicates contraction.",
-      goodScore: "Values above 50 indicate manufacturing growth. Above 55 suggests strong expansion; below 45 signals significant contraction.",
-      future: "Rising PMI suggests economic strength and potential rate hikes. Falling PMI indicates weakening economy and potential rate cuts."
-    },
     "Unemployment Claims": {
       what: "Number of individuals filing for unemployment insurance benefits, indicating layoffs and labor market health.",
       goodScore: "Lower is better. Claims below 250K indicate strong job market. Above 300K suggests labor market weakness.",
       future: "Rising claims signal economic slowdown and potential Fed easing. Falling claims support economic strength and potential rate hikes."
+    },
+    "PMI": {
+      what: "Purchasing Managers' Index measuring manufacturing activity. Values above 50 indicate expansion; below 50 indicates contraction.",
+      goodScore: "Values above 50 indicate manufacturing growth. Above 55 suggests strong expansion; below 45 signals significant contraction.",
+      future: "Rising PMI suggests economic strength and potential rate hikes. Falling PMI indicates weakening economy and potential rate cuts."
+    }
+  }
+
+  // Organize indicators by section
+  const organizeIndicatorsBySection = (data) => {
+    if (!data) return {}
+    
+    return {
+      "Consumer Price Indicators": {
+        indicators: ["CPI", "PCE"].filter(key => data[key]),
+        description: "Measures of consumer price inflation and spending patterns"
+      },
+      "Employment Indicators": {
+        indicators: ["Unemployment Claims", "Payrolls"].filter(key => data[key]),
+        description: "Labor market health and job creation metrics"
+      },
+      "Producer Price Indicators": {
+        indicators: ["PPI"].filter(key => data[key]),
+        description: "Wholesale price inflation and producer cost trends"
+      },
+      "Manufacturing Activity": {
+        indicators: ["PMI"].filter(key => data[key]),
+        description: "Industrial production and manufacturing sector health"
+      }
     }
   }
 
@@ -87,125 +116,141 @@ function App() {
       {/* SECTION 1: MACRO DATA */}
       <section className="macro-section">
         <h2>Economic Indicators</h2>
-        <div className="charts-grid">
-          {macroData && Object.entries(macroData).map(([key, data]) => {
-            // Format data for chart - data structure now has 'value' and 'pct_change'
-            const chartData = data.history ? data.history.map(item => ({
-              date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-              value: item.value,
-              pct_change: item.pct_change || 0,
-              fullDate: item.date
-            })) : [];
+        {macroData && (() => {
+          const sections = organizeIndicatorsBySection(macroData)
+          return Object.entries(sections).map(([sectionName, section]) => {
+            if (section.indicators.length === 0) return null
             
             return (
-              <div key={key} className="card">
-                <h3>{key}</h3>
-                <div className="stat-row">
-                  <span>Latest: <strong>{data.current?.toLocaleString()}</strong></span>
-                  <span className={data.change >= 0 ? 'green' : 'red'}>
-                    {data.change > 0 ? '▲' : '▼'} {data.change}%
-                  </span>
+              <div key={sectionName} className="indicator-section">
+                <div className="section-header">
+                  <h3>{sectionName}</h3>
+                  <p className="section-description">{section.description}</p>
                 </div>
-                <div className="chart-wrapper">
-                  {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
-                        <XAxis 
-                          dataKey="date" 
-                          stroke="#8b95b2"
-                          tick={{ fill: '#8b95b2', fontSize: 10 }}
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                        />
-                        <YAxis 
-                          domain={['auto', 'auto']}
-                          stroke="#8b95b2"
-                          tick={{ fill: '#8b95b2', fontSize: 10 }}
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#141b2d', 
-                            border: '1px solid #1e2746',
-                            color: '#e0e0e0'
-                          }}
-                          labelStyle={{ color: '#4a9eff' }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="value" 
-                          stroke="#4a9eff" 
-                          strokeWidth={2}
-                          dot={false}
-                          activeDot={{ r: 4, fill: '#4a9eff' }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: '#8b95b2' }}>
-                      No data available
-                    </div>
-                  )}
-                </div>
-                {/* Horizontal Data Table */}
-                {chartData.length > 0 && (
-                  <div className="data-table-wrapper">
-                    <div className="data-table-scroll">
-                      <table className="data-table">
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Value</th>
-                            <th>% Change</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {chartData.slice().reverse().map((item, idx) => (
-                            <tr key={idx}>
-                              <td>{item.date}</td>
-                              <td>{typeof item.value === 'number' ? item.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : item.value}</td>
-                              <td className={item.pct_change >= 0 ? 'green' : 'red'}>
-                                {item.pct_change > 0 ? '▲' : item.pct_change < 0 ? '▼' : ''} {item.pct_change.toFixed(2)}%
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-                {/* Explanation Dropdown */}
-                <div className="explanation-section">
-                  <button 
-                    className="explanation-toggle"
-                    onClick={() => toggleCard(key)}
-                    aria-expanded={expandedCards[key]}
-                  >
-                    <span>ℹ️ About {key}</span>
-                    <span className="toggle-icon">{expandedCards[key] ? '▼' : '▶'}</span>
-                  </button>
-                  {expandedCards[key] && indicatorExplanations[key] && (
-                    <div className="explanation-content">
-                      <div className="explanation-item">
-                        <h4>What It Measures</h4>
-                        <p>{indicatorExplanations[key].what}</p>
+                <div className="charts-grid">
+                  {section.indicators.map((key) => {
+                    const data = macroData[key]
+                    // Format data for chart - data structure now has 'value' and 'pct_change'
+                    const chartData = data.history ? data.history.map(item => ({
+                      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                      value: item.value,
+                      pct_change: item.pct_change || 0,
+                      fullDate: item.date
+                    })) : [];
+                    
+                    return (
+                      <div key={key} className="card">
+                        <h3>{key}</h3>
+                        <div className="stat-row">
+                          <span>Latest: <strong>{data.current?.toLocaleString()}</strong></span>
+                          <span className={data.change >= 0 ? 'green' : 'red'}>
+                            {data.change > 0 ? '▲' : '▼'} {data.change}%
+                          </span>
+                        </div>
+                        <div className="chart-wrapper">
+                          {chartData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={200}>
+                              <LineChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
+                                <XAxis 
+                                  dataKey="date" 
+                                  stroke="#8b95b2"
+                                  tick={{ fill: '#8b95b2', fontSize: 10 }}
+                                  angle={-45}
+                                  textAnchor="end"
+                                  height={60}
+                                />
+                                <YAxis 
+                                  domain={['auto', 'auto']}
+                                  stroke="#8b95b2"
+                                  tick={{ fill: '#8b95b2', fontSize: 10 }}
+                                />
+                                <Tooltip 
+                                  contentStyle={{ 
+                                    backgroundColor: '#141b2d', 
+                                    border: '1px solid #1e2746',
+                                    color: '#e0e0e0'
+                                  }}
+                                  labelStyle={{ color: '#4a9eff' }}
+                                />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="value" 
+                                  stroke="#4a9eff" 
+                                  strokeWidth={2}
+                                  dot={false}
+                                  activeDot={{ r: 4, fill: '#4a9eff' }}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          ) : (
+                            <div style={{ padding: '2rem', textAlign: 'center', color: '#8b95b2' }}>
+                              No data available
+                            </div>
+                          )}
+                        </div>
+                        {/* Horizontal Data Table */}
+                        {chartData.length > 0 && (
+                          <div className="data-table-wrapper">
+                            <div className="data-table-scroll">
+                              <table className="data-table">
+                                <thead>
+                                  <tr>
+                                    <th>Date</th>
+                                    <th>Value</th>
+                                    <th>% Change</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {chartData.slice().reverse().map((item, idx) => (
+                                    <tr key={idx}>
+                                      <td>{item.date}</td>
+                                      <td>{typeof item.value === 'number' ? item.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : item.value}</td>
+                                      <td className={item.pct_change >= 0 ? 'green' : 'red'}>
+                                        {item.pct_change > 0 ? '▲' : item.pct_change < 0 ? '▼' : ''} {item.pct_change.toFixed(2)}%
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                        {/* Explanation Dropdown */}
+                        <div className="explanation-section">
+                          <button 
+                            className="explanation-toggle"
+                            onClick={() => toggleCard(key)}
+                            aria-expanded={expandedCards[key]}
+                          >
+                            <span>ℹ️ About {key}</span>
+                            <span className="toggle-icon">{expandedCards[key] ? '▼' : '▶'}</span>
+                          </button>
+                          {expandedCards[key] && indicatorExplanations[key] && (
+                            <div className="explanation-content">
+                              <div className="explanation-item">
+                                <h4>What It Measures</h4>
+                                <p>{indicatorExplanations[key].what}</p>
+                              </div>
+                              <div className="explanation-item">
+                                <h4>What's a Good Score</h4>
+                                <p>{indicatorExplanations[key].goodScore}</p>
+                              </div>
+                              <div className="explanation-item">
+                                <h4>What It Means for the Future</h4>
+                                <p>{indicatorExplanations[key].future}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="explanation-item">
-                        <h4>What's a Good Score</h4>
-                        <p>{indicatorExplanations[key].goodScore}</p>
-                      </div>
-                      <div className="explanation-item">
-                        <h4>What It Means for the Future</h4>
-                        <p>{indicatorExplanations[key].future}</p>
-                      </div>
-                    </div>
-                  )}
+                    )
+                  })}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            )
+          })
+        })()}
       </section>
 
       {/* SECTION 2: RATES & PITCHES */}

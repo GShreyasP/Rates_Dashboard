@@ -186,14 +186,18 @@ def fetch_macro_data():
     """Fetch macro data from FRED (used for caching) - optimized with parallel fetching"""
     from concurrent.futures import ThreadPoolExecutor, as_completed
     
-    # Series IDs: CPI, PPI, Non-Farm Payrolls, PMI, Unemployment Claims
-    # Note: PMI - trying alternative series IDs if one doesn't work
+    # Series IDs organized by category
+    # Consumer Price Indicators
+    # Producer Price Indicators  
+    # Employment Indicators
+    # Manufacturing Activity
     series_map = {
-        "CPI": "CPIAUCSL", 
-        "PPI": "PPIACO", 
-        "Payrolls": "PAYEMS",
+        "CPI": "CPIAUCSL",  # Consumer Price Index
+        "PCE": "PCEPI",     # Personal Consumption Expenditures Price Index
+        "PPI": "PPIACO",    # Producer Price Index
+        "Payrolls": "PAYEMS",  # Non-Farm Payrolls
+        "Unemployment Claims": "ICSA",  # Initial Jobless Claims, Seasonally Adjusted
         "PMI": "NAPM",  # ISM Manufacturing PMI - will try alternative if this fails
-        "Unemployment Claims": "ICSA"  # Initial Claims, Seasonally Adjusted
     }
     
     # Alternative PMI series IDs to try if primary fails
@@ -280,7 +284,7 @@ def fetch_macro_data():
                 return None
         
         # Fetch all series in parallel for much faster loading
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=6) as executor:
             futures = {executor.submit(fetch_series, name, series_id): name 
                       for name, series_id in series_map.items()}
             
