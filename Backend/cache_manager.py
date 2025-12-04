@@ -7,7 +7,9 @@ import threading
 
 # Cache directory
 CACHE_DIR = os.path.join(os.path.dirname(__file__), 'data_cache')
-DATA_UPDATE_INTERVAL = timedelta(days=3)  # Update data every 3 days
+# On Render, filesystem is ephemeral, so we extend cache validity to reduce API calls
+# Cache will be used if it exists and is less than 7 days old
+DATA_UPDATE_INTERVAL = timedelta(days=7)  # Update data every 7 days (extended for Render)
 
 # Ensure cache directory exists
 os.makedirs(CACHE_DIR, exist_ok=True)

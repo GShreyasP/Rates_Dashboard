@@ -183,7 +183,9 @@ def maturity_to_years(maturity_str):
 # --- API ENDPOINTS ---
 
 def fetch_macro_data():
-    """Fetch macro data from FRED (used for caching)"""
+    """Fetch macro data from FRED (used for caching) - optimized with parallel fetching"""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    
     # Series IDs: CPI, PPI, Non-Farm Payrolls, PMI, Unemployment Claims
     # Note: PMI - trying alternative series IDs if one doesn't work
     series_map = {
@@ -208,7 +210,8 @@ def fetch_macro_data():
         # FRED data is typically released mid-month for the previous month
         end_date = datetime.now() + timedelta(days=60)  # Look ahead to catch latest releases
         
-        for name, series_id in series_map.items():
+        def fetch_series(name, series_id):
+            """Helper function to fetch a single series"""
             try:
                 # For PMI, try alternatives if primary fails
                 if name == "PMI":
@@ -223,7 +226,7 @@ def fetch_macro_data():
                             continue
                     if df is None or len(df) == 0:
                         print(f"Warning: Could not fetch PMI data with any series ID")
-                        continue
+                        return None
                 else:
                     # Fetch data from FRED - pandas_datareader will get the latest available data
                     df = web.DataReader(series_id, 'fred', start_date, end_date, api_key=FRED_API_KEY)
@@ -234,7 +237,7 @@ def fetch_macro_data():
                 
                 if len(df) == 0:
                     print(f"Warning: No data found for {name} ({series_id})")
-                    continue
+                    return None
                 
                 # Sort by date to ensure chronological order
                 df = df.sort_values('DATE')
@@ -262,16 +265,30 @@ def fetch_macro_data():
                 # Rename the series_id column to 'value' for easier frontend access
                 history_data = history_data.rename(columns={series_id: 'value'})
                 
-                response_data[name] = {
-                    "history": history_data.to_dict(orient='records'),
-                    "current": latest,
-                    "latest_date": latest_date,
-                    "change": round(change, 2)
+                return {
+                    'name': name,
+                    'data': {
+                        "history": history_data.to_dict(orient='records'),
+                        "current": latest,
+                        "latest_date": latest_date,
+                        "change": round(change, 2)
+                    }
                 }
             except Exception as e:
                 print(f"Error fetching {name} ({series_id}): {str(e)}")
-                # Skip this series if it fails, continue with others
-                continue
+                return None
+        
+        # Fetch all series in parallel for much faster loading
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {executor.submit(fetch_series, name, series_id): name 
+                      for name, series_id in series_map.items()}
+            
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    response_data[result['name']] = result['data']
+        
+            # All series have been fetched in parallel above
     except Exception as e:
         return {"error": str(e)}
         
@@ -284,15 +301,30 @@ def macro_data():
     if cached:
         return jsonify(cached)
     
-    # Check CSV cache (persistent cache, updated every 3 days)
-    if is_cache_valid('macro'):
-        csv_data = load_from_cache('macro')
-        if csv_data:
-            # Also populate memory cache for faster subsequent requests
+    # Check CSV cache - use it if it exists (even if slightly old, to avoid slow API calls)
+    csv_data = load_from_cache('macro')
+    if csv_data:
+        # Check if cache is valid (less than 7 days old)
+        if is_cache_valid('macro'):
+            # Cache is fresh, use it
             set_cached_data('macro', csv_data)
             return jsonify(csv_data)
+        else:
+            # Cache exists but is old - still use it for speed, but update in background
+            set_cached_data('macro', csv_data)
+            # Return cached data immediately, update in background
+            def update_in_background():
+                try:
+                    fresh_data = fetch_macro_data()
+                    if 'error' not in fresh_data:
+                        save_to_cache('macro', fresh_data)
+                        set_cached_data('macro', fresh_data)
+                except:
+                    pass  # Fail silently in background
+            threading.Thread(target=update_in_background, daemon=True).start()
+            return jsonify(csv_data)
     
-    # CSV cache is invalid or missing, fetch fresh data
+    # No cache exists, fetch fresh data (this will be slow on first request)
     print("Fetching fresh macro data from API...")
     response_data = fetch_macro_data()
     
@@ -355,15 +387,30 @@ def rates_analysis():
     if cached:
         return jsonify(cached)
     
-    # Check CSV cache (persistent cache, updated every 3 days)
-    if is_cache_valid('rates'):
-        csv_data = load_from_cache('rates')
-        if csv_data:
-            # Also populate memory cache for faster subsequent requests
+    # Check CSV cache - use it if it exists (even if slightly old, to avoid slow API calls)
+    csv_data = load_from_cache('rates')
+    if csv_data:
+        # Check if cache is valid (less than 7 days old)
+        if is_cache_valid('rates'):
+            # Cache is fresh, use it
             set_cached_data('rates', csv_data)
             return jsonify(csv_data)
+        else:
+            # Cache exists but is old - still use it for speed, but update in background
+            set_cached_data('rates', csv_data)
+            # Return cached data immediately, update in background
+            def update_in_background():
+                try:
+                    fresh_data = fetch_rates_data()
+                    if 'error' not in fresh_data:
+                        save_to_cache('rates', fresh_data)
+                        set_cached_data('rates', fresh_data)
+                except:
+                    pass  # Fail silently in background
+            threading.Thread(target=update_in_background, daemon=True).start()
+            return jsonify(csv_data)
     
-    # CSV cache is invalid or missing, fetch fresh data
+    # No cache exists, fetch fresh data (this will be slow on first request)
     print("Fetching fresh rates data from API...")
     response_data = fetch_rates_data()
     
