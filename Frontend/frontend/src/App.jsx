@@ -67,13 +67,9 @@ function App() {
         indicators: ["Non-Farm Payrolls", "Unemployment Rate", "Unemployment Claims", "JOLTS"].filter(key => data[key]),
         description: "Labor market health, job creation, and labor turnover metrics"
       },
-      "Producer Price Indicators": {
-        indicators: ["PPI"].filter(key => data[key]),
-        description: "Wholesale price inflation and producer cost trends"
-      },
-      "Manufacturing Activity": {
-        indicators: ["PMI"].filter(key => data[key]),
-        description: "Industrial production and manufacturing sector health"
+      "Producer Price Index": {
+        indicators: ["PPI", "PMI"].filter(key => data[key]),
+        description: "Wholesale price inflation, producer cost trends, and manufacturing activity"
       }
     }
   }
@@ -372,7 +368,7 @@ function App() {
                       label={{ value: 'Maturity', position: 'insideBottom', offset: -5, fill: '#8b95b2' }}
                     />
                     <YAxis 
-                      domain={['auto', 'auto']}
+                      domain={[3, 'auto']}
                       stroke="#8b95b2"
                       tick={{ fill: '#8b95b2', fontSize: 12 }}
                       label={{ value: 'Yield (%)', angle: -90, position: 'insideLeft', fill: '#8b95b2' }}

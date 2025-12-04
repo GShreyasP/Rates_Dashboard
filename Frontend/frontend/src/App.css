@@ -43,6 +43,29 @@ section h2 {
   border-bottom: 1px solid #1e2746;
 }
 
+.indicator-section {
+  margin-bottom: 3rem;
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #1e2746;
+}
+
+.section-header h3 {
+  font-size: 1.5rem;
+  color: #4a9eff;
+  margin-bottom: 0.5rem;
+}
+
+.section-description {
+  color: #8b95b2;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin: 0;
+}
+
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
