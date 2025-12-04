@@ -10,6 +10,11 @@ import numpy as np
 import threading
 import requests
 from bs4 import BeautifulSoup
+import time
+from cache_manager import (
+    is_cache_valid, load_from_cache, save_to_cache, 
+    get_cache_age, CACHE_DIR
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -60,9 +65,10 @@ CORS(app)  # Allow React to talk to Flask in dev
 FRED_API_KEY = os.getenv("FRED_API_KEY", "YOUR_API_KEY_HERE")
 
 # --- CACHING ---
-# Cache data for 5 minutes to reduce API calls
+# CSV-based persistent cache (updates every 3 days)
+# Keep in-memory cache for faster repeated requests within the same session
 CACHE_DURATION = timedelta(minutes=5)
-cache = {
+memory_cache = {
     'macro': {'data': None, 'timestamp': None},
     'rates': {'data': None, 'timestamp': None},
     'fedwatch': {'data': None, 'timestamp': None}
@@ -70,9 +76,9 @@ cache = {
 cache_lock = threading.Lock()
 
 def get_cached_data(key):
-    """Get cached data if it's still valid"""
+    """Get cached data from memory cache if it's still valid (short-term cache)"""
     with cache_lock:
-        cached = cache.get(key)
+        cached = memory_cache.get(key)
         if cached and cached['data'] and cached['timestamp']:
             age = datetime.now() - cached['timestamp']
             if age < CACHE_DURATION:
@@ -80,24 +86,80 @@ def get_cached_data(key):
     return None
 
 def set_cached_data(key, data):
-    """Store data in cache"""
+    """Store data in memory cache (short-term)"""
     with cache_lock:
-        cache[key] = {'data': data, 'timestamp': datetime.now()} 
+        memory_cache[key] = {'data': data, 'timestamp': datetime.now()} 
 
 # --- HELPER FUNCTIONS ---
 def get_yield_curve():
-    # Tickers: 13W, 5Y, 10Y, 30Y
-    tickers = {'13W': '^IRX', '2Y': '^IRX', '5Y': '^FVX', '10Y': '^TNX', '30Y': '^TYX'}
+    """
+    Fetch yield curve data from multiple sources:
+    - yfinance for some maturities
+    - FRED API for Treasury constant maturity rates
+    """
     data = {}
+    
+    # Yahoo Finance tickers (existing ones)
+    yf_tickers = {
+        '13W': '^IRX',  # 13-week (3-month) T-bill
+        '5Y': '^FVX',   # 5-year Treasury Note
+        '10Y': '^TNX',  # 10-year Treasury Note
+        '30Y': '^TYX'   # 30-year Treasury Bond
+    }
+    
+    # Fetch from yfinance
     try:
-        for label, ticker in tickers.items():
-            tick = yf.Ticker(ticker)
-            hist = tick.history(period="1d")
-            if not hist.empty:
-                # Yahoo yields are prices (e.g., 4.5), we keep them as is for display
-                data[label] = hist['Close'].iloc[-1]
+        for label, ticker in yf_tickers.items():
+            try:
+                tick = yf.Ticker(ticker)
+                hist = tick.history(period="1d")
+                if not hist.empty:
+                    # Yahoo yields are prices (e.g., 4.5), we keep them as is for display
+                    data[label] = float(hist['Close'].iloc[-1])
+            except Exception as e:
+                print(f"Error fetching {label} ({ticker}) from yfinance: {e}")
     except Exception as e:
-        print(f"Error fetching yields: {e}")
+        print(f"Error fetching yields from yfinance: {e}")
+    
+    # FRED API Treasury constant maturity rates
+    # FRED series IDs for Treasury yields
+    fred_series = {
+        '1M': 'DGS1MO',   # 1-month
+        '2M': 'DGS2MO',   # 2-month
+        '3M': 'DGS3MO',   # 3-month
+        '4M': 'DGS4MO',   # 4-month (may not exist, will skip if unavailable)
+        '6M': 'DGS6MO',   # 6-month
+        '1Y': 'DGS1',     # 1-year
+        '2Y': 'DGS2',     # 2-year
+        '7Y': 'DGS7'      # 7-year
+    }
+    
+    # Fetch from FRED API if key is available
+    if FRED_API_KEY != "YOUR_API_KEY_HERE":
+        try:
+            # Get recent data (last 5 days to ensure we get the latest)
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=5)
+            
+            for label, series_id in fred_series.items():
+                try:
+                    df = web.DataReader(series_id, 'fred', start_date, end_date, api_key=FRED_API_KEY)
+                    if not df.empty:
+                        # Get the most recent non-NaN value
+                        series_data = df[series_id].dropna()
+                        if len(series_data) > 0:
+                            data[label] = float(series_data.iloc[-1])
+                        else:
+                            print(f"Warning: No valid data for {label} ({series_id})")
+                    else:
+                        print(f"Warning: Empty dataframe for {label} ({series_id})")
+                except Exception as e:
+                    print(f"Error fetching {label} ({series_id}) from FRED: {e}")
+        except Exception as e:
+            print(f"Error fetching yields from FRED: {e}")
+    else:
+        print("Warning: FRED_API_KEY not set, skipping FRED yield data")
+    
     return data
 
 def calculate_dv01(face_value, duration, yield_percent):
@@ -217,16 +279,26 @@ def fetch_macro_data():
 
 @app.route('/api/macro')
 def macro_data():
-    # Check cache first
+    # Check memory cache first (for fast repeated requests)
     cached = get_cached_data('macro')
     if cached:
         return jsonify(cached)
     
-    # Fetch fresh data
+    # Check CSV cache (persistent cache, updated every 3 days)
+    if is_cache_valid('macro'):
+        csv_data = load_from_cache('macro')
+        if csv_data:
+            # Also populate memory cache for faster subsequent requests
+            set_cached_data('macro', csv_data)
+            return jsonify(csv_data)
+    
+    # CSV cache is invalid or missing, fetch fresh data
+    print("Fetching fresh macro data from API...")
     response_data = fetch_macro_data()
     
-    # Cache the result
+    # Save to CSV cache and memory cache
     if 'error' not in response_data:
+        save_to_cache('macro', response_data)
         set_cached_data('macro', response_data)
     
     return jsonify(response_data)
@@ -239,7 +311,9 @@ def fetch_rates_data():
         return {"error": "Failed to fetch yields"}
 
     # 1. Curve Shape Analysis (2s10s and 5s30s)
-    spread_2s10s = yields.get('10Y', 0) - yields.get('13W', 0) # Using 13W as proxy for short if 2Y fails
+    # Use 2Y if available, otherwise fall back to 1Y, then 3M, then 13W
+    short_term_yield = yields.get('2Y') or yields.get('1Y') or yields.get('3M') or yields.get('13W', 0)
+    spread_2s10s = yields.get('10Y', 0) - short_term_yield
     spread_5s30s = yields.get('30Y', 0) - yields.get('5Y', 0)
     
     curve_shape = "Normal"
@@ -276,16 +350,26 @@ def fetch_rates_data():
 
 @app.route('/api/rates')
 def rates_analysis():
-    # Check cache first
+    # Check memory cache first (for fast repeated requests)
     cached = get_cached_data('rates')
     if cached:
         return jsonify(cached)
     
-    # Fetch fresh data
+    # Check CSV cache (persistent cache, updated every 3 days)
+    if is_cache_valid('rates'):
+        csv_data = load_from_cache('rates')
+        if csv_data:
+            # Also populate memory cache for faster subsequent requests
+            set_cached_data('rates', csv_data)
+            return jsonify(csv_data)
+    
+    # CSV cache is invalid or missing, fetch fresh data
+    print("Fetching fresh rates data from API...")
     response_data = fetch_rates_data()
     
-    # Cache the result
+    # Save to CSV cache and memory cache
     if 'error' not in response_data:
+        save_to_cache('rates', response_data)
         set_cached_data('rates', response_data)
     
     return jsonify(response_data)
@@ -563,19 +647,131 @@ def fetch_fedwatch_fallback():
 
 @app.route('/api/fedwatch')
 def fedwatch_data():
-    # Check cache first
+    # Check memory cache first (for fast repeated requests)
     cached = get_cached_data('fedwatch')
     if cached:
         return jsonify(cached)
     
-    # Fetch fresh data
+    # Check CSV cache (persistent cache, updated every 3 days)
+    if is_cache_valid('fedwatch'):
+        csv_data = load_from_cache('fedwatch')
+        if csv_data:
+            # Also populate memory cache for faster subsequent requests
+            set_cached_data('fedwatch', csv_data)
+            return jsonify(csv_data)
+    
+    # CSV cache is invalid or missing, fetch fresh data
+    print("Fetching fresh fedwatch data from API...")
     response_data = fetch_fedwatch_data()
     
-    # Cache the result
+    # Save to CSV cache and memory cache
     if 'error' not in response_data:
+        save_to_cache('fedwatch', response_data)
         set_cached_data('fedwatch', response_data)
     
     return jsonify(response_data)
+
+# --- MANUAL UPDATE ENDPOINT (for testing/admin) ---
+@app.route('/api/update-cache')
+def manual_update_cache():
+    """Manually trigger cache update for all data types"""
+    results = {}
+    
+    # Update macro data
+    try:
+        print("Manual update: Fetching macro data...")
+        data = fetch_macro_data()
+        if 'error' not in data:
+            save_to_cache('macro', data)
+            set_cached_data('macro', data)
+            results['macro'] = {'status': 'success', 'message': 'Macro data updated'}
+        else:
+            results['macro'] = {'status': 'error', 'message': data.get('error', 'Unknown error')}
+    except Exception as e:
+        results['macro'] = {'status': 'error', 'message': str(e)}
+    
+    # Update rates data
+    try:
+        print("Manual update: Fetching rates data...")
+        data = fetch_rates_data()
+        if 'error' not in data:
+            save_to_cache('rates', data)
+            set_cached_data('rates', data)
+            results['rates'] = {'status': 'success', 'message': 'Rates data updated'}
+        else:
+            results['rates'] = {'status': 'error', 'message': data.get('error', 'Unknown error')}
+    except Exception as e:
+        results['rates'] = {'status': 'error', 'message': str(e)}
+    
+    # Update fedwatch data
+    try:
+        print("Manual update: Fetching fedwatch data...")
+        data = fetch_fedwatch_data()
+        if 'error' not in data:
+            save_to_cache('fedwatch', data)
+            set_cached_data('fedwatch', data)
+            results['fedwatch'] = {'status': 'success', 'message': 'Fedwatch data updated'}
+        else:
+            results['fedwatch'] = {'status': 'error', 'message': data.get('error', 'Unknown error')}
+    except Exception as e:
+        results['fedwatch'] = {'status': 'error', 'message': str(e)}
+    
+    return jsonify({
+        'message': 'Cache update completed',
+        'results': results,
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.route('/api/cache-status')
+def cache_status():
+    """Get status of all caches"""
+    status = {}
+    for data_type in ['macro', 'rates', 'fedwatch']:
+        is_valid = is_cache_valid(data_type)
+        cache_age = get_cache_age(data_type)
+        status[data_type] = {
+            'valid': is_valid,
+            'age_days': cache_age if cache_age is not None else 'N/A',
+            'needs_update': not is_valid if cache_age is not None else True
+        }
+    return jsonify({
+        'cache_status': status,
+        'update_interval_days': 3,
+        'timestamp': datetime.now().isoformat(),
+        'fred_api_key_set': FRED_API_KEY != "YOUR_API_KEY_HERE"
+    })
+
+@app.route('/api/clear-cache')
+def clear_cache_endpoint():
+    """Clear all caches - forces fresh data fetch on next request"""
+    from cache_manager import clear_cache
+    try:
+        clear_cache()  # Clear all caches
+        return jsonify({
+            'message': 'All caches cleared successfully. Next API call will fetch fresh data.',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/clear-cache')
+def clear_cache_endpoint():
+    """Clear all caches - forces fresh data fetch on next request"""
+    from cache_manager import clear_cache
+    try:
+        clear_cache()  # Clear all caches
+        return jsonify({
+            'message': 'All caches cleared successfully',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
 
 # --- SERVE FRONTEND ---
 @app.route('/', defaults={'path': ''})
@@ -598,18 +794,164 @@ def serve(path):
             return jsonify({"error": "Frontend not found. Please deploy frontend separately."}), 404
 
 def prewarm_cache():
-    """Pre-warm cache on server start"""
+    """Pre-warm cache on server start - load from CSV if valid, otherwise fetch fresh"""
     print("Pre-warming cache...")
-    try:
-        fetch_macro_data()
-        fetch_rates_data()
-        fetch_fedwatch_data()
-        print("Cache pre-warmed successfully")
-    except Exception as e:
-        print(f"Error pre-warming cache: {e}")
+    
+    # Check and load macro data
+    if is_cache_valid('macro'):
+        data = load_from_cache('macro')
+        if data:
+            set_cached_data('macro', data)
+            cache_age = get_cache_age('macro')
+            print(f"Loaded macro data from cache (age: {cache_age} days)")
+        else:
+            print("Macro cache exists but couldn't load, fetching fresh...")
+            data = fetch_macro_data()
+            if 'error' not in data:
+                save_to_cache('macro', data)
+                set_cached_data('macro', data)
+    else:
+        print("Macro cache invalid or missing, fetching fresh data...")
+        data = fetch_macro_data()
+        if 'error' not in data:
+            save_to_cache('macro', data)
+            set_cached_data('macro', data)
+    
+    # Check and load rates data
+    if is_cache_valid('rates'):
+        data = load_from_cache('rates')
+        if data:
+            set_cached_data('rates', data)
+            cache_age = get_cache_age('rates')
+            print(f"Loaded rates data from cache (age: {cache_age} days)")
+        else:
+            print("Rates cache exists but couldn't load, fetching fresh...")
+            data = fetch_rates_data()
+            if 'error' not in data:
+                save_to_cache('rates', data)
+                set_cached_data('rates', data)
+    else:
+        print("Rates cache invalid or missing, fetching fresh data...")
+        data = fetch_rates_data()
+        if 'error' not in data:
+            save_to_cache('rates', data)
+            set_cached_data('rates', data)
+    
+    # Check and load fedwatch data
+    if is_cache_valid('fedwatch'):
+        data = load_from_cache('fedwatch')
+        if data:
+            set_cached_data('fedwatch', data)
+            cache_age = get_cache_age('fedwatch')
+            print(f"Loaded fedwatch data from cache (age: {cache_age} days)")
+        else:
+            print("Fedwatch cache exists but couldn't load, fetching fresh...")
+            data = fetch_fedwatch_data()
+            if 'error' not in data:
+                save_to_cache('fedwatch', data)
+                set_cached_data('fedwatch', data)
+    else:
+        print("Fedwatch cache invalid or missing, fetching fresh data...")
+        data = fetch_fedwatch_data()
+        if 'error' not in data:
+            save_to_cache('fedwatch', data)
+            set_cached_data('fedwatch', data)
+    
+    print("Cache pre-warmed successfully")
+
+def update_data_worker():
+    """Background worker that checks and updates data when it's older than 3 days"""
+    # Wait a bit before starting to let server initialize
+    time.sleep(60)  # Wait 1 minute after server start
+    
+    while True:
+        try:
+            print("\n=== Checking if data needs updating ===")
+            updated_any = False
+            
+            # Check and update macro data if needed
+            if not is_cache_valid('macro'):
+                cache_age = get_cache_age('macro')
+                age_msg = f"{cache_age} days old" if cache_age is not None else "missing"
+                print(f"Macro data is {age_msg} (threshold: 3 days), updating...")
+                data = fetch_macro_data()
+                if 'error' not in data:
+                    save_to_cache('macro', data)
+                    set_cached_data('macro', data)
+                    print("Macro data updated successfully")
+                    updated_any = True
+                else:
+                    print(f"Error updating macro data: {data.get('error')}")
+            else:
+                cache_age = get_cache_age('macro')
+                if cache_age is not None:
+                    print(f"Macro data is fresh (age: {cache_age} days)")
+                else:
+                    print("Macro data is fresh")
+            
+            # Check and update rates data if needed
+            if not is_cache_valid('rates'):
+                cache_age = get_cache_age('rates')
+                age_msg = f"{cache_age} days old" if cache_age is not None else "missing"
+                print(f"Rates data is {age_msg} (threshold: 3 days), updating...")
+                data = fetch_rates_data()
+                if 'error' not in data:
+                    save_to_cache('rates', data)
+                    set_cached_data('rates', data)
+                    print("Rates data updated successfully")
+                    updated_any = True
+                else:
+                    print(f"Error updating rates data: {data.get('error')}")
+            else:
+                cache_age = get_cache_age('rates')
+                if cache_age is not None:
+                    print(f"Rates data is fresh (age: {cache_age} days)")
+                else:
+                    print("Rates data is fresh")
+            
+            # Check and update fedwatch data if needed
+            if not is_cache_valid('fedwatch'):
+                cache_age = get_cache_age('fedwatch')
+                age_msg = f"{cache_age} days old" if cache_age is not None else "missing"
+                print(f"Fedwatch data is {age_msg} (threshold: 3 days), updating...")
+                data = fetch_fedwatch_data()
+                if 'error' not in data:
+                    save_to_cache('fedwatch', data)
+                    set_cached_data('fedwatch', data)
+                    print("Fedwatch data updated successfully")
+                    updated_any = True
+                else:
+                    print(f"Error updating fedwatch data: {data.get('error')}")
+            else:
+                cache_age = get_cache_age('fedwatch')
+                if cache_age is not None:
+                    print(f"Fedwatch data is fresh (age: {cache_age} days)")
+                else:
+                    print("Fedwatch data is fresh")
+            
+            if updated_any:
+                print("=== Background data update completed ===\n")
+            else:
+                print("=== All data is up to date ===\n")
+            
+            # Check every 12 hours (in case data needs updating)
+            time.sleep(43200)  # 12 hours
+            
+        except Exception as e:
+            print(f"Error in background update worker: {e}")
+            import traceback
+            traceback.print_exc()
+            # Sleep for 1 hour before retrying if there's an error
+            time.sleep(3600)
 
 if __name__ == '__main__':
     # Pre-warm cache in background thread
     threading.Thread(target=prewarm_cache, daemon=True).start()
+    
+    # Start background worker to update data every 3 days
+    update_thread = threading.Thread(target=update_data_worker, daemon=True)
+    update_thread.start()
+    print("Background data update worker started (will update every 3 days)")
+    
     port = int(os.environ.get('PORT', 5001))
     app.run(debug=True, host='0.0.0.0', port=port)
