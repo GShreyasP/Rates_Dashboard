@@ -67,7 +67,7 @@ function App() {
         indicators: ["Non-Farm Payrolls", "Unemployment Rate", "Unemployment Claims", "JOLTS"].filter(key => data[key]),
         description: "Labor market health, job creation, and labor turnover metrics"
       },
-      "Producer Price Index": {
+      "Price & Activity Indexes": {
         indicators: ["PPI", "PMI"].filter(key => data[key]),
         description: "Wholesale price inflation, producer cost trends, and manufacturing activity"
       }

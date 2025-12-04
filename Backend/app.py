@@ -100,8 +100,8 @@ def get_yield_curve():
     data = {}
     
     # Yahoo Finance tickers (existing ones)
+    # Note: 13W removed from yield curve as requested
     yf_tickers = {
-        '13W': '^IRX',  # 13-week (3-month) T-bill
         '5Y': '^FVX',   # 5-year Treasury Note
         '10Y': '^TNX',  # 10-year Treasury Note
         '30Y': '^TYX'   # 30-year Treasury Bond
@@ -350,8 +350,8 @@ def fetch_rates_data():
         return {"error": "Failed to fetch yields"}
 
     # 1. Curve Shape Analysis (2s10s and 5s30s)
-    # Use 2Y if available, otherwise fall back to 1Y, then 3M, then 13W
-    short_term_yield = yields.get('2Y') or yields.get('1Y') or yields.get('3M') or yields.get('13W', 0)
+    # Use 2Y if available, otherwise fall back to 1Y, then 3M
+    short_term_yield = yields.get('2Y') or yields.get('1Y') or yields.get('3M', 0)
     spread_2s10s = yields.get('10Y', 0) - short_term_yield
     spread_5s30s = yields.get('30Y', 0) - yields.get('5Y', 0)
     
@@ -436,10 +436,10 @@ def fetch_fedwatch_data():
     next_meeting = datetime(2025, 12, 10)
     
     # Hardcoded target rate probabilities
-    # 350-375: 93%, 375-400: 7%
+    # 350-375: 89.2%, 375-400: 10.8%
     target_rate_probabilities = {
-        "350-375": 93.0,
-        "375-400": 7.0
+        "350-375": 89.2,
+        "375-400": 10.8
     }
     
     most_likely = max(target_rate_probabilities.items(), key=lambda x: x[1])
