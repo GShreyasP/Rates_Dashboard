@@ -528,39 +528,47 @@ function App() {
     }))
   }
 
-  // Calculate DV01 for a position
-  const calculateDV01 = (faceValue, duration, yieldPercent) => {
-    return duration * 0.0001 * faceValue
+  // Calculate modified duration (duration adjusted for yield)
+  // Modified duration decreases as yield increases (convexity effect)
+  // Using approximation: Modified Duration ≈ Macaulay Duration / (1 + yield)
+  const calculateModifiedDuration = (macaulayDuration, yieldPercent) => {
+    return macaulayDuration / (1 + yieldPercent / 100)
   }
 
-  // Calculate convexity adjustment (non-linear relationship)
-  // Convexity ≈ 0.5 * duration^2 for rough approximation
-  const calculateConvexity = (duration) => {
-    return 0.5 * duration * duration
+  // Calculate DV01 for a position at a specific yield
+  // DV01 changes as yield changes because duration changes
+  const calculateDV01 = (faceValue, macaulayDuration, yieldPercent) => {
+    const modifiedDuration = calculateModifiedDuration(macaulayDuration, yieldPercent)
+    // Approximate price at current yield (using par value as baseline)
+    // Price ≈ Face Value for approximation
+    return modifiedDuration * 0.0001 * faceValue
   }
 
-  // Calculate PNL with convexity adjustment (non-linear)
-  const calculatePNL = (originalYield, newYield, dv01, duration, faceValue) => {
+  // Calculate PNL accounting for changing DV01 (convexity)
+  // As yield increases, DV01 decreases (duration decreases), so PNL increases at decreasing rate
+  // As yield decreases, DV01 increases (duration increases), so PNL moves faster
+  const calculatePNL = (originalYield, newYield, macaulayDuration, faceValue) => {
     // Yield change in basis points
     const yieldChangeBps = (newYield - originalYield) * 100
     
-    // Linear component: -DV01 * yield_change_in_bps
-    const linearPNL = -dv01 * yieldChangeBps
+    // Calculate DV01 at original yield (this is the $8000 reference)
+    const originalDV01 = calculateDV01(faceValue, macaulayDuration, originalYield)
     
-    // Convexity adjustment (positive impact when yields change)
-    // Convexity effect = 0.5 * Convexity * (yield_change_bps/100)^2 * Price
-    // Using simplified approximation with face value as proxy for price
-    const convexity = calculateConvexity(duration)
-    const yieldChangeDecimal = yieldChangeBps / 10000 // Convert bps to decimal (e.g., 25 bps = 0.0025)
-    const convexityPNL = 0.5 * convexity * faceValue * yieldChangeDecimal * yieldChangeDecimal * 10000 // Scale back to dollars
+    // Calculate DV01 at new yield (changes due to duration change)
+    const newDV01 = calculateDV01(faceValue, macaulayDuration, newYield)
     
-    // Total PNL = Linear + Convexity adjustment
-    // Negative because bond prices move inversely to yields (for linear part)
-    return linearPNL + convexityPNL
+    // Average DV01 for the move (using average gives better approximation for convexity)
+    const avgDV01 = (originalDV01 + newDV01) / 2
+    
+    // PNL = -Average_DV01 * yield_change_in_bps
+    // Negative because bond prices move inversely to yields
+    // The convexity is built in because we're using average DV01 which accounts for duration change
+    return -avgDV01 * yieldChangeBps
   }
 
-  // Get duration estimate for different maturities (approximate)
-  const getDuration = (maturity) => {
+  // Get Macaulay duration estimate for different maturities (approximate)
+  // These are Macaulay durations (not modified durations)
+  const getMacaulayDuration = (maturity) => {
     const maturityMap = {
       '1Y': 1.0,
       '2Y': 1.9,
@@ -591,12 +599,29 @@ function App() {
       return 0
     }
     
-    // Calculate DV01 for $10M position
-    const duration = getDuration(selectedBond)
+    // Calculate PNL for $10M position
+    const macaulayDuration = getMacaulayDuration(selectedBond)
     const faceValue = 10000000
-    const dv01 = calculateDV01(faceValue, duration, newYield)
-    const pnl = calculatePNL(originalBond.yield, newYield, dv01, duration, faceValue)
-    console.log('PNL calculated:', { bond: selectedBond, original: originalBond.yield, new: newYield, duration, dv01, pnl })
+    
+    // Calculate original DV01 (reference point, should be ~$8000 for 10Y)
+    const originalDV01 = calculateDV01(faceValue, macaulayDuration, originalBond.yield)
+    
+    // Calculate PNL with convexity (DV01 changes with yield)
+    const pnl = calculatePNL(originalBond.yield, newYield, macaulayDuration, faceValue)
+    
+    // Calculate new DV01 for reference
+    const newDV01 = calculateDV01(faceValue, macaulayDuration, newYield)
+    
+    console.log('PNL calculated:', { 
+      bond: selectedBond, 
+      originalYield: originalBond.yield, 
+      newYield: newYield,
+      yieldChangeBps: (newYield - originalBond.yield) * 100,
+      macaulayDuration,
+      originalDV01,
+      newDV01,
+      pnl 
+    })
     return pnl
   }
 
