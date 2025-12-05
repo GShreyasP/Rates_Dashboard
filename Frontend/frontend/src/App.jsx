@@ -667,7 +667,14 @@ function App() {
     fetchData()
   }, [])
 
-  if (loading) return <div className="loading">Loading Market Data...</div>
+  if (loading) return (
+    <div className="loading">
+      <div>Loading Market Data...</div>
+      <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#8b95b2', fontStyle: 'italic' }}>
+        Please allow ~1 minute to load the data
+      </div>
+    </div>
+  )
 
   return (
     <div className="dashboard-container">
@@ -754,6 +761,58 @@ function App() {
                             </div>
                           )}
                         </div>
+                        
+                        {/* Quarterly Change Chart for CPI, PCE Headline, PCE Core, PPI */}
+                        {data.quarterly_change_history && data.quarterly_change_history.length > 0 && (
+                          <div style={{ marginTop: '1.5rem' }}>
+                            <h4 style={{ color: '#4a9eff', fontSize: '1rem', marginBottom: '0.75rem' }}>
+                              Quarterly Change (%)
+                            </h4>
+                            <div className="chart-wrapper">
+                              <ResponsiveContainer width="100%" height={200}>
+                                <LineChart data={data.quarterly_change_history.map(item => ({
+                                  date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                                  quarterly_change: item.quarterly_change,
+                                  fullDate: item.date
+                                }))}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
+                                  <XAxis 
+                                    dataKey="date" 
+                                    stroke="#8b95b2"
+                                    tick={{ fill: '#8b95b2', fontSize: 10 }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={60}
+                                  />
+                                  <YAxis 
+                                    domain={['auto', 'auto']}
+                                    stroke="#8b95b2"
+                                    tick={{ fill: '#8b95b2', fontSize: 10 }}
+                                    label={{ value: '%', angle: -90, position: 'insideLeft', fill: '#8b95b2' }}
+                                  />
+                                  <Tooltip 
+                                    contentStyle={{ 
+                                      backgroundColor: '#141b2d', 
+                                      border: '1px solid #1e2746',
+                                      color: '#e0e0e0'
+                                    }}
+                                    labelStyle={{ color: '#4a9eff' }}
+                                    formatter={(value) => [`${value.toFixed(2)}%`, 'Quarterly Change']}
+                                  />
+                                  <Line 
+                                    type="monotone" 
+                                    dataKey="quarterly_change" 
+                                    stroke="#4ade80" 
+                                    strokeWidth={2}
+                                    dot={false}
+                                    activeDot={{ r: 4, fill: '#4ade80' }}
+                                  />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* Horizontal Data Table */}
                         {chartData.length > 0 && (
                           <div className="data-table-wrapper">

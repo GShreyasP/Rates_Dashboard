@@ -267,9 +267,9 @@ def fetch_macro_data():
                 prev = float(df[series_id].iloc[-2]) if len(df) > 1 else latest
                 change = ((latest - prev) / prev) * 100 if prev != 0 else 0
                 
-                # Calculate Year-over-Year (YoY) change for CPI, PCE, PPI, Non-Farm Payrolls
+                # Calculate Year-over-Year (YoY) change for CPI, PCE, PPI, Non-Farm Payrolls, JOLTS
                 yoy_change = None
-                if name in ["CPI", "PCE Headline", "PCE Core", "PPI", "Non-Farm Payrolls"]:
+                if name in ["CPI", "PCE Headline", "PCE Core", "PPI", "Non-Farm Payrolls", "JOLTS"]:
                     # Find value from 1 year ago (approximately 365 days)
                     latest_date_obj = pd.to_datetime(latest_date)
                     one_year_ago = latest_date_obj - pd.DateOffset(years=1)
@@ -282,6 +282,36 @@ def fetch_macro_data():
                         # Get the closest date to one year ago
                         one_year_value = float(one_year_data.iloc[-1][series_id])
                         yoy_change = ((latest - one_year_value) / one_year_value) * 100 if one_year_value != 0 else 0
+                
+                # Calculate quarterly change for chart (for CPI, PCE Headline, PCE Core, PPI)
+                quarterly_change_data = None
+                if name in ["CPI", "PCE Headline", "PCE Core", "PPI"]:
+                    df['DATE_dt'] = pd.to_datetime(df['DATE'])
+                    quarterly_changes = []
+                    
+                    # Calculate quarterly (3-month) change for each data point
+                    for idx in range(len(df)):
+                        current_date = df.iloc[idx]['DATE_dt']
+                        three_months_ago = current_date - pd.DateOffset(months=3)
+                        
+                        # Find closest date to 3 months ago
+                        past_data = df[df['DATE_dt'] <= three_months_ago]
+                        
+                        if len(past_data) > 0:
+                            past_value = float(past_data.iloc[-1][series_id])
+                            current_value = float(df.iloc[idx][series_id])
+                            qtr_change = ((current_value - past_value) / past_value) * 100 if past_value != 0 else 0
+                            quarterly_changes.append({
+                                'date': df.iloc[idx]['date'],
+                                'quarterly_change': round(qtr_change, 2)
+                            })
+                        else:
+                            quarterly_changes.append({
+                                'date': df.iloc[idx]['date'],
+                                'quarterly_change': 0
+                            })
+                    
+                    quarterly_change_data = quarterly_changes
                 
                 # Convert to native Python types for JSON serialization
                 history_data = df[['date', series_id, 'pct_change']].copy()
@@ -301,6 +331,10 @@ def fetch_macro_data():
                 # Add YoY change if calculated
                 if yoy_change is not None:
                     result_data["yoy_change"] = round(yoy_change, 2)
+                
+                # Add quarterly change data if calculated
+                if quarterly_change_data is not None:
+                    result_data["quarterly_change_history"] = quarterly_change_data
                 
                 return {
                     'name': name,
