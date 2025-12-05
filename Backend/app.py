@@ -270,48 +270,65 @@ def fetch_macro_data():
                 # Calculate Year-over-Year (YoY) change for CPI, PCE, PPI, Non-Farm Payrolls, JOLTS
                 yoy_change = None
                 if name in ["CPI", "PCE Headline", "PCE Core", "PPI", "Non-Farm Payrolls", "JOLTS"]:
-                    # Find value from 1 year ago (approximately 365 days)
-                    latest_date_obj = pd.to_datetime(latest_date)
-                    one_year_ago = latest_date_obj - pd.DateOffset(years=1)
-                    
-                    # Find closest date to one year ago
-                    df['DATE_dt'] = pd.to_datetime(df['DATE'])
-                    one_year_data = df[df['DATE_dt'] <= one_year_ago]
-                    
-                    if len(one_year_data) > 0:
-                        # Get the closest date to one year ago
-                        one_year_value = float(one_year_data.iloc[-1][series_id])
-                        yoy_change = ((latest - one_year_value) / one_year_value) * 100 if one_year_value != 0 else 0
+                    try:
+                        # Find value from 1 year ago (approximately 365 days)
+                        latest_date_obj = pd.to_datetime(latest_date)
+                        one_year_ago = latest_date_obj - pd.DateOffset(years=1)
+                        
+                        # Find closest date to one year ago
+                        df['DATE_dt'] = pd.to_datetime(df['DATE'])
+                        one_year_data = df[df['DATE_dt'] <= one_year_ago]
+                        
+                        if len(one_year_data) > 0:
+                            # Get the closest date to one year ago
+                            one_year_value = float(one_year_data.iloc[-1][series_id])
+                            yoy_change = ((latest - one_year_value) / one_year_value) * 100 if one_year_value != 0 else 0
+                    except Exception as e:
+                        print(f"Error calculating YoY change for {name}: {e}")
+                        yoy_change = None
                 
                 # Calculate quarterly change for chart (for CPI, PCE Headline, PCE Core, PPI)
                 quarterly_change_data = None
                 if name in ["CPI", "PCE Headline", "PCE Core", "PPI"]:
-                    df['DATE_dt'] = pd.to_datetime(df['DATE'])
-                    quarterly_changes = []
-                    
-                    # Calculate quarterly (3-month) change for each data point
-                    for idx in range(len(df)):
-                        current_date = df.iloc[idx]['DATE_dt']
-                        three_months_ago = current_date - pd.DateOffset(months=3)
+                    try:
+                        # Ensure DATE_dt exists (might already exist from YoY calculation)
+                        if 'DATE_dt' not in df.columns:
+                            df['DATE_dt'] = pd.to_datetime(df['DATE'])
+                        quarterly_changes = []
                         
-                        # Find closest date to 3 months ago
-                        past_data = df[df['DATE_dt'] <= three_months_ago]
+                        # Calculate quarterly (3-month) change for each data point
+                        for idx in range(len(df)):
+                            try:
+                                current_date = df.iloc[idx]['DATE_dt']
+                                three_months_ago = current_date - pd.DateOffset(months=3)
+                                
+                                # Find closest date to 3 months ago
+                                past_data = df[df['DATE_dt'] <= three_months_ago]
+                                
+                                if len(past_data) > 0:
+                                    past_value = float(past_data.iloc[-1][series_id])
+                                    current_value = float(df.iloc[idx][series_id])
+                                    qtr_change = ((current_value - past_value) / past_value) * 100 if past_value != 0 else 0
+                                    quarterly_changes.append({
+                                        'date': df.iloc[idx]['date'],
+                                        'quarterly_change': round(qtr_change, 2)
+                                    })
+                                else:
+                                    quarterly_changes.append({
+                                        'date': df.iloc[idx]['date'],
+                                        'quarterly_change': 0
+                                    })
+                            except Exception as e:
+                                print(f"Error calculating quarterly change for index {idx} in {name}: {e}")
+                                quarterly_changes.append({
+                                    'date': df.iloc[idx]['date'],
+                                    'quarterly_change': 0
+                                })
                         
-                        if len(past_data) > 0:
-                            past_value = float(past_data.iloc[-1][series_id])
-                            current_value = float(df.iloc[idx][series_id])
-                            qtr_change = ((current_value - past_value) / past_value) * 100 if past_value != 0 else 0
-                            quarterly_changes.append({
-                                'date': df.iloc[idx]['date'],
-                                'quarterly_change': round(qtr_change, 2)
-                            })
-                        else:
-                            quarterly_changes.append({
-                                'date': df.iloc[idx]['date'],
-                                'quarterly_change': 0
-                            })
-                    
-                    quarterly_change_data = quarterly_changes
+                        quarterly_change_data = quarterly_changes
+                    except Exception as e:
+                        print(f"Error calculating quarterly changes for {name}: {e}")
+                        quarterly_change_data = None
                 
                 # Convert to native Python types for JSON serialization
                 history_data = df[['date', series_id, 'pct_change']].copy()
