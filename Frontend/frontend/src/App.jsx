@@ -668,9 +668,23 @@ function App() {
   }, [])
 
   if (loading) return (
-    <div className="loading">
-      <div>Loading Market Data...</div>
-      <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#8b95b2', fontStyle: 'italic' }}>
+    <div className="loading" style={{ position: 'relative', height: '100vh' }}>
+      <div style={{ fontSize: '1.5rem', color: '#4a9eff' }}>Loading Market Data...</div>
+      <div style={{
+        position: 'absolute',
+        bottom: '2rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        padding: '0.75rem 1.5rem',
+        background: 'rgba(74, 158, 255, 0.1)',
+        border: '1px solid rgba(74, 158, 255, 0.3)',
+        borderRadius: '8px',
+        fontSize: '0.9rem',
+        color: '#8b95b2',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+      }}>
         Please allow ~1 minute to load the data
       </div>
     </div>
