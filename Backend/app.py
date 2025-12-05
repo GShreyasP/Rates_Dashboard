@@ -187,19 +187,22 @@ def fetch_macro_data():
     from concurrent.futures import ThreadPoolExecutor, as_completed
     
     # Series IDs organized by category
-    # Consumer Price Indicators
+    # Inflation Indicators
     # Producer Price Indicators  
     # Employment Indicators
-    # Manufacturing Activity
+    # Manufacturing Activity & Consumer Sentiment
     series_map = {
         "CPI": "CPIAUCSL",  # Consumer Price Index
-        "PCE": "PCEPI",     # Personal Consumption Expenditures Price Index
+        "PCE Headline": "PCEPI",     # Personal Consumption Expenditures Price Index (Headline)
+        "PCE Core": "PCECTPI",  # PCE Price Index excluding food and energy (Core)
         "PPI": "PPIACO",    # Producer Price Index
+        "PMI": "NAPM",  # ISM Manufacturing PMI - will try alternative if this fails
         "Non-Farm Payrolls": "PAYEMS",  # Non-Farm Payrolls (Total Nonfarm)
         "Unemployment Rate": "UNRATE",  # Unemployment Rate
         "Unemployment Claims": "ICSA",  # Initial Jobless Claims, Seasonally Adjusted
         "JOLTS": "JTSJOL",  # Job Openings: Total Nonfarm (JOLTS)
-        "PMI": "NAPM",  # ISM Manufacturing PMI - will try alternative if this fails
+        "Consumer Sentiment": "UMCSENT",  # University of Michigan Consumer Sentiment
+        "Consumer Confidence": "CONCCONF",  # Consumer Confidence Index
     }
     
     # Alternative PMI series IDs to try if primary fails
@@ -264,6 +267,22 @@ def fetch_macro_data():
                 prev = float(df[series_id].iloc[-2]) if len(df) > 1 else latest
                 change = ((latest - prev) / prev) * 100 if prev != 0 else 0
                 
+                # Calculate Year-over-Year (YoY) change for CPI, PCE, PPI, Non-Farm Payrolls
+                yoy_change = None
+                if name in ["CPI", "PCE Headline", "PCE Core", "PPI", "Non-Farm Payrolls"]:
+                    # Find value from 1 year ago (approximately 365 days)
+                    latest_date_obj = pd.to_datetime(latest_date)
+                    one_year_ago = latest_date_obj - pd.DateOffset(years=1)
+                    
+                    # Find closest date to one year ago
+                    df['DATE_dt'] = pd.to_datetime(df['DATE'])
+                    one_year_data = df[df['DATE_dt'] <= one_year_ago]
+                    
+                    if len(one_year_data) > 0:
+                        # Get the closest date to one year ago
+                        one_year_value = float(one_year_data.iloc[-1][series_id])
+                        yoy_change = ((latest - one_year_value) / one_year_value) * 100 if one_year_value != 0 else 0
+                
                 # Convert to native Python types for JSON serialization
                 history_data = df[['date', series_id, 'pct_change']].copy()
                 history_data[series_id] = history_data[series_id].astype(float)
@@ -272,14 +291,20 @@ def fetch_macro_data():
                 # Rename the series_id column to 'value' for easier frontend access
                 history_data = history_data.rename(columns={series_id: 'value'})
                 
+                result_data = {
+                    "history": history_data.to_dict(orient='records'),
+                    "current": latest,
+                    "latest_date": latest_date,
+                    "change": round(change, 2)
+                }
+                
+                # Add YoY change if calculated
+                if yoy_change is not None:
+                    result_data["yoy_change"] = round(yoy_change, 2)
+                
                 return {
                     'name': name,
-                    'data': {
-                        "history": history_data.to_dict(orient='records'),
-                        "current": latest,
-                        "latest_date": latest_date,
-                        "change": round(change, 2)
-                    }
+                    'data': result_data
                 }
             except Exception as e:
                 print(f"Error fetching {name} ({series_id}): {str(e)}")

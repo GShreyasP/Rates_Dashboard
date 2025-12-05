@@ -16,7 +16,7 @@ const maturityToYears = (maturity) => {
 }
 
 // Interactive Yield Chart Component
-function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, onReset, pnl }) {
+function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, onReset, pnl, selectedBond, onBondChange }) {
   const svgRef = useRef(null)
   const containerRef = useRef(null)
   const [isDragging, setIsDragging] = useState(null)
@@ -167,38 +167,68 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
   }
 
   const hasChanges = dataPoints.some(p => Math.abs(p.currentYield - p.originalYield) > 0.01)
+  
+  // Get available yearly maturities for dropdown
+  const availableBonds = dataPoints.map(p => p.maturity).sort((a, b) => {
+    const aYears = maturityToYears(a)
+    const bYears = maturityToYears(b)
+    return aYears - bYears
+  })
 
   return (
     <div className="interactive-chart-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h4 style={{ color: '#4a9eff', fontSize: '1.1rem', margin: 0 }}>
           Interactive Yield Curve & PNL Calculator
         </h4>
-        {hasChanges && onReset && (
-          <button
-            onClick={onReset}
-            style={{
-              padding: '0.5rem 1rem',
-              background: '#1e2746',
-              border: '1px solid #4a9eff',
-              borderRadius: '4px',
-              color: '#4a9eff',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontWeight: 600
-            }}
-            onMouseOver={(e) => {
-              e.target.style.background = '#4a9eff'
-              e.target.style.color = '#fff'
-            }}
-            onMouseOut={(e) => {
-              e.target.style.background = '#1e2746'
-              e.target.style.color = '#4a9eff'
-            }}
-          >
-            Reset to Original
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <label style={{ color: '#8b95b2', fontSize: '0.9rem' }}>
+            Bond for PNL:
+            <select
+              value={selectedBond || '10Y'}
+              onChange={(e) => onBondChange(e.target.value)}
+              style={{
+                marginLeft: '0.5rem',
+                padding: '0.4rem 0.75rem',
+                background: '#0f1525',
+                border: '1px solid #1e2746',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '0.85rem',
+                cursor: 'pointer'
+              }}
+            >
+              {availableBonds.map(bond => (
+                <option key={bond} value={bond}>{bond}</option>
+              ))}
+            </select>
+          </label>
+          {onReset && (
+            <button
+              onClick={onReset}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#1e2746',
+                border: '1px solid #4a9eff',
+                borderRadius: '4px',
+                color: '#4a9eff',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: 600
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = '#4a9eff'
+                e.target.style.color = '#fff'
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = '#1e2746'
+                e.target.style.color = '#4a9eff'
+              }}
+            >
+              Reset to Original
+            </button>
+          )}
+        </div>
       </div>
       <div 
         ref={containerRef}
@@ -377,7 +407,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
           }}>
-            Estimated PNL ($10M 10Y Position)
+            Estimated PNL ($10M {selectedBond || '10Y'} Position)
           </div>
           <div style={{
             color: pnl >= 0 ? '#4ade80' : '#f87171',
@@ -393,7 +423,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
             marginTop: '0.5rem',
             fontStyle: 'italic'
           }}>
-            Drag the 10Y point up or down to see PNL impact
+            Drag the {selectedBond || '10Y'} point up or down to see PNL impact (includes convexity adjustment)
           </div>
         </div>
       </div>
@@ -408,6 +438,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [expandedCards, setExpandedCards] = useState({})
   const [interactiveYields, setInteractiveYields] = useState(null)
+  const [selectedBond, setSelectedBond] = useState('10Y')
   const [draggedPoint, setDraggedPoint] = useState(null)
   const chartRef = useRef(null)
 
@@ -418,10 +449,15 @@ function App() {
       goodScore: "Moderate increases (2-3% annually) indicate healthy inflation. Too high (>5%) suggests overheating; too low (<1%) may signal weak demand.",
       future: "Rising CPI suggests higher costs and potential Fed rate hikes. Falling CPI may indicate economic slowdown and potential rate cuts."
     },
-    "PCE": {
-      what: "Personal Consumption Expenditures Price Index measures changes in prices paid by consumers for goods and services. The Fed's preferred inflation gauge.",
+    "PCE Headline": {
+      what: "Personal Consumption Expenditures Price Index (Headline) measures changes in prices paid by consumers for all goods and services, including food and energy.",
       goodScore: "Moderate increases (2-3% annually) indicate healthy inflation. The Fed targets 2% PCE inflation. Too high (>3%) suggests overheating; too low (<1%) may signal weak demand.",
       future: "Rising PCE is the Fed's primary inflation metric for policy decisions. Higher PCE typically leads to rate hikes; lower PCE may prompt rate cuts."
+    },
+    "PCE Core": {
+      what: "Personal Consumption Expenditures Price Index (Core) excludes volatile food and energy prices, providing a more stable measure of underlying inflation trends.",
+      goodScore: "Core PCE is the Fed's preferred inflation gauge as it excludes volatile components. The Fed targets 2% core PCE. Moderate increases (2-3% annually) indicate healthy inflation.",
+      future: "Core PCE is closely watched by the Fed as it reflects underlying inflation trends without food/energy volatility. Rising core PCE typically leads to rate hikes."
     },
     "PPI": {
       what: "Measures average changes in selling prices received by domestic producers for their output, tracking inflation at the wholesale level.",
@@ -452,6 +488,16 @@ function App() {
       what: "Purchasing Managers' Index measuring manufacturing activity. Values above 50 indicate expansion; below 50 indicates contraction.",
       goodScore: "Values above 50 indicate manufacturing growth. Above 55 suggests strong expansion; below 45 signals significant contraction.",
       future: "Rising PMI suggests economic strength and potential rate hikes. Falling PMI indicates weakening economy and potential rate cuts."
+    },
+    "Consumer Sentiment": {
+      what: "University of Michigan Consumer Sentiment Index measures how optimistic consumers feel about the economy and their personal finances.",
+      goodScore: "Higher values indicate positive consumer sentiment. Values above 90 suggest strong consumer confidence; below 70 may signal economic concerns.",
+      future: "Rising consumer sentiment supports increased spending and economic growth. Falling sentiment may signal reduced spending and economic slowdown."
+    },
+    "Consumer Confidence": {
+      what: "Conference Board Consumer Confidence Index measures consumers' assessment of current business and labor market conditions, and expectations for the next six months.",
+      goodScore: "Higher values indicate stronger consumer confidence. Values above 100 suggest optimistic consumers; below 80 may signal economic concerns.",
+      future: "Rising consumer confidence supports increased spending and economic expansion. Falling confidence may signal reduced spending and potential economic slowdown."
     }
   }
 
@@ -460,17 +506,17 @@ function App() {
     if (!data) return {}
     
     return {
-      "Consumer Price Indicators": {
-        indicators: ["CPI", "PCE"].filter(key => data[key]),
-        description: "Measures of consumer price inflation and spending patterns"
+      "Inflation Indicators": {
+        indicators: ["CPI", "PCE Headline", "PCE Core", "PMI"].filter(key => data[key]),
+        description: "Measures of consumer price inflation, spending patterns, and manufacturing activity"
       },
       "Employment Indicators": {
         indicators: ["Non-Farm Payrolls", "Unemployment Rate", "Unemployment Claims", "JOLTS"].filter(key => data[key]),
         description: "Labor market health, job creation, and labor turnover metrics"
       },
       "Price & Activity Indexes": {
-        indicators: ["PPI", "PMI"].filter(key => data[key]),
-        description: "Wholesale price inflation, producer cost trends, and manufacturing activity"
+        indicators: ["PPI", "Consumer Sentiment", "Consumer Confidence"].filter(key => data[key]),
+        description: "Wholesale price inflation, producer cost trends, and consumer sentiment"
       }
     }
   }
@@ -487,38 +533,70 @@ function App() {
     return duration * 0.0001 * faceValue
   }
 
-  // Calculate PNL based on yield change and DV01
-  const calculatePNL = (originalYield, newYield, dv01) => {
-    // Yield change in basis points
-    const yieldChangeBps = (newYield - originalYield) * 100
-    // PNL = -DV01 * yield_change_in_bps
-    // Negative because bond prices move inversely to yields
-    return -dv01 * yieldChangeBps
+  // Calculate convexity adjustment (non-linear relationship)
+  // Convexity ≈ 0.5 * duration^2 for rough approximation
+  const calculateConvexity = (duration) => {
+    return 0.5 * duration * duration
   }
 
-  // Get PNL for the 10Y position
-  const getPNL = () => {
+  // Calculate PNL with convexity adjustment (non-linear)
+  const calculatePNL = (originalYield, newYield, dv01, duration, faceValue) => {
+    // Yield change in basis points
+    const yieldChangeBps = (newYield - originalYield) * 100
+    
+    // Linear component: -DV01 * yield_change_in_bps
+    const linearPNL = -dv01 * yieldChangeBps
+    
+    // Convexity adjustment (positive impact when yields change)
+    // Convexity effect = 0.5 * Convexity * (yield_change_bps/100)^2 * Price
+    // Using simplified approximation with face value as proxy for price
+    const convexity = calculateConvexity(duration)
+    const yieldChangeDecimal = yieldChangeBps / 10000 // Convert bps to decimal (e.g., 25 bps = 0.0025)
+    const convexityPNL = 0.5 * convexity * faceValue * yieldChangeDecimal * yieldChangeDecimal * 10000 // Scale back to dollars
+    
+    // Total PNL = Linear + Convexity adjustment
+    // Negative because bond prices move inversely to yields (for linear part)
+    return linearPNL + convexityPNL
+  }
+
+  // Get duration estimate for different maturities (approximate)
+  const getDuration = (maturity) => {
+    const maturityMap = {
+      '1Y': 1.0,
+      '2Y': 1.9,
+      '5Y': 4.5,
+      '7Y': 6.2,
+      '10Y': 8.0,
+      '30Y': 18.0
+    }
+    return maturityMap[maturity] || 8.0
+  }
+
+  // Get PNL for selected bond position
+  const getPNL = (selectedBond = '10Y') => {
     if (!ratesData || !interactiveYields || !ratesData.yield_curve) {
       console.log('PNL calc: Missing data', { ratesData: !!ratesData, interactiveYields: !!interactiveYields })
       return 0
     }
     
-    const original10Y = ratesData.yield_curve.find(item => item.maturity === '10Y')
-    if (!original10Y) {
-      console.log('PNL calc: No 10Y found in yield curve')
+    const originalBond = ratesData.yield_curve.find(item => item.maturity === selectedBond)
+    if (!originalBond) {
+      console.log(`PNL calc: No ${selectedBond} found in yield curve`)
       return 0
     }
     
-    const new10Y = interactiveYields['10Y']
-    if (new10Y === undefined) {
-      console.log('PNL calc: No 10Y in interactive yields', interactiveYields)
+    const newYield = interactiveYields[selectedBond]
+    if (newYield === undefined) {
+      console.log(`PNL calc: No ${selectedBond} in interactive yields`, interactiveYields)
       return 0
     }
     
-    // Calculate DV01 for $10M 10Y position (duration ~8 years)
-    const dv01 = calculateDV01(10000000, 8.0, new10Y)
-    const pnl = calculatePNL(original10Y.yield, new10Y, dv01)
-    console.log('PNL calculated:', { original: original10Y.yield, new: new10Y, dv01, pnl })
+    // Calculate DV01 for $10M position
+    const duration = getDuration(selectedBond)
+    const faceValue = 10000000
+    const dv01 = calculateDV01(faceValue, duration, newYield)
+    const pnl = calculatePNL(originalBond.yield, newYield, dv01, duration, faceValue)
+    console.log('PNL calculated:', { bond: selectedBond, original: originalBond.yield, new: newYield, duration, dv01, pnl })
     return pnl
   }
 
@@ -603,8 +681,10 @@ function App() {
                         <h3>{key}</h3>
                         <div className="stat-row">
                           <span>Latest: <strong>{data.current?.toLocaleString()}</strong></span>
-                          <span className={data.change >= 0 ? 'green' : 'red'}>
-                            {data.change > 0 ? '▲' : '▼'} {data.change}%
+                          <span className={(data.yoy_change !== undefined ? data.yoy_change : data.change) >= 0 ? 'green' : 'red'}>
+                            {(data.yoy_change !== undefined ? data.yoy_change : data.change) > 0 ? '▲' : '▼'} 
+                            {data.yoy_change !== undefined ? `${data.yoy_change}%` : `${data.change}%`}
+                            {data.yoy_change !== undefined && <span style={{fontSize: '0.75rem', marginLeft: '0.25rem', opacity: 0.7}}>YoY</span>}
                           </span>
                         </div>
                         <div className="chart-wrapper">
@@ -906,6 +986,8 @@ function App() {
                 <InteractiveYieldChart 
                   originalCurve={ratesData.yield_curve}
                   currentYields={interactiveYields}
+                  selectedBond={selectedBond}
+                  onBondChange={(bond) => setSelectedBond(bond)}
                   onYieldChange={(maturity, newYield) => {
                     setInteractiveYields(prev => ({
                       ...prev,
@@ -921,7 +1003,7 @@ function App() {
                       })
                     setInteractiveYields(yields)
                   }}
-                  pnl={getPNL()}
+                  pnl={getPNL(selectedBond)}
                 />
               ) : (
                 <div style={{ 
