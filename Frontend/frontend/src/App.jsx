@@ -42,32 +42,35 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
     return () => window.removeEventListener('resize', updateWidth)
   }, [])
 
-  // Prepare data points
+  // Prepare data points - only yearly maturities with even spacing
   const getDataPoints = () => {
-    const sortedCurve = [...originalCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
+    // Filter to only yearly maturities (1Y, 2Y, 5Y, 7Y, 10Y, 30Y)
+    const yearlyCurve = originalCurve.filter(item => item.maturity.endsWith('Y'))
+    const sortedCurve = [...yearlyCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
     
     // Find min/max yields for scaling
     const allYields = sortedCurve.map(item => currentYields[item.maturity] || item.yield)
     const minYield = Math.min(...allYields) - 0.5
     const maxYield = Math.max(...allYields) + 0.5
     
-    return sortedCurve.map((item) => {
-      const years = maturityToYears(item.maturity)
+    // Use even spacing for x-axis (not proportional to years)
+    const numPoints = sortedCurve.length
+    
+    return sortedCurve.map((item, index) => {
       const originalYield = item.yield
       const currentYield = currentYields[item.maturity] !== undefined ? currentYields[item.maturity] : originalYield
       
-      // Convert to pixel coordinates
-      const maxYears = Math.max(...sortedCurve.map(i => maturityToYears(i.maturity)))
-      const x = margin.left + (years / maxYears) * plotWidth
+      // Even spacing: distribute points evenly across the plot width
+      const x = margin.left + (index / (numPoints - 1)) * plotWidth
       const y = margin.top + plotHeight - ((currentYield - minYield) / (maxYield - minYield)) * plotHeight
       
       return {
         maturity: item.maturity,
-        years,
         originalYield,
         currentYield,
         x,
-        y
+        y,
+        index
       }
     })
   }
@@ -75,7 +78,9 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
   const dataPoints = getDataPoints()
 
   const handleMouseDown = (e, point) => {
-    const sortedCurve = [...originalCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
+    // Filter to only yearly maturities for consistent calculations
+    const yearlyCurve = originalCurve.filter(item => item.maturity.endsWith('Y'))
+    const sortedCurve = [...yearlyCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
     const allYields = sortedCurve.map(item => currentYields[item.maturity] || item.yield)
     const minYield = Math.min(...allYields) - 0.5
     const maxYield = Math.max(...allYields) + 0.5
@@ -135,18 +140,19 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
     yAxisLabels.push(yieldValue.toFixed(2))
   }
 
-  // Generate path for the yield curve (original)
+  // Generate path for the yield curve (original) - only yearly with even spacing
   const getOriginalCurvePath = () => {
     if (dataPoints.length === 0) return ''
-    const sortedCurve = [...originalCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
+    const yearlyCurve = originalCurve.filter(item => item.maturity.endsWith('Y'))
+    const sortedCurve = [...yearlyCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
     const allYields = sortedCurve.map(item => item.yield)
     const minYield = Math.min(...allYields) - 0.5
     const maxYield = Math.max(...allYields) + 0.5
-    const maxYears = Math.max(...sortedCurve.map(i => maturityToYears(i.maturity)))
+    const numPoints = sortedCurve.length
     
-    const points = sortedCurve.map((item) => {
-      const years = maturityToYears(item.maturity)
-      const x = margin.left + (years / maxYears) * plotWidth
+    const points = sortedCurve.map((item, index) => {
+      // Even spacing
+      const x = margin.left + (index / (numPoints - 1)) * plotWidth
       const y = margin.top + plotHeight - ((item.yield - minYield) / (maxYield - minYield)) * plotHeight
       return `${x},${y}`
     }).join(' L ')
@@ -536,12 +542,14 @@ function App() {
         setMacroData(macroRes.data)
         setRatesData(ratesRes.data)
         setFedwatchData(fedwatchRes.data)
-        // Initialize interactive yields with current rates data
+        // Initialize interactive yields with current rates data (only yearly maturities)
         if (ratesRes.data && ratesRes.data.yield_curve) {
           const yields = {}
-          ratesRes.data.yield_curve.forEach(item => {
-            yields[item.maturity] = item.yield
-          })
+          ratesRes.data.yield_curve
+            .filter(item => item.maturity.endsWith('Y')) // Only yearly maturities
+            .forEach(item => {
+              yields[item.maturity] = item.yield
+            })
           setInteractiveYields(yields)
           console.log('Interactive yields initialized:', yields)
         } else {
@@ -906,9 +914,11 @@ function App() {
                   }}
                   onReset={() => {
                     const yields = {}
-                    ratesData.yield_curve.forEach(item => {
-                      yields[item.maturity] = item.yield
-                    })
+                    ratesData.yield_curve
+                      .filter(item => item.maturity.endsWith('Y')) // Only yearly maturities
+                      .forEach(item => {
+                        yields[item.maturity] = item.yield
+                      })
                     setInteractiveYields(yields)
                   }}
                   pnl={getPNL()}
