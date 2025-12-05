@@ -1,8 +1,0 @@
-Backend/venv/
-Backend/__pycache__/
-Frontend/frontend/node_modules/
-*.log
-.env
-*.pyc
-__pycache__/
-

@@ -206,8 +206,8 @@ def fetch_macro_data():
     pmi_alternatives = ["MANPMI", "UMCSENT"]  # Manufacturing PMI alternatives
     
     response_data = {}
-    # Full historical data from 2022 for complete context (may take 10-15 seconds on first load)
-    start_date = datetime(2022, 1, 1)
+    # Historical data from 2023 to reduce load time while maintaining context
+    start_date = datetime(2023, 1, 1)
     
     if FRED_API_KEY == "YOUR_API_KEY_HERE":
         return {"error": "Missing FRED API Key"}

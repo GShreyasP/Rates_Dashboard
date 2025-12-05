@@ -44,3 +44,8 @@ Thumbs.db
 
 .vercel
 .env*.local
+
+# Cache data
+Backend/data_cache/
+*.json
+*_timestamp.txt

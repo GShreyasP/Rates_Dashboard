@@ -461,6 +461,30 @@ hr {
   margin: 0.5rem 0;
 }
 
+.interactive-chart-container {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #1e2746;
+}
+
+.interactive-chart-container h4 {
+  color: #4a9eff;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.interactive-chart-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 768px) {
+  .interactive-chart-container svg {
+    width: 100%;
+    height: auto;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-container {
     padding: 1rem;
