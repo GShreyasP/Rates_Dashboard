@@ -441,6 +441,8 @@ function App() {
   const [selectedBond, setSelectedBond] = useState('10Y')
   const [draggedPoint, setDraggedPoint] = useState(null)
   const chartRef = useRef(null)
+  const [dataUpdated, setDataUpdated] = useState(false)
+  const [dataUpdateMessage, setDataUpdateMessage] = useState('')
 
   // Explanation data for each indicator
   const indicatorExplanations = {
@@ -665,6 +667,23 @@ function App() {
       }
     }
     fetchData()
+    
+    // Poll for data updates every 30 seconds
+    const pollInterval = setInterval(async () => {
+      try {
+        const updateRes = await axios.get(`${API_URL}/data-updated`)
+        if (updateRes.data.updated && Object.keys(updateRes.data.updated_data).length > 0) {
+          const updatedTypes = Object.keys(updateRes.data.updated_data).join(', ')
+          setDataUpdateMessage(`New data available for: ${updatedTypes}. Please reload to see updates.`)
+          setDataUpdated(true)
+        }
+      } catch (error) {
+        // Silently fail - don't interrupt user experience
+        console.log("Error checking for data updates:", error)
+      }
+    }, 30000) // Check every 30 seconds
+    
+    return () => clearInterval(pollInterval)
   }, [])
 
   if (loading) return (
@@ -685,13 +704,70 @@ function App() {
         textAlign: 'center',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
       }}>
-        Please allow ~1 minute to load the data
+        Loading market data (optimized for faster load times)
       </div>
     </div>
   )
 
+  const handleReload = () => {
+    window.location.reload()
+  }
+
   return (
     <div className="dashboard-container">
+      {dataUpdated && (
+        <div style={{
+          position: 'fixed',
+          top: '1rem',
+          right: '1rem',
+          background: 'rgba(74, 222, 128, 0.15)',
+          border: '2px solid rgba(74, 222, 128, 0.5)',
+          borderRadius: '8px',
+          padding: '1rem 1.5rem',
+          color: '#4ade80',
+          zIndex: 1000,
+          maxWidth: '400px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>🔄 Data Updated</div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>{dataUpdateMessage}</div>
+          </div>
+          <button
+            onClick={handleReload}
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#4ade80',
+              border: 'none',
+              borderRadius: '4px',
+              color: '#0f1525',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '0.85rem'
+            }}
+            onMouseOver={(e) => e.target.style.background = '#4ade80'}
+            onMouseOut={(e) => e.target.style.background = '#4ade80'}
+          >
+            Reload
+          </button>
+          <button
+            onClick={() => setDataUpdated(false)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#4ade80',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              padding: '0.25rem 0.5rem'
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
       <header>
         <h1>Rates Dashboard</h1>
         <p>Macro Data • Yield Curve • Trade Pitches</p>
@@ -775,57 +851,6 @@ function App() {
                             </div>
                           )}
                         </div>
-                        
-                        {/* Quarterly Change Chart for CPI, PCE Headline, PCE Core, PPI */}
-                        {data.quarterly_change_history && data.quarterly_change_history.length > 0 && (
-                          <div style={{ marginTop: '1.5rem' }}>
-                            <h4 style={{ color: '#4a9eff', fontSize: '1rem', marginBottom: '0.75rem' }}>
-                              Quarterly Change (%)
-                            </h4>
-                            <div className="chart-wrapper">
-                              <ResponsiveContainer width="100%" height={200}>
-                                <LineChart data={data.quarterly_change_history.map(item => ({
-                                  date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-                                  quarterly_change: item.quarterly_change,
-                                  fullDate: item.date
-                                }))}>
-                                  <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
-                                  <XAxis 
-                                    dataKey="date" 
-                                    stroke="#8b95b2"
-                                    tick={{ fill: '#8b95b2', fontSize: 10 }}
-                                    angle={-45}
-                                    textAnchor="end"
-                                    height={60}
-                                  />
-                                  <YAxis 
-                                    domain={['auto', 'auto']}
-                                    stroke="#8b95b2"
-                                    tick={{ fill: '#8b95b2', fontSize: 10 }}
-                                    label={{ value: '%', angle: -90, position: 'insideLeft', fill: '#8b95b2' }}
-                                  />
-                                  <Tooltip 
-                                    contentStyle={{ 
-                                      backgroundColor: '#141b2d', 
-                                      border: '1px solid #1e2746',
-                                      color: '#e0e0e0'
-                                    }}
-                                    labelStyle={{ color: '#4a9eff' }}
-                                    formatter={(value) => [`${value.toFixed(2)}%`, 'Quarterly Change']}
-                                  />
-                                  <Line 
-                                    type="monotone" 
-                                    dataKey="quarterly_change" 
-                                    stroke="#4ade80" 
-                                    strokeWidth={2}
-                                    dot={false}
-                                    activeDot={{ r: 4, fill: '#4ade80' }}
-                                  />
-                                </LineChart>
-                              </ResponsiveContainer>
-                            </div>
-                          </div>
-                        )}
                         
                         {/* Horizontal Data Table */}
                         {chartData.length > 0 && (

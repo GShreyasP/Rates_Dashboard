@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 import time
 from cache_manager import (
     is_cache_valid, load_from_cache, save_to_cache, 
-    get_cache_age, CACHE_DIR
+    get_cache_age, CACHE_DIR, check_data_changed, clear_data_changed_flag
 )
 
 # Load environment variables from .env file
@@ -88,7 +88,21 @@ def get_cached_data(key):
 def set_cached_data(key, data):
     """Store data in memory cache (short-term)"""
     with cache_lock:
-        memory_cache[key] = {'data': data, 'timestamp': datetime.now()} 
+        memory_cache[key] = {'data': data, 'timestamp': datetime.now()}
+
+def compare_data(old_data, new_data):
+    """Compare two data objects to detect if there are meaningful changes"""
+    import json
+    if old_data is None or new_data is None:
+        return False
+    
+    # Convert to JSON strings for deep comparison (handles nested dicts)
+    old_str = json.dumps(old_data, sort_keys=True, default=str)
+    new_str = json.dumps(new_data, sort_keys=True, default=str)
+    
+    # For numeric comparison, we'll do a smarter comparison
+    # For now, simple string comparison works for detecting changes
+    return old_str != new_str 
 
 # --- HELPER FUNCTIONS ---
 def get_yield_curve():
@@ -209,8 +223,8 @@ def fetch_macro_data():
     pmi_alternatives = ["MANPMI", "UMCSENT"]  # Manufacturing PMI alternatives
     
     response_data = {}
-    # Historical data from 2023 to reduce load time while maintaining context
-    start_date = datetime(2023, 1, 1)
+    # Historical data from 18 months ago to reduce load time while maintaining context
+    start_date = datetime.now() - timedelta(days=550)  # ~18 months
     
     if FRED_API_KEY == "YOUR_API_KEY_HERE":
         return {"error": "Missing FRED API Key"}
@@ -384,36 +398,40 @@ def macro_data():
     if cached:
         return jsonify(cached)
     
-    # Check CSV cache - use it if it exists (even if slightly old, to avoid slow API calls)
+    # ALWAYS load from cache first for fast response (even if stale)
     csv_data = load_from_cache('macro')
     if csv_data:
-        # Check if cache is valid (less than 7 days old)
-        if is_cache_valid('macro'):
-            # Cache is fresh, use it
-            set_cached_data('macro', csv_data)
-            return jsonify(csv_data)
-        else:
-            # Cache exists but is old - still use it for speed, but update in background
-            set_cached_data('macro', csv_data)
-            # Return cached data immediately, update in background
-            def update_in_background():
-                try:
-                    fresh_data = fetch_macro_data()
-                    if 'error' not in fresh_data:
-                        save_to_cache('macro', fresh_data)
-                        set_cached_data('macro', fresh_data)
-                except:
-                    pass  # Fail silently in background
-            threading.Thread(target=update_in_background, daemon=True).start()
-            return jsonify(csv_data)
+        # Store in memory cache for faster subsequent requests
+        set_cached_data('macro', csv_data)
+        
+        # Always update in background after returning cached data
+        def update_in_background():
+            try:
+                print("Background: Fetching fresh macro data from API...")
+                fresh_data = fetch_macro_data()
+                if 'error' not in fresh_data:
+                    # Compare with cached data
+                    data_changed = compare_data(csv_data, fresh_data)
+                    if data_changed:
+                        print("Background: Macro data has changed, updating cache...")
+                    save_to_cache('macro', fresh_data, data_changed=data_changed)
+                    set_cached_data('macro', fresh_data)
+            except Exception as e:
+                print(f"Background: Error updating macro data: {e}")
+        
+        # Start background update thread
+        threading.Thread(target=update_in_background, daemon=True).start()
+        
+        # Return cached data immediately (fast!)
+        return jsonify(csv_data)
     
-    # No cache exists, fetch fresh data (this will be slow on first request)
-    print("Fetching fresh macro data from API...")
+    # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
+    print("No cache found, fetching fresh macro data from API...")
     response_data = fetch_macro_data()
     
     # Save to CSV cache and memory cache
     if 'error' not in response_data:
-        save_to_cache('macro', response_data)
+        save_to_cache('macro', response_data, data_changed=False)
         set_cached_data('macro', response_data)
     
     return jsonify(response_data)
@@ -470,36 +488,40 @@ def rates_analysis():
     if cached:
         return jsonify(cached)
     
-    # Check CSV cache - use it if it exists (even if slightly old, to avoid slow API calls)
+    # ALWAYS load from cache first for fast response (even if stale)
     csv_data = load_from_cache('rates')
     if csv_data:
-        # Check if cache is valid (less than 7 days old)
-        if is_cache_valid('rates'):
-            # Cache is fresh, use it
-            set_cached_data('rates', csv_data)
-            return jsonify(csv_data)
-        else:
-            # Cache exists but is old - still use it for speed, but update in background
-            set_cached_data('rates', csv_data)
-            # Return cached data immediately, update in background
-            def update_in_background():
-                try:
-                    fresh_data = fetch_rates_data()
-                    if 'error' not in fresh_data:
-                        save_to_cache('rates', fresh_data)
-                        set_cached_data('rates', fresh_data)
-                except:
-                    pass  # Fail silently in background
-            threading.Thread(target=update_in_background, daemon=True).start()
-            return jsonify(csv_data)
+        # Store in memory cache for faster subsequent requests
+        set_cached_data('rates', csv_data)
+        
+        # Always update in background after returning cached data
+        def update_in_background():
+            try:
+                print("Background: Fetching fresh rates data from API...")
+                fresh_data = fetch_rates_data()
+                if 'error' not in fresh_data:
+                    # Compare with cached data
+                    data_changed = compare_data(csv_data, fresh_data)
+                    if data_changed:
+                        print("Background: Rates data has changed, updating cache...")
+                    save_to_cache('rates', fresh_data, data_changed=data_changed)
+                    set_cached_data('rates', fresh_data)
+            except Exception as e:
+                print(f"Background: Error updating rates data: {e}")
+        
+        # Start background update thread
+        threading.Thread(target=update_in_background, daemon=True).start()
+        
+        # Return cached data immediately (fast!)
+        return jsonify(csv_data)
     
-    # No cache exists, fetch fresh data (this will be slow on first request)
-    print("Fetching fresh rates data from API...")
+    # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
+    print("No cache found, fetching fresh rates data from API...")
     response_data = fetch_rates_data()
     
     # Save to CSV cache and memory cache
     if 'error' not in response_data:
-        save_to_cache('rates', response_data)
+        save_to_cache('rates', response_data, data_changed=False)
         set_cached_data('rates', response_data)
     
     return jsonify(response_data)
@@ -782,21 +804,40 @@ def fedwatch_data():
     if cached:
         return jsonify(cached)
     
-    # Check CSV cache (persistent cache, updated every 3 days)
-    if is_cache_valid('fedwatch'):
-        csv_data = load_from_cache('fedwatch')
-        if csv_data:
-            # Also populate memory cache for faster subsequent requests
-            set_cached_data('fedwatch', csv_data)
-            return jsonify(csv_data)
+    # ALWAYS load from cache first for fast response (even if stale)
+    csv_data = load_from_cache('fedwatch')
+    if csv_data:
+        # Store in memory cache for faster subsequent requests
+        set_cached_data('fedwatch', csv_data)
+        
+        # Always update in background after returning cached data
+        def update_in_background():
+            try:
+                print("Background: Fetching fresh fedwatch data from API...")
+                fresh_data = fetch_fedwatch_data()
+                if 'error' not in fresh_data:
+                    # Compare with cached data
+                    data_changed = compare_data(csv_data, fresh_data)
+                    if data_changed:
+                        print("Background: FedWatch data has changed, updating cache...")
+                    save_to_cache('fedwatch', fresh_data, data_changed=data_changed)
+                    set_cached_data('fedwatch', fresh_data)
+            except Exception as e:
+                print(f"Background: Error updating fedwatch data: {e}")
+        
+        # Start background update thread
+        threading.Thread(target=update_in_background, daemon=True).start()
+        
+        # Return cached data immediately (fast!)
+        return jsonify(csv_data)
     
-    # CSV cache is invalid or missing, fetch fresh data
-    print("Fetching fresh fedwatch data from API...")
+    # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
+    print("No cache found, fetching fresh fedwatch data from API...")
     response_data = fetch_fedwatch_data()
     
     # Save to CSV cache and memory cache
     if 'error' not in response_data:
-        save_to_cache('fedwatch', response_data)
+        save_to_cache('fedwatch', response_data, data_changed=False)
         set_cached_data('fedwatch', response_data)
     
     return jsonify(response_data)
@@ -812,7 +853,7 @@ def manual_update_cache():
         print("Manual update: Fetching macro data...")
         data = fetch_macro_data()
         if 'error' not in data:
-            save_to_cache('macro', data)
+            save_to_cache('macro', data, data_changed=True)
             set_cached_data('macro', data)
             results['macro'] = {'status': 'success', 'message': 'Macro data updated'}
         else:
@@ -825,7 +866,7 @@ def manual_update_cache():
         print("Manual update: Fetching rates data...")
         data = fetch_rates_data()
         if 'error' not in data:
-            save_to_cache('rates', data)
+            save_to_cache('rates', data, data_changed=True)
             set_cached_data('rates', data)
             results['rates'] = {'status': 'success', 'message': 'Rates data updated'}
         else:
@@ -838,7 +879,7 @@ def manual_update_cache():
         print("Manual update: Fetching fedwatch data...")
         data = fetch_fedwatch_data()
         if 'error' not in data:
-            save_to_cache('fedwatch', data)
+            save_to_cache('fedwatch', data, data_changed=True)
             set_cached_data('fedwatch', data)
             results['fedwatch'] = {'status': 'success', 'message': 'Fedwatch data updated'}
         else:
@@ -922,13 +963,13 @@ def prewarm_cache():
             print("Macro cache exists but couldn't load, fetching fresh...")
             data = fetch_macro_data()
             if 'error' not in data:
-                save_to_cache('macro', data)
+                save_to_cache('macro', data, data_changed=False)
                 set_cached_data('macro', data)
     else:
         print("Macro cache invalid or missing, fetching fresh data...")
         data = fetch_macro_data()
         if 'error' not in data:
-            save_to_cache('macro', data)
+            save_to_cache('macro', data, data_changed=False)
             set_cached_data('macro', data)
     
     # Check and load rates data
@@ -942,13 +983,13 @@ def prewarm_cache():
             print("Rates cache exists but couldn't load, fetching fresh...")
             data = fetch_rates_data()
             if 'error' not in data:
-                save_to_cache('rates', data)
+                save_to_cache('rates', data, data_changed=False)
                 set_cached_data('rates', data)
     else:
         print("Rates cache invalid or missing, fetching fresh data...")
         data = fetch_rates_data()
         if 'error' not in data:
-            save_to_cache('rates', data)
+            save_to_cache('rates', data, data_changed=False)
             set_cached_data('rates', data)
     
     # Check and load fedwatch data
@@ -962,13 +1003,13 @@ def prewarm_cache():
             print("Fedwatch cache exists but couldn't load, fetching fresh...")
             data = fetch_fedwatch_data()
             if 'error' not in data:
-                save_to_cache('fedwatch', data)
+                save_to_cache('fedwatch', data, data_changed=False)
                 set_cached_data('fedwatch', data)
     else:
         print("Fedwatch cache invalid or missing, fetching fresh data...")
         data = fetch_fedwatch_data()
         if 'error' not in data:
-            save_to_cache('fedwatch', data)
+            save_to_cache('fedwatch', data, data_changed=False)
             set_cached_data('fedwatch', data)
     
     print("Cache pre-warmed successfully")
@@ -990,7 +1031,7 @@ def update_data_worker():
                 print(f"Macro data is {age_msg} (threshold: 3 days), updating...")
                 data = fetch_macro_data()
                 if 'error' not in data:
-                    save_to_cache('macro', data)
+                    save_to_cache('macro', data, data_changed=True)
                     set_cached_data('macro', data)
                     print("Macro data updated successfully")
                     updated_any = True
@@ -1010,7 +1051,7 @@ def update_data_worker():
                 print(f"Rates data is {age_msg} (threshold: 3 days), updating...")
                 data = fetch_rates_data()
                 if 'error' not in data:
-                    save_to_cache('rates', data)
+                    save_to_cache('rates', data, data_changed=True)
                     set_cached_data('rates', data)
                     print("Rates data updated successfully")
                     updated_any = True
@@ -1030,7 +1071,7 @@ def update_data_worker():
                 print(f"Fedwatch data is {age_msg} (threshold: 3 days), updating...")
                 data = fetch_fedwatch_data()
                 if 'error' not in data:
-                    save_to_cache('fedwatch', data)
+                    save_to_cache('fedwatch', data, data_changed=True)
                     set_cached_data('fedwatch', data)
                     print("Fedwatch data updated successfully")
                     updated_any = True

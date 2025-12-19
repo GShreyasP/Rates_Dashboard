@@ -62,7 +62,7 @@ def load_from_cache(data_type):
         print(f"Error loading cache for {data_type}: {e}")
         return None
 
-def save_to_cache(data_type, data):
+def save_to_cache(data_type, data, data_changed=False):
     """Save data to CSV/JSON cache"""
     cache_path = get_cache_path(data_type)
     timestamp_path = get_timestamp_path(data_type)
@@ -76,12 +76,39 @@ def save_to_cache(data_type, data):
             # Save timestamp
             with open(timestamp_path, 'w') as f:
                 f.write(datetime.now().isoformat())
+            
+            # If data changed, create/update a data_changed flag file
+            if data_changed:
+                changed_flag_path = os.path.join(CACHE_DIR, f'{data_type}_changed.txt')
+                with open(changed_flag_path, 'w') as f:
+                    f.write(datetime.now().isoformat())
         
         print(f"Saved {data_type} to cache")
         return True
     except Exception as e:
         print(f"Error saving cache for {data_type}: {e}")
         return False
+
+def clear_data_changed_flag(data_type):
+    """Clear the data_changed flag for a data type"""
+    changed_flag_path = os.path.join(CACHE_DIR, f'{data_type}_changed.txt')
+    try:
+        if os.path.exists(changed_flag_path):
+            os.remove(changed_flag_path)
+    except Exception as e:
+        print(f"Error clearing changed flag for {data_type}: {e}")
+
+def check_data_changed(data_type):
+    """Check if data was changed since last check"""
+    changed_flag_path = os.path.join(CACHE_DIR, f'{data_type}_changed.txt')
+    if os.path.exists(changed_flag_path):
+        try:
+            with open(changed_flag_path, 'r') as f:
+                timestamp_str = f.read().strip()
+                return timestamp_str
+        except:
+            return None
+    return None
 
 def get_cache_age(data_type):
     """Get the age of cached data in days"""

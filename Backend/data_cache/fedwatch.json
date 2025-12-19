@@ -1,0 +1,12 @@
+{
+  "next_meeting_date": "December 10, 2025",
+  "target_rate_probabilities": {
+    "350-375": 89.2,
+    "375-400": 10.8
+  },
+  "most_likely_change": "350-375",
+  "most_likely_probability": 89.2,
+  "current_target_rate": "375-400",
+  "current_fed_rate": 3.75,
+  "source": "FedWatch Data"
+}

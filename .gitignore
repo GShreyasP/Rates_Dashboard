@@ -45,7 +45,12 @@ Thumbs.db
 .vercel
 .env*.local
 
-# Cache data
-Backend/data_cache/
-*.json
-*_timestamp.txt
+# Cache data - but allow initial cache files to be committed
+Backend/data_cache/*_changed.txt
+# Allow initial cache JSON and timestamp files to be tracked
+!Backend/data_cache/macro.json
+!Backend/data_cache/rates.json
+!Backend/data_cache/fedwatch.json
+!Backend/data_cache/macro_timestamp.txt
+!Backend/data_cache/rates_timestamp.txt
+!Backend/data_cache/fedwatch_timestamp.txt
