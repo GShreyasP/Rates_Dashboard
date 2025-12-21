@@ -281,10 +281,9 @@ def fetch_macro_data():
                 prev = float(df[series_id].iloc[-2]) if len(df) > 1 else latest
                 change = ((latest - prev) / prev) * 100 if prev != 0 else 0
                 
-                # Calculate Year-over-Year (YoY) change for CPI, PCE Headline, PCE Core, PPI, Non-Farm Payrolls, JOLTS
+                # Calculate Year-over-Year (YoY) change for CPI, PCE, PPI, Non-Farm Payrolls, JOLTS
                 yoy_change = None
                 if name in ["CPI", "PCE Headline", "PCE Core", "PPI", "Non-Farm Payrolls", "JOLTS"]:
-                    # Always calculate YoY for these indicators
                     try:
                         # Find value from 1 year ago (approximately 365 days)
                         latest_date_obj = pd.to_datetime(latest_date)
@@ -420,16 +419,22 @@ def macro_data():
             except Exception as e:
                 print(f"Background: Error updating macro data: {e}")
         
-        # Start background update thread (non-blocking)
+        # Start background update thread
         threading.Thread(target=update_in_background, daemon=True).start()
         
         # Return cached data immediately (fast!)
         return jsonify(csv_data)
     
-    # No cache exists - this shouldn't happen, but if it does, return error quickly
-    # rather than blocking for 2 minutes fetching data
-    print("WARNING: No macro cache found! Cache files should be committed to repo.")
-    return jsonify({"error": "Data temporarily unavailable. Please try again in a moment."}), 503
+    # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
+    print("No cache found, fetching fresh macro data from API...")
+    response_data = fetch_macro_data()
+    
+    # Save to CSV cache and memory cache
+    if 'error' not in response_data:
+        save_to_cache('macro', response_data, data_changed=False)
+        set_cached_data('macro', response_data)
+    
+    return jsonify(response_data)
 
 def fetch_rates_data():
     """Fetch rates data (used for caching)"""
@@ -504,15 +509,22 @@ def rates_analysis():
             except Exception as e:
                 print(f"Background: Error updating rates data: {e}")
         
-        # Start background update thread (non-blocking)
+        # Start background update thread
         threading.Thread(target=update_in_background, daemon=True).start()
         
         # Return cached data immediately (fast!)
         return jsonify(csv_data)
     
-    # No cache exists - this shouldn't happen, but if it does, return error quickly
-    print("WARNING: No rates cache found! Cache files should be committed to repo.")
-    return jsonify({"error": "Data temporarily unavailable. Please try again in a moment."}), 503
+    # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
+    print("No cache found, fetching fresh rates data from API...")
+    response_data = fetch_rates_data()
+    
+    # Save to CSV cache and memory cache
+    if 'error' not in response_data:
+        save_to_cache('rates', response_data, data_changed=False)
+        set_cached_data('rates', response_data)
+    
+    return jsonify(response_data)
 
 def fetch_fedwatch_data():
     """Fetch FedWatch interest rate cut odds - hardcoded data"""
@@ -787,19 +799,46 @@ def fetch_fedwatch_fallback():
 
 @app.route('/api/fedwatch')
 def fedwatch_data():
-    # For FedWatch, always fetch fresh data (it's just hardcoded, very fast)
-    # This ensures we always have the latest data
-    response_data = fetch_fedwatch_data()
-    
     # Check memory cache first (for fast repeated requests)
     cached = get_cached_data('fedwatch')
-    if cached and not compare_data(cached, response_data):
-        # If memory cache matches, return it
+    if cached:
         return jsonify(cached)
     
-    # Update cache with fresh data
-    save_to_cache('fedwatch', response_data, data_changed=False)
-    set_cached_data('fedwatch', response_data)
+    # ALWAYS load from cache first for fast response (even if stale)
+    csv_data = load_from_cache('fedwatch')
+    if csv_data:
+        # Store in memory cache for faster subsequent requests
+        set_cached_data('fedwatch', csv_data)
+        
+        # Always update in background after returning cached data
+        def update_in_background():
+            try:
+                print("Background: Fetching fresh fedwatch data from API...")
+                fresh_data = fetch_fedwatch_data()
+                if 'error' not in fresh_data:
+                    # Compare with cached data
+                    data_changed = compare_data(csv_data, fresh_data)
+                    if data_changed:
+                        print("Background: FedWatch data has changed, updating cache...")
+                    save_to_cache('fedwatch', fresh_data, data_changed=data_changed)
+                    set_cached_data('fedwatch', fresh_data)
+            except Exception as e:
+                print(f"Background: Error updating fedwatch data: {e}")
+        
+        # Start background update thread
+        threading.Thread(target=update_in_background, daemon=True).start()
+        
+        # Return cached data immediately (fast!)
+        return jsonify(csv_data)
+    
+    # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
+    print("No cache found, fetching fresh fedwatch data from API...")
+    response_data = fetch_fedwatch_data()
+    
+    # Save to CSV cache and memory cache
+    if 'error' not in response_data:
+        save_to_cache('fedwatch', response_data, data_changed=False)
+        set_cached_data('fedwatch', response_data)
     
     return jsonify(response_data)
 
