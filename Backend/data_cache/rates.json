@@ -1,0 +1,67 @@
+{
+  "yields": {
+    "1M": 3.81,
+    "3M": 3.73,
+    "6M": 3.7,
+    "1Y": 3.63,
+    "2Y": 3.61,
+    "5Y": 3.756999969482422,
+    "7Y": 3.96,
+    "10Y": 4.164000034332275,
+    "30Y": 4.796999931335449
+  },
+  "yield_curve": [
+    {
+      "maturity": "1M",
+      "years": 0.08333333333333333,
+      "yield": 3.81
+    },
+    {
+      "maturity": "3M",
+      "years": 0.25,
+      "yield": 3.73
+    },
+    {
+      "maturity": "6M",
+      "years": 0.5,
+      "yield": 3.7
+    },
+    {
+      "maturity": "1Y",
+      "years": 1.0,
+      "yield": 3.63
+    },
+    {
+      "maturity": "2Y",
+      "years": 2.0,
+      "yield": 3.61
+    },
+    {
+      "maturity": "5Y",
+      "years": 5.0,
+      "yield": 3.756999969482422
+    },
+    {
+      "maturity": "7Y",
+      "years": 7.0,
+      "yield": 3.96
+    },
+    {
+      "maturity": "10Y",
+      "years": 10.0,
+      "yield": 4.164000034332275
+    },
+    {
+      "maturity": "30Y",
+      "years": 30.0,
+      "yield": 4.796999931335449
+    }
+  ],
+  "analysis": {
+    "spread_2s10s": 0.55,
+    "spread_5s30s": 1.04,
+    "curve_shape": "Normal",
+    "trade_pitch": "Bear Flattener (Rates rising)",
+    "dv01_10m_position": "$8,000.00"
+  }
+}

@@ -1,0 +1,2667 @@
+{
+  "CPI": {
+    "history": [
+      {
+        "date": "2023-01-01",
+        "value": 300.456,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-02-01",
+        "value": 301.476,
+        "pct_change": 0.34
+      },
+      {
+        "date": "2023-03-01",
+        "value": 301.643,
+        "pct_change": 0.06
+      },
+      {
+        "date": "2023-04-01",
+        "value": 302.858,
+        "pct_change": 0.4
+      },
+      {
+        "date": "2023-05-01",
+        "value": 303.316,
+        "pct_change": 0.15
+      },
+      {
+        "date": "2023-06-01",
+        "value": 304.099,
+        "pct_change": 0.26
+      },
+      {
+        "date": "2023-07-01",
+        "value": 304.615,
+        "pct_change": 0.17
+      },
+      {
+        "date": "2023-08-01",
+        "value": 306.138,
+        "pct_change": 0.5
+      },
+      {
+        "date": "2023-09-01",
+        "value": 307.374,
+        "pct_change": 0.4
+      },
+      {
+        "date": "2023-10-01",
+        "value": 307.653,
+        "pct_change": 0.09
+      },
+      {
+        "date": "2023-11-01",
+        "value": 308.087,
+        "pct_change": 0.14
+      },
+      {
+        "date": "2023-12-01",
+        "value": 308.735,
+        "pct_change": 0.21
+      },
+      {
+        "date": "2024-01-01",
+        "value": 309.794,
+        "pct_change": 0.34
+      },
+      {
+        "date": "2024-02-01",
+        "value": 311.022,
+        "pct_change": 0.4
+      },
+      {
+        "date": "2024-03-01",
+        "value": 312.107,
+        "pct_change": 0.35
+      },
+      {
+        "date": "2024-04-01",
+        "value": 313.016,
+        "pct_change": 0.29
+      },
+      {
+        "date": "2024-05-01",
+        "value": 313.14,
+        "pct_change": 0.04
+      },
+      {
+        "date": "2024-06-01",
+        "value": 313.131,
+        "pct_change": -0.0
+      },
+      {
+        "date": "2024-07-01",
+        "value": 313.566,
+        "pct_change": 0.14
+      },
+      {
+        "date": "2024-08-01",
+        "value": 314.131,
+        "pct_change": 0.18
+      },
+      {
+        "date": "2024-09-01",
+        "value": 314.851,
+        "pct_change": 0.23
+      },
+      {
+        "date": "2024-10-01",
+        "value": 315.564,
+        "pct_change": 0.23
+      },
+      {
+        "date": "2024-11-01",
+        "value": 316.449,
+        "pct_change": 0.28
+      },
+      {
+        "date": "2024-12-01",
+        "value": 317.603,
+        "pct_change": 0.36
+      },
+      {
+        "date": "2025-01-01",
+        "value": 319.086,
+        "pct_change": 0.47
+      },
+      {
+        "date": "2025-02-01",
+        "value": 319.775,
+        "pct_change": 0.22
+      },
+      {
+        "date": "2025-03-01",
+        "value": 319.615,
+        "pct_change": -0.05
+      },
+      {
+        "date": "2025-04-01",
+        "value": 320.321,
+        "pct_change": 0.22
+      },
+      {
+        "date": "2025-05-01",
+        "value": 320.58,
+        "pct_change": 0.08
+      },
+      {
+        "date": "2025-06-01",
+        "value": 321.5,
+        "pct_change": 0.29
+      },
+      {
+        "date": "2025-07-01",
+        "value": 322.132,
+        "pct_change": 0.2
+      },
+      {
+        "date": "2025-08-01",
+        "value": 323.364,
+        "pct_change": 0.38
+      },
+      {
+        "date": "2025-09-01",
+        "value": 324.368,
+        "pct_change": 0.31
+      }
+    ],
+    "current": 324.368,
+    "latest_date": "2025-09-01",
+    "change": 0.31,
+    "yoy_change": 3.02,
+    "quarterly_change_history": [
+      {
+        "date": "2023-01-01",
+        "quarterly_change": 0
+      },
+      {
+        "date": "2023-02-01",
+        "quarterly_change": 0
+      },
+      {
+        "date": "2023-03-01",
+        "quarterly_change": 0
+      },
+      {
+        "date": "2023-04-01",
+        "quarterly_change": 0.8
+      },
+      {
+        "date": "2023-05-01",
+        "quarterly_change": 0.61
+      },
+      {
+        "date": "2023-06-01",
+        "quarterly_change": 0.81
+      },
+      {
+        "date": "2023-07-01",
+        "quarterly_change": 0.58
+      },
+      {
+        "date": "2023-08-01",
+        "quarterly_change": 0.93
+      },
+      {
+        "date": "2023-09-01",
+        "quarterly_change": 1.08
+      },
+      {
+        "date": "2023-10-01",
+        "quarterly_change": 1.0
+      },
+      {
+        "date": "2023-11-01",
+        "quarterly_change": 0.64
+      },
+      {
+        "date": "2023-12-01",
+        "quarterly_change": 0.44
+      },
+      {
+        "date": "2024-01-01",
+        "quarterly_change": 0.7
+      },
+      {
+        "date": "2024-02-01",
+        "quarterly_change": 0.95
+      },
+      {
+        "date": "2024-03-01",
+        "quarterly_change": 1.09
+      },
+      {
+        "date": "2024-04-01",
+        "quarterly_change": 1.04
+      },
+      {
+        "date": "2024-05-01",
+        "quarterly_change": 0.68
+      },
+      {
+        "date": "2024-06-01",
+        "quarterly_change": 0.33
+      },
+      {
+        "date": "2024-07-01",
+        "quarterly_change": 0.18
+      },
+      {
+        "date": "2024-08-01",
+        "quarterly_change": 0.32
+      },
+      {
+        "date": "2024-09-01",
+        "quarterly_change": 0.55
+      },
+      {
+        "date": "2024-10-01",
+        "quarterly_change": 0.64
+      },
+      {
+        "date": "2024-11-01",
+        "quarterly_change": 0.74
+      },
+      {
+        "date": "2024-12-01",
+        "quarterly_change": 0.87
+      },
+      {
+        "date": "2025-01-01",
+        "quarterly_change": 1.12
+      },
+      {
+        "date": "2025-02-01",
+        "quarterly_change": 1.05
+      },
+      {
+        "date": "2025-03-01",
+        "quarterly_change": 0.63
+      },
+      {
+        "date": "2025-04-01",
+        "quarterly_change": 0.39
+      },
+      {
+        "date": "2025-05-01",
+        "quarterly_change": 0.25
+      },
+      {
+        "date": "2025-06-01",
+        "quarterly_change": 0.59
+      },
+      {
+        "date": "2025-07-01",
+        "quarterly_change": 0.57
+      },
+      {
+        "date": "2025-08-01",
+        "quarterly_change": 0.87
+      },
+      {
+        "date": "2025-09-01",
+        "quarterly_change": 0.89
+      }
+    ]
+  },
+  "Unemployment Rate": {
+    "history": [
+      {
+        "date": "2023-01-01",
+        "value": 3.5,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-02-01",
+        "value": 3.6,
+        "pct_change": 2.86
+      },
+      {
+        "date": "2023-03-01",
+        "value": 3.5,
+        "pct_change": -2.78
+      },
+      {
+        "date": "2023-04-01",
+        "value": 3.4,
+        "pct_change": -2.86
+      },
+      {
+        "date": "2023-05-01",
+        "value": 3.6,
+        "pct_change": 5.88
+      },
+      {
+        "date": "2023-06-01",
+        "value": 3.6,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-07-01",
+        "value": 3.5,
+        "pct_change": -2.78
+      },
+      {
+        "date": "2023-08-01",
+        "value": 3.7,
+        "pct_change": 5.71
+      },
+      {
+        "date": "2023-09-01",
+        "value": 3.8,
+        "pct_change": 2.7
+      },
+      {
+        "date": "2023-10-01",
+        "value": 3.9,
+        "pct_change": 2.63
+      },
+      {
+        "date": "2023-11-01",
+        "value": 3.7,
+        "pct_change": -5.13
+      },
+      {
+        "date": "2023-12-01",
+        "value": 3.8,
+        "pct_change": 2.7
+      },
+      {
+        "date": "2024-01-01",
+        "value": 3.7,
+        "pct_change": -2.63
+      },
+      {
+        "date": "2024-02-01",
+        "value": 3.9,
+        "pct_change": 5.41
+      },
+      {
+        "date": "2024-03-01",
+        "value": 3.9,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2024-04-01",
+        "value": 3.9,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2024-05-01",
+        "value": 4.0,
+        "pct_change": 2.56
+      },
+      {
+        "date": "2024-06-01",
+        "value": 4.1,
+        "pct_change": 2.5
+      },
+      {
+        "date": "2024-07-01",
+        "value": 4.2,
+        "pct_change": 2.44
+      },
+      {
+        "date": "2024-08-01",
+        "value": 4.2,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2024-09-01",
+        "value": 4.1,
+        "pct_change": -2.38
+      },
+      {
+        "date": "2024-10-01",
+        "value": 4.1,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2024-11-01",
+        "value": 4.2,
+        "pct_change": 2.44
+      },
+      {
+        "date": "2024-12-01",
+        "value": 4.1,
+        "pct_change": -2.38
+      },
+      {
+        "date": "2025-01-01",
+        "value": 4.0,
+        "pct_change": -2.44
+      },
+      {
+        "date": "2025-02-01",
+        "value": 4.1,
+        "pct_change": 2.5
+      },
+      {
+        "date": "2025-03-01",
+        "value": 4.2,
+        "pct_change": 2.44
+      },
+      {
+        "date": "2025-04-01",
+        "value": 4.2,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2025-05-01",
+        "value": 4.2,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2025-06-01",
+        "value": 4.1,
+        "pct_change": -2.38
+      },
+      {
+        "date": "2025-07-01",
+        "value": 4.2,
+        "pct_change": 2.44
+      },
+      {
+        "date": "2025-08-01",
+        "value": 4.3,
+        "pct_change": 2.38
+      },
+      {
+        "date": "2025-09-01",
+        "value": 4.4,
+        "pct_change": 2.33
+      }
+    ],
+    "current": 4.4,
+    "latest_date": "2025-09-01",
+    "change": 2.33
+  },
+  "Consumer Sentiment": {
+    "history": [
+      {
+        "date": "2023-01-01",
+        "value": 64.9,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-02-01",
+        "value": 66.9,
+        "pct_change": 3.08
+      },
+      {
+        "date": "2023-03-01",
+        "value": 62.0,
+        "pct_change": -7.32
+      },
+      {
+        "date": "2023-04-01",
+        "value": 63.7,
+        "pct_change": 2.74
+      },
+      {
+        "date": "2023-05-01",
+        "value": 59.0,
+        "pct_change": -7.38
+      },
+      {
+        "date": "2023-06-01",
+        "value": 64.2,
+        "pct_change": 8.81
+      },
+      {
+        "date": "2023-07-01",
+        "value": 71.5,
+        "pct_change": 11.37
+      },
+      {
+        "date": "2023-08-01",
+        "value": 69.4,
+        "pct_change": -2.94
+      },
+      {
+        "date": "2023-09-01",
+        "value": 67.8,
+        "pct_change": -2.31
+      },
+      {
+        "date": "2023-10-01",
+        "value": 63.8,
+        "pct_change": -5.9
+      },
+      {
+        "date": "2023-11-01",
+        "value": 61.3,
+        "pct_change": -3.92
+      },
+      {
+        "date": "2023-12-01",
+        "value": 69.7,
+        "pct_change": 13.7
+      },
+      {
+        "date": "2024-01-01",
+        "value": 79.0,
+        "pct_change": 13.34
+      },
+      {
+        "date": "2024-02-01",
+        "value": 76.9,
+        "pct_change": -2.66
+      },
+      {
+        "date": "2024-03-01",
+        "value": 79.4,
+        "pct_change": 3.25
+      },
+      {
+        "date": "2024-04-01",
+        "value": 77.2,
+        "pct_change": -2.77
+      },
+      {
+        "date": "2024-05-01",
+        "value": 69.1,
+        "pct_change": -10.49
+      },
+      {
+        "date": "2024-06-01",
+        "value": 68.2,
+        "pct_change": -1.3
+      },
+      {
+        "date": "2024-07-01",
+        "value": 66.4,
+        "pct_change": -2.64
+      },
+      {
+        "date": "2024-08-01",
+        "value": 67.9,
+        "pct_change": 2.26
+      },
+      {
+        "date": "2024-09-01",
+        "value": 70.1,
+        "pct_change": 3.24
+      },
+      {
+        "date": "2024-10-01",
+        "value": 70.5,
+        "pct_change": 0.57
+      },
+      {
+        "date": "2024-11-01",
+        "value": 71.8,
+        "pct_change": 1.84
+      },
+      {
+        "date": "2024-12-01",
+        "value": 74.0,
+        "pct_change": 3.06
+      },
+      {
+        "date": "2025-01-01",
+        "value": 71.7,
+        "pct_change": -3.11
+      },
+      {
+        "date": "2025-02-01",
+        "value": 64.7,
+        "pct_change": -9.76
+      },
+      {
+        "date": "2025-03-01",
+        "value": 57.0,
+        "pct_change": -11.9
+      },
+      {
+        "date": "2025-04-01",
+        "value": 52.2,
+        "pct_change": -8.42
+      },
+      {
+        "date": "2025-05-01",
+        "value": 52.2,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2025-06-01",
+        "value": 60.7,
+        "pct_change": 16.28
+      },
+      {
+        "date": "2025-07-01",
+        "value": 61.7,
+        "pct_change": 1.65
+      },
+      {
+        "date": "2025-08-01",
+        "value": 58.2,
+        "pct_change": -5.67
+      },
+      {
+        "date": "2025-09-01",
+        "value": 55.1,
+        "pct_change": -5.33
+      },
+      {
+        "date": "2025-10-01",
+        "value": 53.6,
+        "pct_change": -2.72
+      }
+    ],
+    "current": 53.6,
+    "latest_date": "2025-10-01",
+    "change": -2.72
+  },
+  "JOLTS": {
+    "history": [
+      {
+        "date": "2023-01-01",
+        "value": 10393.0,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-02-01",
+        "value": 9846.0,
+        "pct_change": -5.26
+      },
+      {
+        "date": "2023-03-01",
+        "value": 9572.0,
+        "pct_change": -2.78
+      },
+      {
+        "date": "2023-04-01",
+        "value": 9992.0,
+        "pct_change": 4.39
+      },
+      {
+        "date": "2023-05-01",
+        "value": 9310.0,
+        "pct_change": -6.83
+      },
+      {
+        "date": "2023-06-01",
+        "value": 9191.0,
+        "pct_change": -1.28
+      },
+      {
+        "date": "2023-07-01",
+        "value": 8606.0,
+        "pct_change": -6.36
+      },
+      {
+        "date": "2023-08-01",
+        "value": 9287.0,
+        "pct_change": 7.91
+      },
+      {
+        "date": "2023-09-01",
+        "value": 9279.0,
+        "pct_change": -0.09
+      },
+      {
+        "date": "2023-10-01",
+        "value": 8550.0,
+        "pct_change": -7.86
+      },
+      {
+        "date": "2023-11-01",
+        "value": 8663.0,
+        "pct_change": 1.32
+      },
+      {
+        "date": "2023-12-01",
+        "value": 8585.0,
+        "pct_change": -0.9
+      },
+      {
+        "date": "2024-01-01",
+        "value": 8468.0,
+        "pct_change": -1.36
+      },
+      {
+        "date": "2024-02-01",
+        "value": 8445.0,
+        "pct_change": -0.27
+      },
+      {
+        "date": "2024-03-01",
+        "value": 8093.0,
+        "pct_change": -4.17
+      },
+      {
+        "date": "2024-04-01",
+        "value": 7619.0,
+        "pct_change": -5.86
+      },
+      {
+        "date": "2024-05-01",
+        "value": 7901.0,
+        "pct_change": 3.7
+      },
+      {
+        "date": "2024-06-01",
+        "value": 7412.0,
+        "pct_change": -6.19
+      },
+      {
+        "date": "2024-07-01",
+        "value": 7504.0,
+        "pct_change": 1.24
+      },
+      {
+        "date": "2024-08-01",
+        "value": 7649.0,
+        "pct_change": 1.93
+      },
+      {
+        "date": "2024-09-01",
+        "value": 7103.0,
+        "pct_change": -7.14
+      },
+      {
+        "date": "2024-10-01",
+        "value": 7615.0,
+        "pct_change": 7.21
+      },
+      {
+        "date": "2024-11-01",
+        "value": 8031.0,
+        "pct_change": 5.46
+      },
+      {
+        "date": "2024-12-01",
+        "value": 7508.0,
+        "pct_change": -6.51
+      },
+      {
+        "date": "2025-01-01",
+        "value": 7762.0,
+        "pct_change": 3.38
+      },
+      {
+        "date": "2025-02-01",
+        "value": 7480.0,
+        "pct_change": -3.63
+      },
+      {
+        "date": "2025-03-01",
+        "value": 7200.0,
+        "pct_change": -3.74
+      },
+      {
+        "date": "2025-04-01",
+        "value": 7395.0,
+        "pct_change": 2.71
+      },
+      {
+        "date": "2025-05-01",
+        "value": 7712.0,
+        "pct_change": 4.29
+      },
+      {
+        "date": "2025-06-01",
+        "value": 7357.0,
+        "pct_change": -4.6
+      },
+      {
+        "date": "2025-07-01",
+        "value": 7208.0,
+        "pct_change": -2.03
+      },
+      {
+        "date": "2025-08-01",
+        "value": 7227.0,
+        "pct_change": 0.26
+      },
+      {
+        "date": "2025-09-01",
+        "value": 7658.0,
+        "pct_change": 5.96
+      },
+      {
+        "date": "2025-10-01",
+        "value": 7670.0,
+        "pct_change": 0.16
+      }
+    ],
+    "current": 7670.0,
+    "latest_date": "2025-10-01",
+    "change": 0.16,
+    "yoy_change": 0.72
+  },
+  "PCE Headline": {
+    "history": [
+      {
+        "date": "2023-01-01",
+        "value": 119.018,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-02-01",
+        "value": 119.369,
+        "pct_change": 0.29
+      },
+      {
+        "date": "2023-03-01",
+        "value": 119.538,
+        "pct_change": 0.14
+      },
+      {
+        "date": "2023-04-01",
+        "value": 119.951,
+        "pct_change": 0.35
+      },
+      {
+        "date": "2023-05-01",
+        "value": 120.15,
+        "pct_change": 0.17
+      },
+      {
+        "date": "2023-06-01",
+        "value": 120.469,
+        "pct_change": 0.27
+      },
+      {
+        "date": "2023-07-01",
+        "value": 120.607,
+        "pct_change": 0.11
+      },
+      {
+        "date": "2023-08-01",
+        "value": 120.97,
+        "pct_change": 0.3
+      },
+      {
+        "date": "2023-09-01",
+        "value": 121.419,
+        "pct_change": 0.37
+      },
+      {
+        "date": "2023-10-01",
+        "value": 121.484,
+        "pct_change": 0.05
+      },
+      {
+        "date": "2023-11-01",
+        "value": 121.493,
+        "pct_change": 0.01
+      },
+      {
+        "date": "2023-12-01",
+        "value": 121.66,
+        "pct_change": 0.14
+      },
+      {
+        "date": "2024-01-01",
+        "value": 122.23,
+        "pct_change": 0.47
+      },
+      {
+        "date": "2024-02-01",
+        "value": 122.598,
+        "pct_change": 0.3
+      },
+      {
+        "date": "2024-03-01",
+        "value": 123.038,
+        "pct_change": 0.36
+      },
+      {
+        "date": "2024-04-01",
+        "value": 123.341,
+        "pct_change": 0.25
+      },
+      {
+        "date": "2024-05-01",
+        "value": 123.348,
+        "pct_change": 0.01
+      },
+      {
+        "date": "2024-06-01",
+        "value": 123.539,
+        "pct_change": 0.15
+      },
+      {
+        "date": "2024-07-01",
+        "value": 123.736,
+        "pct_change": 0.16
+      },
+      {
+        "date": "2024-08-01",
+        "value": 123.889,
+        "pct_change": 0.12
+      },
+      {
+        "date": "2024-09-01",
+        "value": 124.164,
+        "pct_change": 0.22
+      },
+      {
+        "date": "2024-10-01",
+        "value": 124.494,
+        "pct_change": 0.27
+      },
+      {
+        "date": "2024-11-01",
+        "value": 124.637,
+        "pct_change": 0.11
+      },
+      {
+        "date": "2024-12-01",
+        "value": 124.979,
+        "pct_change": 0.27
+      },
+      {
+        "date": "2025-01-01",
+        "value": 125.417,
+        "pct_change": 0.35
+      },
+      {
+        "date": "2025-02-01",
+        "value": 125.921,
+        "pct_change": 0.4
+      },
+      {
+        "date": "2025-03-01",
+        "value": 125.941,
+        "pct_change": 0.02
+      },
+      {
+        "date": "2025-04-01",
+        "value": 126.15,
+        "pct_change": 0.17
+      },
+      {
+        "date": "2025-05-01",
+        "value": 126.38,
+        "pct_change": 0.18
+      },
+      {
+        "date": "2025-06-01",
+        "value": 126.743,
+        "pct_change": 0.29
+      },
+      {
+        "date": "2025-07-01",
+        "value": 126.955,
+        "pct_change": 0.17
+      },
+      {
+        "date": "2025-08-01",
+        "value": 127.283,
+        "pct_change": 0.26
+      },
+      {
+        "date": "2025-09-01",
+        "value": 127.625,
+        "pct_change": 0.27
+      }
+    ],
+    "current": 127.625,
+    "latest_date": "2025-09-01",
+    "change": 0.27,
+    "yoy_change": 2.79,
+    "quarterly_change_history": [
+      {
+        "date": "2023-01-01",
+        "quarterly_change": 0
+      },
+      {
+        "date": "2023-02-01",
+        "quarterly_change": 0
+      },
+      {
+        "date": "2023-03-01",
+        "quarterly_change": 0
+      },
+      {
+        "date": "2023-04-01",
+        "quarterly_change": 0.78
+      },
+      {
+        "date": "2023-05-01",
+        "quarterly_change": 0.65
+      },
+      {
+        "date": "2023-06-01",
+        "quarterly_change": 0.78
+      },
+      {
+        "date": "2023-07-01",
+        "quarterly_change": 0.55
+      },
+      {
+        "date": "2023-08-01",
+        "quarterly_change": 0.68
+      },
+      {
+        "date": "2023-09-01",
+        "quarterly_change": 0.79
+      },
+      {
+        "date": "2023-10-01",
+        "quarterly_change": 0.73
+      },
+      {
+        "date": "2023-11-01",
+        "quarterly_change": 0.43
+      },
+      {
+        "date": "2023-12-01",
+        "quarterly_change": 0.2
+      },
+      {
+        "date": "2024-01-01",
+        "quarterly_change": 0.61
+      },
+      {
+        "date": "2024-02-01",
+        "quarterly_change": 0.91
+      },
+      {
+        "date": "2024-03-01",
+        "quarterly_change": 1.13
+      },
+      {
+        "date": "2024-04-01",
+        "quarterly_change": 0.91
+      },
+      {
+        "date": "2024-05-01",
+        "quarterly_change": 0.61
+      },
+      {
+        "date": "2024-06-01",
+        "quarterly_change": 0.41
+      },
+      {
+        "date": "2024-07-01",
+        "quarterly_change": 0.32
+      },
+      {
+        "date": "2024-08-01",
+        "quarterly_change": 0.44
+      },
+      {
+        "date": "2024-09-01",
+        "quarterly_change": 0.51
+      },
+      {
+        "date": "2024-10-01",
+        "quarterly_change": 0.61
+      },
+      {
+        "date": "2024-11-01",
+        "quarterly_change": 0.6
+      },
+      {
+        "date": "2024-12-01",
+        "quarterly_change": 0.66
+      },
+      {
+        "date": "2025-01-01",
+        "quarterly_change": 0.74
+      },
+      {
+        "date": "2025-02-01",
+        "quarterly_change": 1.03
+      },
+      {
+        "date": "2025-03-01",
+        "quarterly_change": 0.77
+      },
+      {
+        "date": "2025-04-01",
+        "quarterly_change": 0.58
+      },
+      {
+        "date": "2025-05-01",
+        "quarterly_change": 0.36
+      },
+      {
+        "date": "2025-06-01",
+        "quarterly_change": 0.64
+      },
+      {
+        "date": "2025-07-01",
+        "quarterly_change": 0.64
+      },
+      {
+        "date": "2025-08-01",
+        "quarterly_change": 0.71
+      },
+      {
+        "date": "2025-09-01",
+        "quarterly_change": 0.7
+      }
+    ]
+  },
+  "PCE Core": {
+    "history": [
+      {
+        "date": "2023-01-01",
+        "value": 119.308,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-04-01",
+        "value": 120.19,
+        "pct_change": 0.74
+      },
+      {
+        "date": "2023-07-01",
+        "value": 120.999,
+        "pct_change": 0.67
+      },
+      {
+        "date": "2023-10-01",
+        "value": 121.546,
+        "pct_change": 0.45
+      },
+      {
+        "date": "2024-01-01",
+        "value": 122.622,
+        "pct_change": 0.89
+      },
+      {
+        "date": "2024-04-01",
+        "value": 123.409,
+        "pct_change": 0.64
+      },
+      {
+        "date": "2024-07-01",
+        "value": 123.93,
+        "pct_change": 0.42
+      },
+      {
+        "date": "2024-10-01",
+        "value": 124.703,
+        "pct_change": 0.62
+      },
+      {
+        "date": "2025-01-01",
+        "value": 125.759,
+        "pct_change": 0.85
+      },
+      {
+        "date": "2025-04-01",
+        "value": 126.424,
+        "pct_change": 0.53
+      }
+    ],
+    "current": 126.424,
+    "latest_date": "2025-04-01",
+    "change": 0.53,
+    "yoy_change": 2.44,
+    "quarterly_change_history": [
+      {
+        "date": "2023-01-01",
+        "quarterly_change": 0
+      },
+      {
+        "date": "2023-04-01",
+        "quarterly_change": 0.74
+      },
+      {
+        "date": "2023-07-01",
+        "quarterly_change": 0.67
+      },
+      {
+        "date": "2023-10-01",
+        "quarterly_change": 0.45
+      },
+      {
+        "date": "2024-01-01",
+        "quarterly_change": 0.89
+      },
+      {
+        "date": "2024-04-01",
+        "quarterly_change": 0.64
+      },
+      {
+        "date": "2024-07-01",
+        "quarterly_change": 0.42
+      },
+      {
+        "date": "2024-10-01",
+        "quarterly_change": 0.62
+      },
+      {
+        "date": "2025-01-01",
+        "quarterly_change": 0.85
+      },
+      {
+        "date": "2025-04-01",
+        "quarterly_change": 0.53
+      }
+    ]
+  },
+  "PPI": {
+    "history": [
+      {
+        "date": "2023-01-01",
+        "value": 260.227,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-02-01",
+        "value": 258.669,
+        "pct_change": -0.6
+      },
+      {
+        "date": "2023-03-01",
+        "value": 257.062,
+        "pct_change": -0.62
+      },
+      {
+        "date": "2023-04-01",
+        "value": 256.908,
+        "pct_change": -0.06
+      },
+      {
+        "date": "2023-05-01",
+        "value": 253.67,
+        "pct_change": -1.26
+      },
+      {
+        "date": "2023-06-01",
+        "value": 253.86,
+        "pct_change": 0.07
+      },
+      {
+        "date": "2023-07-01",
+        "value": 253.835,
+        "pct_change": -0.01
+      },
+      {
+        "date": "2023-08-01",
+        "value": 257.68,
+        "pct_change": 1.51
+      },
+      {
+        "date": "2023-09-01",
+        "value": 258.934,
+        "pct_change": 0.49
+      },
+      {
+        "date": "2023-10-01",
+        "value": 255.192,
+        "pct_change": -1.45
+      },
+      {
+        "date": "2023-11-01",
+        "value": 252.856,
+        "pct_change": -0.92
+      },
+      {
+        "date": "2023-12-01",
+        "value": 249.866,
+        "pct_change": -1.18
+      },
+      {
+        "date": "2024-01-01",
+        "value": 251.306,
+        "pct_change": 0.58
+      },
+      {
+        "date": "2024-02-01",
+        "value": 254.926,
+        "pct_change": 1.44
+      },
+      {
+        "date": "2024-03-01",
+        "value": 255.095,
+        "pct_change": 0.07
+      },
+      {
+        "date": "2024-04-01",
+        "value": 256.978,
+        "pct_change": 0.74
+      },
+      {
+        "date": "2024-05-01",
+        "value": 255.313,
+        "pct_change": -0.65
+      },
+      {
+        "date": "2024-06-01",
+        "value": 255.914,
+        "pct_change": 0.24
+      },
+      {
+        "date": "2024-07-01",
+        "value": 257.321,
+        "pct_change": 0.55
+      },
+      {
+        "date": "2024-08-01",
+        "value": 255.463,
+        "pct_change": -0.72
+      },
+      {
+        "date": "2024-09-01",
+        "value": 252.682,
+        "pct_change": -1.09
+      },
+      {
+        "date": "2024-10-01",
+        "value": 253.081,
+        "pct_change": 0.16
+      },
+      {
+        "date": "2024-11-01",
+        "value": 253.211,
+        "pct_change": 0.05
+      },
+      {
+        "date": "2024-12-01",
+        "value": 253.423,
+        "pct_change": 0.08
+      },
+      {
+        "date": "2025-01-01",
+        "value": 257.36,
+        "pct_change": 1.55
+      },
+      {
+        "date": "2025-02-01",
+        "value": 259.498,
+        "pct_change": 0.83
+      },
+      {
+        "date": "2025-03-01",
+        "value": 258.525,
+        "pct_change": -0.37
+      },
+      {
+        "date": "2025-04-01",
+        "value": 258.392,
+        "pct_change": -0.05
+      },
+      {
+        "date": "2025-05-01",
+        "value": 258.678,
+        "pct_change": 0.11
+      },
+      {
+        "date": "2025-06-01",
+        "value": 260.482,
+        "pct_change": 0.7
+      },
+      {
+        "date": "2025-07-01",
+        "value": 262.363,
+        "pct_change": 0.72
+      },
+      {
+        "date": "2025-08-01",
+        "value": 262.104,
+        "pct_change": -0.1
+      },
+      {
+        "date": "2025-09-01",
+        "value": 262.344,
+        "pct_change": 0.09
+      }
+    ],
+    "current": 262.344,
+    "latest_date": "2025-09-01",
+    "change": 0.09,
+    "yoy_change": 3.82,
+    "quarterly_change_history": [
+      {
+        "date": "2023-01-01",
+        "quarterly_change": 0
+      },
+      {
+        "date": "2023-02-01",
+        "quarterly_change": 0
+      },
+      {
+        "date": "2023-03-01",
+        "quarterly_change": 0
+      },
+      {
+        "date": "2023-04-01",
+        "quarterly_change": -1.28
+      },
+      {
+        "date": "2023-05-01",
+        "quarterly_change": -1.93
+      },
+      {
+        "date": "2023-06-01",
+        "quarterly_change": -1.25
+      },
+      {
+        "date": "2023-07-01",
+        "quarterly_change": -1.2
+      },
+      {
+        "date": "2023-08-01",
+        "quarterly_change": 1.58
+      },
+      {
+        "date": "2023-09-01",
+        "quarterly_change": 2.0
+      },
+      {
+        "date": "2023-10-01",
+        "quarterly_change": 0.53
+      },
+      {
+        "date": "2023-11-01",
+        "quarterly_change": -1.87
+      },
+      {
+        "date": "2023-12-01",
+        "quarterly_change": -3.5
+      },
+      {
+        "date": "2024-01-01",
+        "quarterly_change": -1.52
+      },
+      {
+        "date": "2024-02-01",
+        "quarterly_change": 0.82
+      },
+      {
+        "date": "2024-03-01",
+        "quarterly_change": 2.09
+      },
+      {
+        "date": "2024-04-01",
+        "quarterly_change": 2.26
+      },
+      {
+        "date": "2024-05-01",
+        "quarterly_change": 0.15
+      },
+      {
+        "date": "2024-06-01",
+        "quarterly_change": 0.32
+      },
+      {
+        "date": "2024-07-01",
+        "quarterly_change": 0.13
+      },
+      {
+        "date": "2024-08-01",
+        "quarterly_change": 0.06
+      },
+      {
+        "date": "2024-09-01",
+        "quarterly_change": -1.26
+      },
+      {
+        "date": "2024-10-01",
+        "quarterly_change": -1.65
+      },
+      {
+        "date": "2024-11-01",
+        "quarterly_change": -0.88
+      },
+      {
+        "date": "2024-12-01",
+        "quarterly_change": 0.29
+      },
+      {
+        "date": "2025-01-01",
+        "quarterly_change": 1.69
+      },
+      {
+        "date": "2025-02-01",
+        "quarterly_change": 2.48
+      },
+      {
+        "date": "2025-03-01",
+        "quarterly_change": 2.01
+      },
+      {
+        "date": "2025-04-01",
+        "quarterly_change": 0.4
+      },
+      {
+        "date": "2025-05-01",
+        "quarterly_change": -0.32
+      },
+      {
+        "date": "2025-06-01",
+        "quarterly_change": 0.76
+      },
+      {
+        "date": "2025-07-01",
+        "quarterly_change": 1.54
+      },
+      {
+        "date": "2025-08-01",
+        "quarterly_change": 1.32
+      },
+      {
+        "date": "2025-09-01",
+        "quarterly_change": 0.71
+      }
+    ]
+  },
+  "PMI": {
+    "history": [
+      {
+        "date": "2023-01-01",
+        "value": 64.9,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-02-01",
+        "value": 66.9,
+        "pct_change": 3.08
+      },
+      {
+        "date": "2023-03-01",
+        "value": 62.0,
+        "pct_change": -7.32
+      },
+      {
+        "date": "2023-04-01",
+        "value": 63.7,
+        "pct_change": 2.74
+      },
+      {
+        "date": "2023-05-01",
+        "value": 59.0,
+        "pct_change": -7.38
+      },
+      {
+        "date": "2023-06-01",
+        "value": 64.2,
+        "pct_change": 8.81
+      },
+      {
+        "date": "2023-07-01",
+        "value": 71.5,
+        "pct_change": 11.37
+      },
+      {
+        "date": "2023-08-01",
+        "value": 69.4,
+        "pct_change": -2.94
+      },
+      {
+        "date": "2023-09-01",
+        "value": 67.8,
+        "pct_change": -2.31
+      },
+      {
+        "date": "2023-10-01",
+        "value": 63.8,
+        "pct_change": -5.9
+      },
+      {
+        "date": "2023-11-01",
+        "value": 61.3,
+        "pct_change": -3.92
+      },
+      {
+        "date": "2023-12-01",
+        "value": 69.7,
+        "pct_change": 13.7
+      },
+      {
+        "date": "2024-01-01",
+        "value": 79.0,
+        "pct_change": 13.34
+      },
+      {
+        "date": "2024-02-01",
+        "value": 76.9,
+        "pct_change": -2.66
+      },
+      {
+        "date": "2024-03-01",
+        "value": 79.4,
+        "pct_change": 3.25
+      },
+      {
+        "date": "2024-04-01",
+        "value": 77.2,
+        "pct_change": -2.77
+      },
+      {
+        "date": "2024-05-01",
+        "value": 69.1,
+        "pct_change": -10.49
+      },
+      {
+        "date": "2024-06-01",
+        "value": 68.2,
+        "pct_change": -1.3
+      },
+      {
+        "date": "2024-07-01",
+        "value": 66.4,
+        "pct_change": -2.64
+      },
+      {
+        "date": "2024-08-01",
+        "value": 67.9,
+        "pct_change": 2.26
+      },
+      {
+        "date": "2024-09-01",
+        "value": 70.1,
+        "pct_change": 3.24
+      },
+      {
+        "date": "2024-10-01",
+        "value": 70.5,
+        "pct_change": 0.57
+      },
+      {
+        "date": "2024-11-01",
+        "value": 71.8,
+        "pct_change": 1.84
+      },
+      {
+        "date": "2024-12-01",
+        "value": 74.0,
+        "pct_change": 3.06
+      },
+      {
+        "date": "2025-01-01",
+        "value": 71.7,
+        "pct_change": -3.11
+      },
+      {
+        "date": "2025-02-01",
+        "value": 64.7,
+        "pct_change": -9.76
+      },
+      {
+        "date": "2025-03-01",
+        "value": 57.0,
+        "pct_change": -11.9
+      },
+      {
+        "date": "2025-04-01",
+        "value": 52.2,
+        "pct_change": -8.42
+      },
+      {
+        "date": "2025-05-01",
+        "value": 52.2,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2025-06-01",
+        "value": 60.7,
+        "pct_change": 16.28
+      },
+      {
+        "date": "2025-07-01",
+        "value": 61.7,
+        "pct_change": 1.65
+      },
+      {
+        "date": "2025-08-01",
+        "value": 58.2,
+        "pct_change": -5.67
+      },
+      {
+        "date": "2025-09-01",
+        "value": 55.1,
+        "pct_change": -5.33
+      },
+      {
+        "date": "2025-10-01",
+        "value": 53.6,
+        "pct_change": -2.72
+      }
+    ],
+    "current": 53.6,
+    "latest_date": "2025-10-01",
+    "change": -2.72
+  },
+  "Non-Farm Payrolls": {
+    "history": [
+      {
+        "date": "2023-01-01",
+        "value": 154780.0,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-02-01",
+        "value": 155086.0,
+        "pct_change": 0.2
+      },
+      {
+        "date": "2023-03-01",
+        "value": 155171.0,
+        "pct_change": 0.05
+      },
+      {
+        "date": "2023-04-01",
+        "value": 155387.0,
+        "pct_change": 0.14
+      },
+      {
+        "date": "2023-05-01",
+        "value": 155614.0,
+        "pct_change": 0.15
+      },
+      {
+        "date": "2023-06-01",
+        "value": 155871.0,
+        "pct_change": 0.17
+      },
+      {
+        "date": "2023-07-01",
+        "value": 156019.0,
+        "pct_change": 0.09
+      },
+      {
+        "date": "2023-08-01",
+        "value": 156176.0,
+        "pct_change": 0.1
+      },
+      {
+        "date": "2023-09-01",
+        "value": 156334.0,
+        "pct_change": 0.1
+      },
+      {
+        "date": "2023-10-01",
+        "value": 156520.0,
+        "pct_change": 0.12
+      },
+      {
+        "date": "2023-11-01",
+        "value": 156661.0,
+        "pct_change": 0.09
+      },
+      {
+        "date": "2023-12-01",
+        "value": 156930.0,
+        "pct_change": 0.17
+      },
+      {
+        "date": "2024-01-01",
+        "value": 157049.0,
+        "pct_change": 0.08
+      },
+      {
+        "date": "2024-02-01",
+        "value": 157271.0,
+        "pct_change": 0.14
+      },
+      {
+        "date": "2024-03-01",
+        "value": 157517.0,
+        "pct_change": 0.16
+      },
+      {
+        "date": "2024-04-01",
+        "value": 157635.0,
+        "pct_change": 0.07
+      },
+      {
+        "date": "2024-05-01",
+        "value": 157828.0,
+        "pct_change": 0.12
+      },
+      {
+        "date": "2024-06-01",
+        "value": 157915.0,
+        "pct_change": 0.06
+      },
+      {
+        "date": "2024-07-01",
+        "value": 158003.0,
+        "pct_change": 0.06
+      },
+      {
+        "date": "2024-08-01",
+        "value": 158074.0,
+        "pct_change": 0.04
+      },
+      {
+        "date": "2024-09-01",
+        "value": 158314.0,
+        "pct_change": 0.15
+      },
+      {
+        "date": "2024-10-01",
+        "value": 158358.0,
+        "pct_change": 0.03
+      },
+      {
+        "date": "2024-11-01",
+        "value": 158619.0,
+        "pct_change": 0.16
+      },
+      {
+        "date": "2024-12-01",
+        "value": 158942.0,
+        "pct_change": 0.2
+      },
+      {
+        "date": "2025-01-01",
+        "value": 159053.0,
+        "pct_change": 0.07
+      },
+      {
+        "date": "2025-02-01",
+        "value": 159155.0,
+        "pct_change": 0.06
+      },
+      {
+        "date": "2025-03-01",
+        "value": 159275.0,
+        "pct_change": 0.08
+      },
+      {
+        "date": "2025-04-01",
+        "value": 159433.0,
+        "pct_change": 0.1
+      },
+      {
+        "date": "2025-05-01",
+        "value": 159452.0,
+        "pct_change": 0.01
+      },
+      {
+        "date": "2025-06-01",
+        "value": 159439.0,
+        "pct_change": -0.01
+      },
+      {
+        "date": "2025-07-01",
+        "value": 159511.0,
+        "pct_change": 0.05
+      },
+      {
+        "date": "2025-08-01",
+        "value": 159507.0,
+        "pct_change": -0.0
+      },
+      {
+        "date": "2025-09-01",
+        "value": 159626.0,
+        "pct_change": 0.07
+      }
+    ],
+    "current": 159626.0,
+    "latest_date": "2025-09-01",
+    "change": 0.07,
+    "yoy_change": 0.83
+  },
+  "Unemployment Claims": {
+    "history": [
+      {
+        "date": "2023-01-07",
+        "value": 208000.0,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-01-14",
+        "value": 203000.0,
+        "pct_change": -2.4
+      },
+      {
+        "date": "2023-01-21",
+        "value": 203000.0,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-01-28",
+        "value": 200000.0,
+        "pct_change": -1.48
+      },
+      {
+        "date": "2023-02-04",
+        "value": 215000.0,
+        "pct_change": 7.5
+      },
+      {
+        "date": "2023-02-11",
+        "value": 219000.0,
+        "pct_change": 1.86
+      },
+      {
+        "date": "2023-02-18",
+        "value": 217000.0,
+        "pct_change": -0.91
+      },
+      {
+        "date": "2023-02-25",
+        "value": 209000.0,
+        "pct_change": -3.69
+      },
+      {
+        "date": "2023-03-04",
+        "value": 229000.0,
+        "pct_change": 9.57
+      },
+      {
+        "date": "2023-03-11",
+        "value": 222000.0,
+        "pct_change": -3.06
+      },
+      {
+        "date": "2023-03-18",
+        "value": 230000.0,
+        "pct_change": 3.6
+      },
+      {
+        "date": "2023-03-25",
+        "value": 234000.0,
+        "pct_change": 1.74
+      },
+      {
+        "date": "2023-04-01",
+        "value": 217000.0,
+        "pct_change": -7.26
+      },
+      {
+        "date": "2023-04-08",
+        "value": 219000.0,
+        "pct_change": 0.92
+      },
+      {
+        "date": "2023-04-15",
+        "value": 223000.0,
+        "pct_change": 1.83
+      },
+      {
+        "date": "2023-04-22",
+        "value": 210000.0,
+        "pct_change": -5.83
+      },
+      {
+        "date": "2023-04-29",
+        "value": 214000.0,
+        "pct_change": 1.9
+      },
+      {
+        "date": "2023-05-06",
+        "value": 223000.0,
+        "pct_change": 4.21
+      },
+      {
+        "date": "2023-05-13",
+        "value": 225000.0,
+        "pct_change": 0.9
+      },
+      {
+        "date": "2023-05-20",
+        "value": 227000.0,
+        "pct_change": 0.89
+      },
+      {
+        "date": "2023-05-27",
+        "value": 230000.0,
+        "pct_change": 1.32
+      },
+      {
+        "date": "2023-06-03",
+        "value": 253000.0,
+        "pct_change": 10.0
+      },
+      {
+        "date": "2023-06-10",
+        "value": 258000.0,
+        "pct_change": 1.98
+      },
+      {
+        "date": "2023-06-17",
+        "value": 260000.0,
+        "pct_change": 0.78
+      },
+      {
+        "date": "2023-06-24",
+        "value": 236000.0,
+        "pct_change": -9.23
+      },
+      {
+        "date": "2023-07-01",
+        "value": 248000.0,
+        "pct_change": 5.08
+      },
+      {
+        "date": "2023-07-08",
+        "value": 229000.0,
+        "pct_change": -7.66
+      },
+      {
+        "date": "2023-07-15",
+        "value": 228000.0,
+        "pct_change": -0.44
+      },
+      {
+        "date": "2023-07-22",
+        "value": 231000.0,
+        "pct_change": 1.32
+      },
+      {
+        "date": "2023-07-29",
+        "value": 238000.0,
+        "pct_change": 3.03
+      },
+      {
+        "date": "2023-08-05",
+        "value": 258000.0,
+        "pct_change": 8.4
+      },
+      {
+        "date": "2023-08-12",
+        "value": 248000.0,
+        "pct_change": -3.88
+      },
+      {
+        "date": "2023-08-19",
+        "value": 240000.0,
+        "pct_change": -3.23
+      },
+      {
+        "date": "2023-08-26",
+        "value": 234000.0,
+        "pct_change": -2.5
+      },
+      {
+        "date": "2023-09-02",
+        "value": 227000.0,
+        "pct_change": -2.99
+      },
+      {
+        "date": "2023-09-09",
+        "value": 227000.0,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2023-09-16",
+        "value": 210000.0,
+        "pct_change": -7.49
+      },
+      {
+        "date": "2023-09-23",
+        "value": 215000.0,
+        "pct_change": 2.38
+      },
+      {
+        "date": "2023-09-30",
+        "value": 216000.0,
+        "pct_change": 0.47
+      },
+      {
+        "date": "2023-10-07",
+        "value": 210000.0,
+        "pct_change": -2.78
+      },
+      {
+        "date": "2023-10-14",
+        "value": 200000.0,
+        "pct_change": -4.76
+      },
+      {
+        "date": "2023-10-21",
+        "value": 214000.0,
+        "pct_change": 7.0
+      },
+      {
+        "date": "2023-10-28",
+        "value": 217000.0,
+        "pct_change": 1.4
+      },
+      {
+        "date": "2023-11-04",
+        "value": 216000.0,
+        "pct_change": -0.46
+      },
+      {
+        "date": "2023-11-11",
+        "value": 229000.0,
+        "pct_change": 6.02
+      },
+      {
+        "date": "2023-11-18",
+        "value": 213000.0,
+        "pct_change": -6.99
+      },
+      {
+        "date": "2023-11-25",
+        "value": 214000.0,
+        "pct_change": 0.47
+      },
+      {
+        "date": "2023-12-02",
+        "value": 216000.0,
+        "pct_change": 0.93
+      },
+      {
+        "date": "2023-12-09",
+        "value": 204000.0,
+        "pct_change": -5.56
+      },
+      {
+        "date": "2023-12-16",
+        "value": 209000.0,
+        "pct_change": 2.45
+      },
+      {
+        "date": "2023-12-23",
+        "value": 210000.0,
+        "pct_change": 0.48
+      },
+      {
+        "date": "2023-12-30",
+        "value": 198000.0,
+        "pct_change": -5.71
+      },
+      {
+        "date": "2024-01-06",
+        "value": 199000.0,
+        "pct_change": 0.51
+      },
+      {
+        "date": "2024-01-13",
+        "value": 193000.0,
+        "pct_change": -3.02
+      },
+      {
+        "date": "2024-01-20",
+        "value": 223000.0,
+        "pct_change": 15.54
+      },
+      {
+        "date": "2024-01-27",
+        "value": 225000.0,
+        "pct_change": 0.9
+      },
+      {
+        "date": "2024-02-03",
+        "value": 214000.0,
+        "pct_change": -4.89
+      },
+      {
+        "date": "2024-02-10",
+        "value": 212000.0,
+        "pct_change": -0.93
+      },
+      {
+        "date": "2024-02-17",
+        "value": 203000.0,
+        "pct_change": -4.25
+      },
+      {
+        "date": "2024-02-24",
+        "value": 214000.0,
+        "pct_change": 5.42
+      },
+      {
+        "date": "2024-03-02",
+        "value": 212000.0,
+        "pct_change": -0.93
+      },
+      {
+        "date": "2024-03-09",
+        "value": 213000.0,
+        "pct_change": 0.47
+      },
+      {
+        "date": "2024-03-16",
+        "value": 213000.0,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2024-03-23",
+        "value": 214000.0,
+        "pct_change": 0.47
+      },
+      {
+        "date": "2024-03-30",
+        "value": 223000.0,
+        "pct_change": 4.21
+      },
+      {
+        "date": "2024-04-06",
+        "value": 212000.0,
+        "pct_change": -4.93
+      },
+      {
+        "date": "2024-04-13",
+        "value": 211000.0,
+        "pct_change": -0.47
+      },
+      {
+        "date": "2024-04-20",
+        "value": 209000.0,
+        "pct_change": -0.95
+      },
+      {
+        "date": "2024-04-27",
+        "value": 209000.0,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2024-05-04",
+        "value": 229000.0,
+        "pct_change": 9.57
+      },
+      {
+        "date": "2024-05-11",
+        "value": 222000.0,
+        "pct_change": -3.06
+      },
+      {
+        "date": "2024-05-18",
+        "value": 216000.0,
+        "pct_change": -2.7
+      },
+      {
+        "date": "2024-05-25",
+        "value": 221000.0,
+        "pct_change": 2.31
+      },
+      {
+        "date": "2024-06-01",
+        "value": 229000.0,
+        "pct_change": 3.62
+      },
+      {
+        "date": "2024-06-08",
+        "value": 241000.0,
+        "pct_change": 5.24
+      },
+      {
+        "date": "2024-06-15",
+        "value": 237000.0,
+        "pct_change": -1.66
+      },
+      {
+        "date": "2024-06-22",
+        "value": 233000.0,
+        "pct_change": -1.69
+      },
+      {
+        "date": "2024-06-29",
+        "value": 238000.0,
+        "pct_change": 2.15
+      },
+      {
+        "date": "2024-07-06",
+        "value": 222000.0,
+        "pct_change": -6.72
+      },
+      {
+        "date": "2024-07-13",
+        "value": 240000.0,
+        "pct_change": 8.11
+      },
+      {
+        "date": "2024-07-20",
+        "value": 236000.0,
+        "pct_change": -1.67
+      },
+      {
+        "date": "2024-07-27",
+        "value": 248000.0,
+        "pct_change": 5.08
+      },
+      {
+        "date": "2024-08-03",
+        "value": 234000.0,
+        "pct_change": -5.65
+      },
+      {
+        "date": "2024-08-10",
+        "value": 228000.0,
+        "pct_change": -2.56
+      },
+      {
+        "date": "2024-08-17",
+        "value": 232000.0,
+        "pct_change": 1.75
+      },
+      {
+        "date": "2024-08-24",
+        "value": 232000.0,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2024-08-31",
+        "value": 228000.0,
+        "pct_change": -1.72
+      },
+      {
+        "date": "2024-09-07",
+        "value": 230000.0,
+        "pct_change": 0.88
+      },
+      {
+        "date": "2024-09-14",
+        "value": 222000.0,
+        "pct_change": -3.48
+      },
+      {
+        "date": "2024-09-21",
+        "value": 221000.0,
+        "pct_change": -0.45
+      },
+      {
+        "date": "2024-09-28",
+        "value": 227000.0,
+        "pct_change": 2.71
+      },
+      {
+        "date": "2024-10-05",
+        "value": 259000.0,
+        "pct_change": 14.1
+      },
+      {
+        "date": "2024-10-12",
+        "value": 240000.0,
+        "pct_change": -7.34
+      },
+      {
+        "date": "2024-10-19",
+        "value": 228000.0,
+        "pct_change": -5.0
+      },
+      {
+        "date": "2024-10-26",
+        "value": 218000.0,
+        "pct_change": -4.39
+      },
+      {
+        "date": "2024-11-02",
+        "value": 221000.0,
+        "pct_change": 1.38
+      },
+      {
+        "date": "2024-11-09",
+        "value": 219000.0,
+        "pct_change": -0.9
+      },
+      {
+        "date": "2024-11-16",
+        "value": 216000.0,
+        "pct_change": -1.37
+      },
+      {
+        "date": "2024-11-23",
+        "value": 216000.0,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2024-11-30",
+        "value": 225000.0,
+        "pct_change": 4.17
+      },
+      {
+        "date": "2024-12-07",
+        "value": 239000.0,
+        "pct_change": 6.22
+      },
+      {
+        "date": "2024-12-14",
+        "value": 222000.0,
+        "pct_change": -7.11
+      },
+      {
+        "date": "2024-12-21",
+        "value": 219000.0,
+        "pct_change": -1.35
+      },
+      {
+        "date": "2024-12-28",
+        "value": 209000.0,
+        "pct_change": -4.57
+      },
+      {
+        "date": "2025-01-04",
+        "value": 205000.0,
+        "pct_change": -1.91
+      },
+      {
+        "date": "2025-01-11",
+        "value": 217000.0,
+        "pct_change": 5.85
+      },
+      {
+        "date": "2025-01-18",
+        "value": 222000.0,
+        "pct_change": 2.3
+      },
+      {
+        "date": "2025-01-25",
+        "value": 210000.0,
+        "pct_change": -5.41
+      },
+      {
+        "date": "2025-02-01",
+        "value": 222000.0,
+        "pct_change": 5.71
+      },
+      {
+        "date": "2025-02-08",
+        "value": 215000.0,
+        "pct_change": -3.15
+      },
+      {
+        "date": "2025-02-15",
+        "value": 224000.0,
+        "pct_change": 4.19
+      },
+      {
+        "date": "2025-02-22",
+        "value": 243000.0,
+        "pct_change": 8.48
+      },
+      {
+        "date": "2025-03-01",
+        "value": 224000.0,
+        "pct_change": -7.82
+      },
+      {
+        "date": "2025-03-08",
+        "value": 223000.0,
+        "pct_change": -0.45
+      },
+      {
+        "date": "2025-03-15",
+        "value": 225000.0,
+        "pct_change": 0.9
+      },
+      {
+        "date": "2025-03-22",
+        "value": 225000.0,
+        "pct_change": 0.0
+      },
+      {
+        "date": "2025-03-29",
+        "value": 219000.0,
+        "pct_change": -2.67
+      },
+      {
+        "date": "2025-04-05",
+        "value": 224000.0,
+        "pct_change": 2.28
+      },
+      {
+        "date": "2025-04-12",
+        "value": 216000.0,
+        "pct_change": -3.57
+      },
+      {
+        "date": "2025-04-19",
+        "value": 223000.0,
+        "pct_change": 3.24
+      },
+      {
+        "date": "2025-04-26",
+        "value": 241000.0,
+        "pct_change": 8.07
+      },
+      {
+        "date": "2025-05-03",
+        "value": 229000.0,
+        "pct_change": -4.98
+      },
+      {
+        "date": "2025-05-10",
+        "value": 228000.0,
+        "pct_change": -0.44
+      },
+      {
+        "date": "2025-05-17",
+        "value": 226000.0,
+        "pct_change": -0.88
+      },
+      {
+        "date": "2025-05-24",
+        "value": 239000.0,
+        "pct_change": 5.75
+      },
+      {
+        "date": "2025-05-31",
+        "value": 248000.0,
+        "pct_change": 3.77
+      },
+      {
+        "date": "2025-06-07",
+        "value": 250000.0,
+        "pct_change": 0.81
+      },
+      {
+        "date": "2025-06-14",
+        "value": 246000.0,
+        "pct_change": -1.6
+      },
+      {
+        "date": "2025-06-21",
+        "value": 237000.0,
+        "pct_change": -3.66
+      },
+      {
+        "date": "2025-06-28",
+        "value": 232000.0,
+        "pct_change": -2.11
+      },
+      {
+        "date": "2025-07-05",
+        "value": 228000.0,
+        "pct_change": -1.72
+      },
+      {
+        "date": "2025-07-12",
+        "value": 221000.0,
+        "pct_change": -3.07
+      },
+      {
+        "date": "2025-07-19",
+        "value": 217000.0,
+        "pct_change": -1.81
+      },
+      {
+        "date": "2025-07-26",
+        "value": 219000.0,
+        "pct_change": 0.92
+      },
+      {
+        "date": "2025-08-02",
+        "value": 227000.0,
+        "pct_change": 3.65
+      },
+      {
+        "date": "2025-08-09",
+        "value": 224000.0,
+        "pct_change": -1.32
+      },
+      {
+        "date": "2025-08-16",
+        "value": 234000.0,
+        "pct_change": 4.46
+      },
+      {
+        "date": "2025-08-23",
+        "value": 229000.0,
+        "pct_change": -2.14
+      },
+      {
+        "date": "2025-08-30",
+        "value": 236000.0,
+        "pct_change": 3.06
+      },
+      {
+        "date": "2025-09-06",
+        "value": 264000.0,
+        "pct_change": 11.86
+      },
+      {
+        "date": "2025-09-13",
+        "value": 232000.0,
+        "pct_change": -12.12
+      },
+      {
+        "date": "2025-09-20",
+        "value": 219000.0,
+        "pct_change": -5.6
+      },
+      {
+        "date": "2025-09-27",
+        "value": 224000.0,
+        "pct_change": 2.28
+      },
+      {
+        "date": "2025-10-04",
+        "value": 235000.0,
+        "pct_change": 4.91
+      },
+      {
+        "date": "2025-10-11",
+        "value": 220000.0,
+        "pct_change": -6.38
+      },
+      {
+        "date": "2025-10-18",
+        "value": 232000.0,
+        "pct_change": 5.45
+      },
+      {
+        "date": "2025-10-25",
+        "value": 220000.0,
+        "pct_change": -5.17
+      },
+      {
+        "date": "2025-11-01",
+        "value": 229000.0,
+        "pct_change": 4.09
+      },
+      {
+        "date": "2025-11-08",
+        "value": 228000.0,
+        "pct_change": -0.44
+      },
+      {
+        "date": "2025-11-15",
+        "value": 222000.0,
+        "pct_change": -2.63
+      },
+      {
+        "date": "2025-11-22",
+        "value": 218000.0,
+        "pct_change": -1.8
+      },
+      {
+        "date": "2025-11-29",
+        "value": 191000.0,
+        "pct_change": -12.39
+      }
+    ],
+    "current": 191000.0,
+    "latest_date": "2025-11-29",
+    "change": -12.39
+  }
+}
