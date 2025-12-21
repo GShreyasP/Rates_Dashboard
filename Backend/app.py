@@ -420,22 +420,16 @@ def macro_data():
             except Exception as e:
                 print(f"Background: Error updating macro data: {e}")
         
-        # Start background update thread
+        # Start background update thread (non-blocking)
         threading.Thread(target=update_in_background, daemon=True).start()
         
         # Return cached data immediately (fast!)
         return jsonify(csv_data)
     
-    # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
-    print("No cache found, fetching fresh macro data from API...")
-    response_data = fetch_macro_data()
-    
-    # Save to CSV cache and memory cache
-    if 'error' not in response_data:
-        save_to_cache('macro', response_data, data_changed=False)
-        set_cached_data('macro', response_data)
-    
-    return jsonify(response_data)
+    # No cache exists - this shouldn't happen, but if it does, return error quickly
+    # rather than blocking for 2 minutes fetching data
+    print("WARNING: No macro cache found! Cache files should be committed to repo.")
+    return jsonify({"error": "Data temporarily unavailable. Please try again in a moment."}), 503
 
 def fetch_rates_data():
     """Fetch rates data (used for caching)"""
@@ -510,22 +504,15 @@ def rates_analysis():
             except Exception as e:
                 print(f"Background: Error updating rates data: {e}")
         
-        # Start background update thread
+        # Start background update thread (non-blocking)
         threading.Thread(target=update_in_background, daemon=True).start()
         
         # Return cached data immediately (fast!)
         return jsonify(csv_data)
     
-    # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
-    print("No cache found, fetching fresh rates data from API...")
-    response_data = fetch_rates_data()
-    
-    # Save to CSV cache and memory cache
-    if 'error' not in response_data:
-        save_to_cache('rates', response_data, data_changed=False)
-        set_cached_data('rates', response_data)
-    
-    return jsonify(response_data)
+    # No cache exists - this shouldn't happen, but if it does, return error quickly
+    print("WARNING: No rates cache found! Cache files should be committed to repo.")
+    return jsonify({"error": "Data temporarily unavailable. Please try again in a moment."}), 503
 
 def fetch_fedwatch_data():
     """Fetch FedWatch interest rate cut odds - hardcoded data"""
