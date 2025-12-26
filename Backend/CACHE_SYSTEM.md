@@ -55,3 +55,6 @@ Update interval can be changed in `cache_manager.py`:
 DATA_UPDATE_INTERVAL = timedelta(days=3)  # Change this to adjust update frequency
 ```
 
+
+
+
