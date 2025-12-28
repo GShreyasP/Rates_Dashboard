@@ -137,12 +137,12 @@ def get_yield_curve():
         print(f"Error fetching yields from yfinance: {e}")
     
     # FRED API Treasury constant maturity rates
-    # Fetching all requested maturities: 1,3,6,13 mo and 1,3,5,7,20,30 yr
+    # Fetching all requested maturities: 1,3,6 mo and 1,3,5,7,20,30 yr
+    # Note: 13M doesn't exist in FRED, removed it
     fred_series = {
         '1M': 'DGS1MO',   # 1-month
         '3M': 'DGS3MO',   # 3-month
         '6M': 'DGS6MO',   # 6-month
-        '13M': 'DGS13MO', # 13-month (may not exist, will skip if unavailable)
         '1Y': 'DGS1',    # 1-year
         '3Y': 'DGS3',    # 3-year
         '5Y': 'DGS5',    # 5-year
