@@ -1,10 +1,16 @@
 """Vercel serverless function for macro data"""
 import json
 import os
+import sys
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas_datareader.data as web
 import pandas as pd
+
+# Add api directory to path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
 # Get API Key from environment variable
 FRED_API_KEY = os.getenv("FRED_API_KEY", "YOUR_API_KEY_HERE")
@@ -116,6 +122,19 @@ def fetch_macro_data():
 
 def handler(request):
     """Vercel serverless function handler"""
+    # Handle CORS preflight
+    if request and request.get('method') == 'OPTIONS':
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Max-Age": "86400"
+            },
+            "body": ""
+        }
+    
     try:
         # Fetch fresh data (no caching in serverless - Vercel handles it at CDN level)
         data = fetch_macro_data()
@@ -141,11 +160,12 @@ def handler(request):
             "body": json.dumps(data)
         }
     except Exception as e:
+        import traceback
         return {
             "statusCode": 500,
             "headers": {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
             },
-            "body": json.dumps({"error": str(e)})
+            "body": json.dumps({"error": str(e), "traceback": traceback.format_exc()})
         }

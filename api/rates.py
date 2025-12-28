@@ -1,6 +1,18 @@
 """Vercel serverless function for rates data"""
 import json
-from shared import get_yield_curve, maturity_to_years, calculate_dv01
+import sys
+import os
+
+# Add api directory to path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+try:
+    from shared import get_yield_curve, maturity_to_years, calculate_dv01
+except ImportError:
+    # Fallback: try importing from api.shared
+    from api.shared import get_yield_curve, maturity_to_years, calculate_dv01
 
 def fetch_rates_data():
     """Fetch rates data"""
@@ -47,6 +59,19 @@ def fetch_rates_data():
 
 def handler(request):
     """Vercel serverless function handler"""
+    # Handle CORS preflight
+    if request and request.get('method') == 'OPTIONS':
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Max-Age": "86400"
+            },
+            "body": ""
+        }
+    
     try:
         data = fetch_rates_data()
         
@@ -71,11 +96,12 @@ def handler(request):
             "body": json.dumps(data)
         }
     except Exception as e:
+        import traceback
         return {
             "statusCode": 500,
             "headers": {
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*"
             },
-            "body": json.dumps({"error": str(e)})
+            "body": json.dumps({"error": str(e), "traceback": traceback.format_exc()})
         }

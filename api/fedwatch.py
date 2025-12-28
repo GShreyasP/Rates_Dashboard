@@ -4,6 +4,19 @@ from datetime import datetime
 
 def handler(request=None):
     """Fetch FedWatch interest rate cut odds - hardcoded data"""
+    # Handle CORS preflight
+    if request and request.get('method') == 'OPTIONS':
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Max-Age": "86400"
+            },
+            "body": ""
+        }
+    
     try:
         # Calculate next FOMC meeting date (December 10, 2025 based on image)
         next_meeting = datetime(2025, 12, 10)
