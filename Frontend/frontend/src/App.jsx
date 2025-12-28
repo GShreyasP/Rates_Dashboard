@@ -638,34 +638,78 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log('Fetching data from:', API_URL)
         // Fetch all endpoints in parallel for faster loading
         const [macroRes, ratesRes, fedwatchRes] = await Promise.all([
-          axios.get(`${API_URL}/macro`),
-          axios.get(`${API_URL}/rates`),
+          axios.get(`${API_URL}/macro`).catch(err => {
+            console.error("Error fetching macro data:", err.response?.data || err.message)
+            return { data: null, error: err }
+          }),
+          axios.get(`${API_URL}/rates`).catch(err => {
+            console.error("Error fetching rates data:", err.response?.data || err.message)
+            return { data: null, error: err }
+          }),
           axios.get(`${API_URL}/fedwatch`).catch(err => {
-            console.warn("FedWatch data not available:", err)
+            console.warn("FedWatch data not available:", err.response?.data || err.message)
             return { data: null }
           })
         ])
-        setMacroData(macroRes.data)
-        setRatesData(ratesRes.data)
-        setFedwatchData(fedwatchRes.data)
+        
+        // Log what we received
+        console.log('Macro data response:', macroRes.data)
+        console.log('Rates data response:', ratesRes.data)
+        console.log('FedWatch data response:', fedwatchRes.data)
+        
+        // Check for errors in response data
+        if (macroRes.data?.error) {
+          console.error("Macro API returned error:", macroRes.data.error)
+        }
+        if (ratesRes.data?.error) {
+          console.error("Rates API returned error:", ratesRes.data.error)
+        }
+        
+        // Only set data if we got valid responses (not errors)
+        if (macroRes.data && !macroRes.error) {
+          setMacroData(macroRes.data)
+        } else {
+          console.warn("Macro data not set due to error")
+        }
+        if (ratesRes.data && !ratesRes.error) {
+          setRatesData(ratesRes.data)
+        } else {
+          console.warn("Rates data not set due to error")
+        }
+        if (fedwatchRes.data) {
+          setFedwatchData(fedwatchRes.data)
+        }
+        
         // Initialize interactive yields with current rates data (only yearly maturities)
-        if (ratesRes.data && ratesRes.data.yield_curve) {
+        if (ratesRes.data && ratesRes.data.yield_curve && Array.isArray(ratesRes.data.yield_curve) && ratesRes.data.yield_curve.length > 0) {
           const yields = {}
           ratesRes.data.yield_curve
-            .filter(item => item.maturity.endsWith('Y')) // Only yearly maturities
+            .filter(item => item.maturity && item.maturity.endsWith('Y')) // Only yearly maturities
             .forEach(item => {
               yields[item.maturity] = item.yield
             })
           setInteractiveYields(yields)
           console.log('Interactive yields initialized:', yields)
         } else {
-          console.warn('No yield curve data available for interactive chart')
+          console.warn('No yield curve data available for interactive chart', {
+            hasData: !!ratesRes.data,
+            hasYieldCurve: !!ratesRes.data?.yield_curve,
+            isArray: Array.isArray(ratesRes.data?.yield_curve),
+            length: ratesRes.data?.yield_curve?.length
+          })
         }
         setLoading(false)
       } catch (error) {
         console.error("Error fetching data", error)
+        console.error("Error details:", {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          config: error.config
+        })
         setLoading(false)
       }
     }
