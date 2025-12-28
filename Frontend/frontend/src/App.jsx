@@ -1174,9 +1174,56 @@ function App() {
                 <div>
                   {/* Interactive Chart */}
                   <div style={{ marginBottom: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                      <div style={{ color: '#8b95b2', fontSize: '0.9rem' }}>
-                        Drag points to simulate yield changes
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                      <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <label style={{ color: '#8b95b2', fontSize: '0.9rem' }}>2Y Yield:</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={yield2Y.toFixed(2)}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              if (!isNaN(val)) {
+                                setTradeYields(prev => ({ ...prev, '2Y': val }));
+                              }
+                            }}
+                            style={{
+                              width: '80px',
+                              padding: '0.25rem 0.5rem',
+                              background: '#1e2746',
+                              border: '1px solid #4a9eff',
+                              borderRadius: '4px',
+                              color: '#e0e0e0',
+                              fontSize: '0.9rem'
+                            }}
+                          />
+                          <span style={{ color: '#8b95b2', fontSize: '0.85rem' }}>%</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <label style={{ color: '#8b95b2', fontSize: '0.9rem' }}>10Y Yield:</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={yield10Y.toFixed(2)}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              if (!isNaN(val)) {
+                                setTradeYields(prev => ({ ...prev, '10Y': val }));
+                              }
+                            }}
+                            style={{
+                              width: '80px',
+                              padding: '0.25rem 0.5rem',
+                              background: '#1e2746',
+                              border: '1px solid #f87171',
+                              borderRadius: '4px',
+                              color: '#e0e0e0',
+                              fontSize: '0.9rem'
+                            }}
+                          />
+                          <span style={{ color: '#8b95b2', fontSize: '0.85rem' }}>%</span>
+                        </div>
                       </div>
                       <button
                         onClick={() => setTradeYields({ '2Y': null, '10Y': null })}
