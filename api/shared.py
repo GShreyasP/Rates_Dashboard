@@ -1,5 +1,44 @@
 """Shared utilities for Vercel serverless functions"""
 import os
+import sys
+
+# Fix for Python 3.12+ where distutils was removed
+# Provide distutils compatibility before importing packages that need it
+try:
+    import distutils
+except ImportError:
+    # Python 3.12+ - distutils was removed, use setuptools as replacement
+    try:
+        import setuptools
+        # Create a distutils module alias
+        sys.modules['distutils'] = setuptools
+        sys.modules['distutils.util'] = setuptools.util
+        sys.modules['distutils.version'] = setuptools.version
+    except ImportError:
+        # If setuptools is not available, create a minimal distutils stub
+        class DistutilsStub:
+            class util:
+                @staticmethod
+                def strtobool(val):
+                    val = val.lower()
+                    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+                        return 1
+                    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+                        return 0
+                    else:
+                        raise ValueError(f"invalid truth value {val!r}")
+            
+            class version:
+                class LooseVersion:
+                    def __init__(self, v):
+                        self.v = v
+                    def __str__(self):
+                        return str(self.v)
+        
+        sys.modules['distutils'] = DistutilsStub()
+        sys.modules['distutils.util'] = DistutilsStub.util
+        sys.modules['distutils.version'] = DistutilsStub.version
+
 from datetime import datetime, timedelta
 import pandas_datareader.data as web
 import yfinance as yf

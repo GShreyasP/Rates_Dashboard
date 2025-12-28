@@ -4,6 +4,37 @@ import json
 import os
 import sys
 
+# Fix for Python 3.12+ where distutils was removed
+try:
+    import distutils
+except ImportError:
+    try:
+        import setuptools
+        sys.modules['distutils'] = setuptools
+        sys.modules['distutils.util'] = setuptools.util
+        sys.modules['distutils.version'] = setuptools.version
+    except ImportError:
+        class DistutilsStub:
+            class util:
+                @staticmethod
+                def strtobool(val):
+                    val = val.lower()
+                    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+                        return 1
+                    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+                        return 0
+                    else:
+                        raise ValueError(f"invalid truth value {val!r}")
+            class version:
+                class LooseVersion:
+                    def __init__(self, v):
+                        self.v = v
+                    def __str__(self):
+                        return str(self.v)
+        sys.modules['distutils'] = DistutilsStub()
+        sys.modules['distutils.util'] = DistutilsStub.util
+        sys.modules['distutils.version'] = DistutilsStub.version
+
 # Lazy imports to avoid failures at module load time
 _datetime = None
 _timedelta = None
