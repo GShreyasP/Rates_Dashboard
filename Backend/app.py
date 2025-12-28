@@ -155,9 +155,9 @@ def get_yield_curve():
     # Fetch from FRED API if key is available
     if FRED_API_KEY != "YOUR_API_KEY_HERE":
         try:
-            # Get recent data (last 5 days to ensure we get the latest)
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=5)
+            # Get recent data (look back 30 days to ensure we get the latest available data)
+            end_date = datetime.now().date()
+            start_date = end_date - timedelta(days=30)
             
             for label, series_id in fred_series.items():
                 try:

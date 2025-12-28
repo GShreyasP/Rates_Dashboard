@@ -75,8 +75,9 @@ def get_yield_curve():
         # Fetch from FRED first (primary source)
         if api_key_set:
             try:
-                end_date = datetime.now()
-                start_date = end_date - timedelta(days=5)
+                # Use today's date (not future dates)
+                end_date = datetime.now().date()
+                start_date = end_date - timedelta(days=30)  # Look back 30 days to ensure we get data
                 print(f"Fetching FRED data from {start_date} to {end_date}")
                 
                 for label, series_id in fred_series.items():
