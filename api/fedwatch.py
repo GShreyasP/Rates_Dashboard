@@ -1,3 +1,4 @@
+"""Vercel serverless function for FedWatch data"""
 import json
 from datetime import datetime
 
@@ -7,11 +8,11 @@ def handler(request=None):
         # Calculate next FOMC meeting date (December 10, 2025 based on image)
         next_meeting = datetime(2025, 12, 10)
         
-        # Hardcoded target rate probabilities from image
-        # 350-375: 87.2%, 375-400: 12.8%
+        # Hardcoded target rate probabilities
+        # 350-375: 89.2%, 375-400: 10.8%
         target_rate_probabilities = {
-            "350-375": 87.2,
-            "375-400": 12.8
+            "350-375": 89.2,
+            "375-400": 10.8
         }
         
         most_likely = max(target_rate_probabilities.items(), key=lambda x: x[1])

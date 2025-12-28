@@ -4,7 +4,3 @@ yfinance
 numpy
 requests
 beautifulsoup4
-
-
-
-

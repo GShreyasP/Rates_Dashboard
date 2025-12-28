@@ -58,3 +58,4 @@ DATA_UPDATE_INTERVAL = timedelta(days=3)  # Change this to adjust update frequen
 
 
 
+

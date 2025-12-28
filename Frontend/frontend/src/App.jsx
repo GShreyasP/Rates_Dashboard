@@ -627,7 +627,10 @@ function App() {
     return pnl
   }
 
-  // Determine API URL (Localhost for dev, env variable for prod, or relative path)
+  // Determine API URL 
+  // - Development: localhost
+  // - Production on Vercel: use relative paths (/api)
+  // - Production with separate backend: use VITE_API_URL env var
   const API_URL = import.meta.env.DEV 
     ? 'http://localhost:5001/api' 
     : (import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api');

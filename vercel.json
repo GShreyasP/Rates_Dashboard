@@ -2,7 +2,16 @@
   "buildCommand": "cd Frontend/frontend && npm install && npm run build",
   "outputDirectory": "Frontend/frontend/dist",
   "framework": "vite",
+  "functions": {
+    "api/**/*.py": {
+      "runtime": "python3.9"
+    }
+  },
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
