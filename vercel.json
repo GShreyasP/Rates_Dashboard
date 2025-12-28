@@ -2,10 +2,6 @@
   "buildCommand": "cd Frontend/frontend && npm install && npm run build",
   "outputDirectory": "Frontend/frontend/dist",
   "framework": "vite",
-  "ignore": [
-    "Frontend/frontend/node_modules/**",
-    "Backend/**"
-  ],
   "rewrites": [
     {
       "source": "/((?!api/).*)",
