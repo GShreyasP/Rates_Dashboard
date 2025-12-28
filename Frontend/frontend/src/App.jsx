@@ -1204,14 +1204,16 @@ function App() {
               const yield2YChange = (yield2Y - original2Y) * 100; // in bps
               const yield10YChange = (yield10Y - original10Y) * 100; // in bps
               
-              // P&L calculation: Short 10Y loses when 10Y rises, Long 2Y gains when 2Y falls
-              const pnl_10Y_leg = -yield10YChange * (dv01_10Y / 100); // Short position
-              const pnl_2Y_leg = -yield2YChange * (dv01_2Y * long2YNotional / 10_000_000 / 100); // Long position
+              // P&L calculation:
+              // Short 10Y: When 10Y yield rises, bond price falls, short position makes money (positive P&L)
+              // Long 2Y: When 2Y yield falls, bond price rises, long position makes money (positive P&L)
+              const pnl_10Y_leg = yield10YChange * (dv01_10Y / 100); // Short position: + when yield rises
+              const pnl_2Y_leg = -yield2YChange * (dv01_2Y * long2YNotional / 10_000_000 / 100); // Long position: + when yield falls
               const totalPnl = pnl_10Y_leg + pnl_2Y_leg;
               
               // P&L scenarios (for display)
-              const pnl_10Y_up_1bp = -dv01_10Y; // Short loses
-              const pnl_2Y_down_1bp = dv01_2Y * (long2YNotional / 10_000_000); // Long gains
+              const pnl_10Y_up_1bp = dv01_10Y; // Short gains when yield rises
+              const pnl_2Y_down_1bp = dv01_2Y * (long2YNotional / 10_000_000); // Long gains when yield falls
               const pnl_spread_widen_10bps = 10 * (dv01_10Y + (dv01_2Y * long2YNotional / 10_000_000));
               
               // Build full yield curve data with 2Y and 10Y highlighted
