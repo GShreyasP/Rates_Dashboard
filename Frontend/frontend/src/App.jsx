@@ -1089,20 +1089,20 @@ function App() {
             <div className="pitch-content">
               <div className="metric">
                 <label>Curve Shape</label>
-                <div className="value">{ratesData?.analysis.curve_shape}</div>
+                <div className="value">{ratesData?.analysis?.curve_shape || "Unknown"}</div>
               </div>
               <div className="metric">
                 <label>2s10s Spread</label>
-                <div className="value">{ratesData?.analysis.spread_2s10s} bps</div>
+                <div className="value">{ratesData?.analysis?.spread_2s10s ?? 0} bps</div>
               </div>
               <div className="metric highlight">
                 <label>Trade Idea</label>
-                <div className="value">{ratesData?.analysis.trade_pitch}</div>
+                <div className="value">{ratesData?.analysis?.trade_pitch || "Data unavailable"}</div>
               </div>
               <hr />
               <div className="metric">
                 <label>DV01 ($10M 10Y)</label>
-                <div className="value mono">{ratesData?.analysis.dv01_10m_position}</div>
+                <div className="value mono">{ratesData?.analysis?.dv01_10m_position || "$0.00"}</div>
               </div>
             </div>
             

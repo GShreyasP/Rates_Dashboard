@@ -45,12 +45,36 @@ def fetch_rates_data():
         _import_shared()
         
         if not _shared_imported or not _get_yield_curve:
-            return {"error": "Failed to import required functions"}
+            # Return consistent structure even on error
+            return {
+                "yields": {},
+                "yield_curve": [],
+                "analysis": {
+                    "spread_2s10s": 0,
+                    "spread_5s30s": 0,
+                    "curve_shape": "Unknown",
+                    "trade_pitch": "Data unavailable",
+                    "dv01_10m_position": "$0.00"
+                },
+                "error": "Failed to import required functions"
+            }
         
         yields = _get_yield_curve()
         
         if not yields:
-            return {"error": "Failed to fetch yields"}
+            # Return consistent structure even on error
+            return {
+                "yields": {},
+                "yield_curve": [],
+                "analysis": {
+                    "spread_2s10s": 0,
+                    "spread_5s30s": 0,
+                    "curve_shape": "Unknown",
+                    "trade_pitch": "Data unavailable",
+                    "dv01_10m_position": "$0.00"
+                },
+                "error": "Failed to fetch yields"
+            }
 
         # Curve Shape Analysis
         short_term_yield = yields.get('2Y') or yields.get('1Y') or yields.get('3M', 0)
@@ -93,7 +117,19 @@ def fetch_rates_data():
         traceback_str = traceback.format_exc()
         print(f"Error in fetch_rates_data: {error_msg}")
         print(traceback_str)
-        return {"error": f"Failed to fetch rates data: {error_msg}"}
+        # Return consistent structure even on error
+        return {
+            "yields": {},
+            "yield_curve": [],
+            "analysis": {
+                "spread_2s10s": 0,
+                "spread_5s30s": 0,
+                "curve_shape": "Unknown",
+                "trade_pitch": "Data unavailable",
+                "dv01_10m_position": "$0.00"
+            },
+            "error": f"Failed to fetch rates data: {error_msg}"
+        }
 
 class handler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
