@@ -443,6 +443,7 @@ function App() {
   const chartRef = useRef(null)
   const [dataUpdated, setDataUpdated] = useState(false)
   const [dataUpdateMessage, setDataUpdateMessage] = useState('')
+  const [tradeYields, setTradeYields] = useState({ '2Y': null, '10Y': null })
 
   // Explanation data for each indicator
   const indicatorExplanations = {
@@ -1133,9 +1134,14 @@ function App() {
             
             {/* Interactive 2Y vs 10Y Chart */}
             {ratesData && ratesData.yield_curve && ratesData.yields ? (() => {
-              const yield2Y = ratesData.yields['2Y'] || 0;
-              const yield10Y = ratesData.yields['10Y'] || 0;
+              // Use interactive yields if set, otherwise use original data
+              const yield2Y = tradeYields['2Y'] !== null ? tradeYields['2Y'] : (ratesData.yields['2Y'] || 0);
+              const yield10Y = tradeYields['10Y'] !== null ? tradeYields['10Y'] : (ratesData.yields['10Y'] || 0);
+              const original2Y = ratesData.yields['2Y'] || 0;
+              const original10Y = ratesData.yields['10Y'] || 0;
               const spread = yield10Y - yield2Y;
+              const originalSpread = original10Y - original2Y;
+              const spreadChange = (spread - originalSpread) * 100; // in bps
               
               // Calculate DV01 for $10M positions
               const dv01_2Y = 1.9 * 0.0001 * 10_000_000; // 2Y duration ~1.9
@@ -1145,10 +1151,19 @@ function App() {
               // Short $10M 10Y, Long $X 2Y where X * dv01_2Y = 10M * dv01_10Y
               const long2YNotional = (10_000_000 * dv01_10Y) / dv01_2Y;
               
-              // P&L scenarios
+              // Calculate actual P&L based on current yield changes
+              const yield2YChange = (yield2Y - original2Y) * 100; // in bps
+              const yield10YChange = (yield10Y - original10Y) * 100; // in bps
+              
+              // P&L calculation: Short 10Y loses when 10Y rises, Long 2Y gains when 2Y falls
+              const pnl_10Y_leg = -yield10YChange * (dv01_10Y / 100); // Short position
+              const pnl_2Y_leg = -yield2YChange * (dv01_2Y * long2YNotional / 10_000_000 / 100); // Long position
+              const totalPnl = pnl_10Y_leg + pnl_2Y_leg;
+              
+              // P&L scenarios (for display)
               const pnl_10Y_up_1bp = -dv01_10Y; // Short loses
               const pnl_2Y_down_1bp = dv01_2Y * (long2YNotional / 10_000_000); // Long gains
-              const pnl_spread_widen_10bps = (spread + 0.10 - spread) * 100 * (dv01_10Y + (dv01_2Y * long2YNotional / 10_000_000));
+              const pnl_spread_widen_10bps = 10 * (dv01_10Y + (dv01_2Y * long2YNotional / 10_000_000));
               
               const chartData = [
                 { maturity: '2Y', yield: yield2Y, color: '#4ade80' },
@@ -1157,10 +1172,44 @@ function App() {
               
               return (
                 <div>
-                  {/* Chart */}
+                  {/* Interactive Chart */}
                   <div style={{ marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <div style={{ color: '#8b95b2', fontSize: '0.9rem' }}>
+                        Drag points to simulate yield changes
+                      </div>
+                      <button
+                        onClick={() => setTradeYields({ '2Y': null, '10Y': null })}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          background: '#1e2746',
+                          border: '1px solid #4a9eff',
+                          borderRadius: '4px',
+                          color: '#4a9eff',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem'
+                        }}
+                      >
+                        Reset to Current
+                      </button>
+                    </div>
                     <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={chartData}>
+                      <LineChart 
+                        data={chartData}
+                        onMouseDown={(e) => {
+                          if (e && e.activeLabel) {
+                            const maturity = e.activeLabel;
+                            const chart = e.chart;
+                            const activeCoordinate = e.activeCoordinate;
+                            if (chart && activeCoordinate) {
+                              // Calculate yield from Y coordinate
+                              const yAxis = chart.yAxisMap[0];
+                              const yValue = yAxis.scale.invert(activeCoordinate.y);
+                              setTradeYields(prev => ({ ...prev, [maturity]: yValue }));
+                            }
+                          }
+                        }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
                         <XAxis 
                           dataKey="maturity" 
@@ -1179,7 +1228,15 @@ function App() {
                             border: '1px solid #1e2746',
                             color: '#e0e0e0'
                           }}
-                          formatter={(value) => [`${value.toFixed(2)}%`, 'Yield']}
+                          formatter={(value, name, props) => {
+                            const change = props.payload.maturity === '2Y' 
+                              ? ((value - original2Y) * 100).toFixed(1)
+                              : ((value - original10Y) * 100).toFixed(1);
+                            return [
+                              `${value.toFixed(2)}% (${change > 0 ? '+' : ''}${change} bps)`,
+                              'Yield'
+                            ];
+                          }}
                         />
                         <Line 
                           type="monotone" 
@@ -1188,22 +1245,82 @@ function App() {
                           strokeWidth={3}
                           dot={(props) => {
                             const { cx, cy, payload } = props;
+                            const isChanged = (payload.maturity === '2Y' && Math.abs(payload.yield - original2Y) > 0.001) ||
+                                            (payload.maturity === '10Y' && Math.abs(payload.yield - original10Y) > 0.001);
                             return (
-                              <circle 
-                                cx={cx} 
-                                cy={cy} 
-                                r={8} 
-                                fill={payload.color || '#4a9eff'}
-                                stroke="#fff"
-                                strokeWidth={2}
-                              />
+                              <g>
+                                <circle 
+                                  cx={cx} 
+                                  cy={cy} 
+                                  r={10} 
+                                  fill={payload.color || '#4a9eff'}
+                                  stroke={isChanged ? '#4ade80' : '#fff'}
+                                  strokeWidth={isChanged ? 3 : 2}
+                                  style={{ cursor: 'pointer' }}
+                                />
+                                {isChanged && (
+                                  <circle 
+                                    cx={cx} 
+                                    cy={cy} 
+                                    r={12} 
+                                    fill="none"
+                                    stroke="#4ade80"
+                                    strokeWidth={2}
+                                    strokeDasharray="4 4"
+                                    opacity={0.6}
+                                  />
+                                )}
+                              </g>
                             );
                           }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
-                    <div style={{ textAlign: 'center', marginTop: '0.5rem', color: '#8b95b2', fontSize: '0.9rem' }}>
-                      Current 2s10s Spread: <span style={{ color: '#4a9eff', fontWeight: 'bold' }}>{(spread * 100).toFixed(2)} bps</span>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-around', 
+                      marginTop: '1rem',
+                      padding: '1rem',
+                      background: 'rgba(74, 158, 255, 0.05)',
+                      borderRadius: '6px'
+                    }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ color: '#8b95b2', fontSize: '0.85rem' }}>2Y Yield</div>
+                        <div style={{ color: '#4ade80', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                          {yield2Y.toFixed(2)}%
+                          {Math.abs(yield2Y - original2Y) > 0.001 && (
+                            <span style={{ fontSize: '0.9rem', marginLeft: '0.5rem' }}>
+                              ({((yield2Y - original2Y) * 100) > 0 ? '+' : ''}{((yield2Y - original2Y) * 100).toFixed(1)} bps)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ color: '#8b95b2', fontSize: '0.85rem' }}>10Y Yield</div>
+                        <div style={{ color: '#f87171', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                          {yield10Y.toFixed(2)}%
+                          {Math.abs(yield10Y - original10Y) > 0.001 && (
+                            <span style={{ fontSize: '0.9rem', marginLeft: '0.5rem' }}>
+                              ({((yield10Y - original10Y) * 100) > 0 ? '+' : ''}{((yield10Y - original10Y) * 100).toFixed(1)} bps)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ color: '#8b95b2', fontSize: '0.85rem' }}>2s10s Spread</div>
+                        <div style={{ color: '#4a9eff', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                          {(spread * 100).toFixed(2)} bps
+                          {Math.abs(spreadChange) > 0.1 && (
+                            <span style={{ 
+                              fontSize: '0.9rem', 
+                              marginLeft: '0.5rem',
+                              color: spreadChange > 0 ? '#4ade80' : '#f87171'
+                            }}>
+                              ({spreadChange > 0 ? '+' : ''}{spreadChange.toFixed(1)} bps)
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1240,16 +1357,29 @@ function App() {
                     
                     <div style={{ 
                       padding: '1rem', 
-                      background: 'rgba(74, 158, 255, 0.1)', 
-                      border: '1px solid rgba(74, 158, 255, 0.3)',
+                      background: Math.abs(totalPnl) > 0.01 ? (totalPnl > 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)') : 'rgba(74, 158, 255, 0.1)', 
+                      border: `1px solid ${Math.abs(totalPnl) > 0.01 ? (totalPnl > 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(248, 113, 113, 0.3)') : 'rgba(74, 158, 255, 0.3)'}`,
                       borderRadius: '6px'
                     }}>
-                      <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.5rem' }}>P&L Scenarios</div>
-                      <div style={{ color: '#e0e0e0', fontSize: '0.9rem', lineHeight: '1.6' }}>
-                        <div>10Y ↑1bp, 2Y flat: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_10Y_up_1bp + pnl_2Y_down_1bp).toLocaleString()}</span></div>
-                        <div>2Y ↓1bp, 10Y flat: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_2Y_down_1bp).toLocaleString()}</span></div>
-                        <div>Spread widens 10bps: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_spread_widen_10bps).toLocaleString()}</span></div>
+                      <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                        {Math.abs(totalPnl) > 0.01 ? 'Current P&L' : 'P&L Scenarios'}
                       </div>
+                      {Math.abs(totalPnl) > 0.01 ? (
+                        <div style={{ 
+                          color: totalPnl > 0 ? '#4ade80' : '#f87171', 
+                          fontSize: '1.3rem', 
+                          fontWeight: 'bold',
+                          textAlign: 'center'
+                        }}>
+                          {totalPnl > 0 ? '+' : ''}${totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      ) : (
+                        <div style={{ color: '#e0e0e0', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                          <div>10Y ↑1bp, 2Y flat: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_10Y_up_1bp + pnl_2Y_down_1bp).toLocaleString()}</span></div>
+                          <div>2Y ↓1bp, 10Y flat: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_2Y_down_1bp).toLocaleString()}</span></div>
+                          <div>Spread widens 10bps: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_spread_widen_10bps).toLocaleString()}</span></div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
