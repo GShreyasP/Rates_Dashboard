@@ -1127,6 +1127,217 @@ function App() {
             </table>
           </div>
 
+          {/* BEAR STEEPENER TRADE PITCH */}
+          <div className="card" style={{ gridColumn: '1 / -1', marginTop: '2rem' }}>
+            <h3 style={{ color: '#4a9eff', marginBottom: '1.5rem' }}>Bear Steepener Trade: Short 10Y / Long 2Y</h3>
+            
+            {/* Interactive 2Y vs 10Y Chart */}
+            {ratesData && ratesData.yield_curve && ratesData.yields ? (() => {
+              const yield2Y = ratesData.yields['2Y'] || 0;
+              const yield10Y = ratesData.yields['10Y'] || 0;
+              const spread = yield10Y - yield2Y;
+              
+              // Calculate DV01 for $10M positions
+              const dv01_2Y = 1.9 * 0.0001 * 10_000_000; // 2Y duration ~1.9
+              const dv01_10Y = 8.0 * 0.0001 * 10_000_000; // 10Y duration ~8.0
+              
+              // For duration-neutral trade, calculate position sizes
+              // Short $10M 10Y, Long $X 2Y where X * dv01_2Y = 10M * dv01_10Y
+              const long2YNotional = (10_000_000 * dv01_10Y) / dv01_2Y;
+              
+              // P&L scenarios
+              const pnl_10Y_up_1bp = -dv01_10Y; // Short loses
+              const pnl_2Y_down_1bp = dv01_2Y * (long2YNotional / 10_000_000); // Long gains
+              const pnl_spread_widen_10bps = (spread + 0.10 - spread) * 100 * (dv01_10Y + (dv01_2Y * long2YNotional / 10_000_000));
+              
+              const chartData = [
+                { maturity: '2Y', yield: yield2Y, color: '#4ade80' },
+                { maturity: '10Y', yield: yield10Y, color: '#f87171' }
+              ];
+              
+              return (
+                <div>
+                  {/* Chart */}
+                  <div style={{ marginBottom: '2rem' }}>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
+                        <XAxis 
+                          dataKey="maturity" 
+                          stroke="#8b95b2"
+                          tick={{ fill: '#8b95b2', fontSize: 14, fontWeight: 'bold' }}
+                        />
+                        <YAxis 
+                          domain={['auto', 'auto']}
+                          stroke="#8b95b2"
+                          tick={{ fill: '#8b95b2', fontSize: 12 }}
+                          label={{ value: 'Yield (%)', angle: -90, position: 'insideLeft', fill: '#8b95b2' }}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: '#141b2d', 
+                            border: '1px solid #1e2746',
+                            color: '#e0e0e0'
+                          }}
+                          formatter={(value) => [`${value.toFixed(2)}%`, 'Yield']}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="yield" 
+                          stroke="#4a9eff" 
+                          strokeWidth={3}
+                          dot={(props) => {
+                            const { cx, cy, payload } = props;
+                            return (
+                              <circle 
+                                cx={cx} 
+                                cy={cy} 
+                                r={8} 
+                                fill={payload.color || '#4a9eff'}
+                                stroke="#fff"
+                                strokeWidth={2}
+                              />
+                            );
+                          }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                    <div style={{ textAlign: 'center', marginTop: '0.5rem', color: '#8b95b2', fontSize: '0.9rem' }}>
+                      Current 2s10s Spread: <span style={{ color: '#4a9eff', fontWeight: 'bold' }}>{(spread * 100).toFixed(2)} bps</span>
+                    </div>
+                  </div>
+
+                  {/* Trade Structure & DV01 */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                    gap: '1rem',
+                    marginBottom: '2rem'
+                  }}>
+                    <div style={{ 
+                      padding: '1rem', 
+                      background: 'rgba(74, 222, 128, 0.1)', 
+                      border: '1px solid rgba(74, 222, 128, 0.3)',
+                      borderRadius: '6px'
+                    }}>
+                      <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Long Position</div>
+                      <div style={{ color: '#4ade80', fontSize: '1.2rem', fontWeight: 'bold' }}>2Y Treasury</div>
+                      <div style={{ color: '#e0e0e0', marginTop: '0.5rem' }}>Notional: ${(long2YNotional / 1_000_000).toFixed(2)}M</div>
+                      <div style={{ color: '#8b95b2', fontSize: '0.9rem', marginTop: '0.25rem' }}>DV01: ${(dv01_2Y * long2YNotional / 10_000_000).toLocaleString()}</div>
+                    </div>
+                    
+                    <div style={{ 
+                      padding: '1rem', 
+                      background: 'rgba(248, 113, 113, 0.1)', 
+                      border: '1px solid rgba(248, 113, 113, 0.3)',
+                      borderRadius: '6px'
+                    }}>
+                      <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Short Position</div>
+                      <div style={{ color: '#f87171', fontSize: '1.2rem', fontWeight: 'bold' }}>10Y Treasury</div>
+                      <div style={{ color: '#e0e0e0', marginTop: '0.5rem' }}>Notional: $10.00M</div>
+                      <div style={{ color: '#8b95b2', fontSize: '0.9rem', marginTop: '0.25rem' }}>DV01: ${dv01_10Y.toLocaleString()}</div>
+                    </div>
+                    
+                    <div style={{ 
+                      padding: '1rem', 
+                      background: 'rgba(74, 158, 255, 0.1)', 
+                      border: '1px solid rgba(74, 158, 255, 0.3)',
+                      borderRadius: '6px'
+                    }}>
+                      <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.5rem' }}>P&L Scenarios</div>
+                      <div style={{ color: '#e0e0e0', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                        <div>10Y ↑1bp, 2Y flat: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_10Y_up_1bp + pnl_2Y_down_1bp).toLocaleString()}</span></div>
+                        <div>2Y ↓1bp, 10Y flat: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_2Y_down_1bp).toLocaleString()}</span></div>
+                        <div>Spread widens 10bps: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_spread_widen_10bps).toLocaleString()}</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Trade Explanation */}
+                  <div style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ color: '#4a9eff', marginBottom: '1rem' }}>The Trade</h4>
+                    <div style={{ 
+                      padding: '1.5rem', 
+                      background: 'rgba(74, 158, 255, 0.05)', 
+                      border: '1px solid rgba(74, 158, 255, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e0e0e0',
+                      lineHeight: '1.8'
+                    }}>
+                      <p style={{ marginBottom: '1rem' }}>
+                        <strong style={{ color: '#4a9eff' }}>Action:</strong> Short the 10-year Treasury Note (sell futures) and Long the 2-year Treasury Note (buy futures).
+                      </p>
+                      <p style={{ marginBottom: '1rem' }}>
+                        <strong style={{ color: '#4a9eff' }}>Target:</strong> Current 2s10s spread is {(spread * 100).toFixed(0)} bps. Target a widening to +100 bps as the "term premium" returns to historical norms.
+                      </p>
+                      <p>
+                        <strong style={{ color: '#4a9eff' }}>Duration Neutrality:</strong> Position is weighted by DV01 to ensure this is a "curve play" and not just a bet on direction. The trade profits from curve steepening regardless of parallel rate moves.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Why This Trade */}
+                  <div style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ color: '#4a9eff', marginBottom: '1rem' }}>Why This Trade: The "Hawkish Easing" Cycle</h4>
+                    <div style={{ 
+                      padding: '1.5rem', 
+                      background: 'rgba(74, 158, 255, 0.05)', 
+                      border: '1px solid rgba(74, 158, 255, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e0e0e0',
+                      lineHeight: '1.8'
+                    }}>
+                      <p style={{ marginBottom: '1rem' }}>
+                        Based on market data from late December 2025, we are witnessing a unique "Hawkish Easing" cycle. The Federal Reserve recently delivered a 25bps cut (bringing the target to 3.50%–3.75%), but coupled it with a "dot plot" that signaled only one more cut for all of 2026.
+                      </p>
+                      <p style={{ marginBottom: '1rem' }}>
+                        This has resulted in a <strong style={{ color: '#4a9eff' }}>Bear Steepening</strong> of the yield curve. While short-term rates are drifting lower due to the actual cuts, long-term yields (10Y and 30Y) are rising as investors demand a higher "term premium" to compensate for persistent inflation risks (Core PCE at 2.8%) and massive Treasury supply.
+                      </p>
+                      
+                      <div style={{ marginTop: '1.5rem' }}>
+                        <h5 style={{ color: '#4a9eff', marginBottom: '0.75rem' }}>The Thesis</h5>
+                        <div style={{ marginLeft: '1rem' }}>
+                          <p style={{ marginBottom: '0.75rem' }}>
+                            <strong style={{ color: '#4ade80' }}>The Front End is Anchored:</strong> The Fed has entered a "wait and see" mode. Even if they don't cut aggressively, the 2-year yield is unlikely to spike because the hiking cycle is definitively over.
+                          </p>
+                          <p style={{ marginBottom: '0.75rem' }}>
+                            <strong style={{ color: '#f87171' }}>The Back End is Unbound:</strong> Several factors are pushing long-term yields higher:
+                          </p>
+                          <ul style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
+                            <li><strong>Fiscal Deficits:</strong> Continued high government spending is increasing the supply of long-dated bonds, requiring higher yields to attract buyers.</li>
+                            <li><strong>Inflation Stickiness:</strong> With Core PCE at 2.8% and new potential tariffs on the horizon, the market is losing faith that inflation will return to the 2% target soon.</li>
+                            <li><strong>BOJ Normalization:</strong> The Bank of Japan just raised rates to 0.75%, which may cause Japanese investors (the largest foreign holders of US Treasuries) to repatriate capital, putting further upward pressure on US long-end yields.</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Risk Factors */}
+                  <div>
+                    <h4 style={{ color: '#f87171', marginBottom: '1rem' }}>Risk Factors</h4>
+                    <div style={{ 
+                      padding: '1.5rem', 
+                      background: 'rgba(248, 113, 113, 0.05)', 
+                      border: '1px solid rgba(248, 113, 113, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e0e0e0',
+                      lineHeight: '1.8'
+                    }}>
+                      <p>
+                        <strong style={{ color: '#f87171' }}>The "Bull Flattener" Risk:</strong> If a sudden recessionary shock occurs (e.g., unemployment spikes toward 5%), the Fed would likely slash rates aggressively. In that scenario, the 2-year would crash much faster than the 10-year, causing the curve to "Bull Steepen" instead. While you still profit from the widening spread, the "Short 10Y" leg would lose money on a nominal basis.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })() : (
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#8b95b2' }}>
+                Loading trade data...
+              </div>
+            )}
+          </div>
+
           {/* TRADE PITCH */}
           <div className="card pitch-card">
             <h3>Desk Pitch & Risk</h3>
