@@ -1193,23 +1193,33 @@ function App() {
               const spreadChange = (spread - originalSpread) * 100; // in bps
               
               // Calculate DV01 for $10M positions
-              const dv01_2Y = 1.9 * 0.0001 * 10_000_000; // 2Y duration ~1.9
-              const dv01_10Y = 8.0 * 0.0001 * 10_000_000; // 10Y duration ~8.0
+              // DV01 = duration * 0.0001 * notional (where 0.0001 = 1bp = 0.01%)
+              // This gives dollars per 1 basis point
+              const dv01_2Y = 1.9 * 0.0001 * 10_000_000; // 2Y duration ~1.9, gives $1,900 per 1bp
+              const dv01_10Y = 8.0 * 0.0001 * 10_000_000; // 10Y duration ~8.0, gives $8,000 per 1bp
               
               // For duration-neutral trade, calculate position sizes
               // Short $10M 10Y, Long $X 2Y where X * dv01_2Y = 10M * dv01_10Y
               const long2YNotional = (10_000_000 * dv01_10Y) / dv01_2Y;
               
               // Calculate actual P&L based on current yield changes
-              const yield2YChange = (yield2Y - original2Y) * 100; // in bps
+              const yield2YChange = (yield2Y - original2Y) * 100; // in bps (e.g., 0.01 = 1.0 bps)
               const yield10YChange = (yield10Y - original10Y) * 100; // in bps
               
               // P&L calculation:
               // Short 10Y: When 10Y yield rises, bond price falls, short position makes money (positive P&L)
               // Long 2Y: When 2Y yield falls, bond price rises, long position makes money (positive P&L)
-              const pnl_10Y_leg = yield10YChange * (dv01_10Y / 100); // Short position: + when yield rises
-              const pnl_2Y_leg = -yield2YChange * (dv01_2Y * long2YNotional / 10_000_000 / 100); // Long position: + when yield falls
+              // DV01 is in dollars per 1bp, yieldChange is in bps, so multiply directly (no division by 100)
+              const dv01_2Y_scaled = dv01_2Y * long2YNotional / 10_000_000; // DV01 for the actual 2Y position size
+              // DV01 is already $ per 1bp, yieldChange is in bps, so multiply directly (no /100 needed)
+              const pnl_10Y_leg = yield10YChange * dv01_10Y; // yield10YChange (bps) * dv01_10Y ($/bp) = $ P&L
+              const pnl_2Y_leg = -yield2YChange * dv01_2Y_scaled; // yield2YChange (bps) * dv01_2Y_scaled ($/bp) = $ P&L
               const totalPnl = pnl_10Y_leg + pnl_2Y_leg;
+              
+              // Calculate total DV01 (for spread widening - when 10Y rises 1bp and 2Y unchanged)
+              // This is the DV01 of the trade for a 1bp spread widening
+              // Note: DV01 values are in dollars per 1bp, so totalDv01/100 gives dollars per 1bp for display
+              const totalDv01 = dv01_10Y + dv01_2Y_scaled; // Should be ~$8,300
               
               // P&L scenarios (for display)
               const pnl_10Y_up_1bp = dv01_10Y; // Short gains when yield rises
@@ -1518,9 +1528,12 @@ function App() {
                         </div>
                       ) : (
                         <div style={{ color: '#e0e0e0', fontSize: '0.9rem', lineHeight: '1.6' }}>
-                          <div>10Y ↑1bp, 2Y flat: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_10Y_up_1bp + pnl_2Y_down_1bp).toLocaleString()}</span></div>
-                          <div>2Y ↓1bp, 10Y flat: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_2Y_down_1bp).toLocaleString()}</span></div>
-                          <div>Spread widens 10bps: <span style={{ color: '#4ade80' }}>+${Math.abs(pnl_spread_widen_10bps).toLocaleString()}</span></div>
+                          <div>10Y ↑1bp, 2Y flat: <span style={{ color: '#4ade80' }}>+${dv01_10Y.toLocaleString()}</span></div>
+                          <div>2Y ↓1bp, 10Y flat: <span style={{ color: '#4ade80' }}>+${dv01_2Y_scaled.toLocaleString()}</span></div>
+                          <div>Spread widens 10bps: <span style={{ color: '#4ade80' }}>+${(totalDv01 * 10).toLocaleString()}</span></div>
+                          <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(139, 149, 178, 0.2)' }}>
+                            <div style={{ color: '#8b95b2', fontSize: '0.8rem' }}>Trade DV01: ${totalDv01.toLocaleString()}</div>
+                          </div>
                         </div>
                       )}
                     </div>
