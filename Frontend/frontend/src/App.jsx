@@ -1196,7 +1196,7 @@ function App() {
               // DV01 = duration * 0.0001 * notional (where 0.0001 = 1bp = 0.01%)
               // This gives dollars per 1 basis point
               const dv01_2Y = 1.9 * 0.0001 * 10_000_000; // 2Y duration ~1.9, gives $1,900 per 1bp
-              const dv01_10Y = 8.0 * 0.0001 * 10_000_000; // 10Y duration ~8.0, gives $8,000 per 1bp
+              const dv01_10Y = 8.3 * 0.0001 * 10_000_000; // 10Y duration ~8.3, gives $8,300 per 1bp
               
               // For duration-neutral trade, calculate position sizes
               // Short $10M 10Y, Long $X 2Y where X * dv01_2Y = 10M * dv01_10Y
