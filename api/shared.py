@@ -52,36 +52,42 @@ def get_yield_curve():
     data = {}
     
     try:
-        # Yahoo Finance tickers
+        # Yahoo Finance tickers (as backup for some maturities)
         yf_tickers = {
             '5Y': '^FVX',   # 5-year Treasury Note
             '10Y': '^TNX',  # 10-year Treasury Note
             '30Y': '^TYX'   # 30-year Treasury Bond
         }
         
-        # Fetch from yfinance
+        # Fetch from yfinance (as backup)
         try:
             for label, ticker in yf_tickers.items():
-                try:
-                    tick = yf.Ticker(ticker)
-                    hist = tick.history(period="1d")
-                    if not hist.empty:
-                        data[label] = float(hist['Close'].iloc[-1])
-                except Exception as e:
-                    print(f"Error fetching {label} ({ticker}) from yfinance: {e}")
+                # Only use yfinance if FRED data is not available
+                if label not in data:
+                    try:
+                        tick = yf.Ticker(ticker)
+                        hist = tick.history(period="1d")
+                        if not hist.empty:
+                            data[label] = float(hist['Close'].iloc[-1])
+                    except Exception as e:
+                        print(f"Error fetching {label} ({ticker}) from yfinance: {e}")
         except Exception as e:
             print(f"Error fetching yields from yfinance: {e}")
         
         # FRED API Treasury constant maturity rates
+        # Fetching all requested maturities: 1,3,6,13 mo and 1,3,5,7,20,30 yr
         fred_series = {
-            '1M': 'DGS1MO',
-            '2M': 'DGS2MO',
-            '3M': 'DGS3MO',
-            '4M': 'DGS4MO',
-            '6M': 'DGS6MO',
-            '1Y': 'DGS1',
-            '2Y': 'DGS2',
-            '7Y': 'DGS7'
+            '1M': 'DGS1MO',   # 1-month
+            '3M': 'DGS3MO',   # 3-month
+            '6M': 'DGS6MO',   # 6-month
+            '13M': 'DGS13MO', # 13-month (may not exist, will skip if unavailable)
+            '1Y': 'DGS1',    # 1-year
+            '3Y': 'DGS3',    # 3-year
+            '5Y': 'DGS5',    # 5-year
+            '7Y': 'DGS7',    # 7-year
+            '10Y': 'DGS10',  # 10-year
+            '20Y': 'DGS20',  # 20-year
+            '30Y': 'DGS30'   # 30-year
         }
         
         if FRED_API_KEY != "YOUR_API_KEY_HERE":
