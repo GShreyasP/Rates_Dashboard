@@ -1,7 +1,435 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import './App.css'
+
+// Helper function to convert maturity string to years
+const maturityToYears = (maturity) => {
+  if (maturity.endsWith('W')) {
+    return parseInt(maturity.slice(0, -1)) / 52.0
+  } else if (maturity.endsWith('M')) {
+    return parseInt(maturity.slice(0, -1)) / 12.0
+  } else if (maturity.endsWith('Y')) {
+    return parseFloat(maturity.slice(0, -1))
+  }
+  return 0
+}
+
+// Interactive Yield Chart Component
+function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, onReset, pnl, selectedBond, onBondChange }) {
+  const svgRef = useRef(null)
+  const containerRef = useRef(null)
+  const [isDragging, setIsDragging] = useState(null)
+  const [chartWidth, setChartWidth] = useState(700)
+  const dragStateRef = useRef({ startY: 0, startYield: 0, maturity: null, minYield: 0, maxYield: 0, plotHeight: 0 })
+
+  const chartHeight = 350
+  const margin = { top: 20, right: 30, bottom: 60, left: 60 }
+  const plotWidth = chartWidth - margin.left - margin.right
+  const plotHeight = chartHeight - margin.top - margin.bottom
+
+  // Make chart responsive
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth
+        setChartWidth(Math.min(700, containerWidth - 32)) // 32px for padding
+      }
+    }
+    
+    updateWidth()
+    window.addEventListener('resize', updateWidth)
+    return () => window.removeEventListener('resize', updateWidth)
+  }, [])
+
+  // Prepare data points - only yearly maturities with even spacing
+  const getDataPoints = () => {
+    // Filter to only yearly maturities (1Y, 2Y, 5Y, 7Y, 10Y, 30Y)
+    const yearlyCurve = originalCurve.filter(item => item.maturity.endsWith('Y'))
+    const sortedCurve = [...yearlyCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
+    
+    // Find min/max yields for scaling
+    const allYields = sortedCurve.map(item => currentYields[item.maturity] || item.yield)
+    const minYield = Math.min(...allYields) - 0.5
+    const maxYield = Math.max(...allYields) + 0.5
+    
+    // Use even spacing for x-axis (not proportional to years)
+    const numPoints = sortedCurve.length
+    
+    return sortedCurve.map((item, index) => {
+      const originalYield = item.yield
+      const currentYield = currentYields[item.maturity] !== undefined ? currentYields[item.maturity] : originalYield
+      
+      // Even spacing: distribute points evenly across the plot width
+      const x = margin.left + (index / (numPoints - 1)) * plotWidth
+      const y = margin.top + plotHeight - ((currentYield - minYield) / (maxYield - minYield)) * plotHeight
+      
+      return {
+        maturity: item.maturity,
+        originalYield,
+        currentYield,
+        x,
+        y,
+        index
+      }
+    })
+  }
+
+  const dataPoints = getDataPoints()
+
+  const handleMouseDown = (e, point) => {
+    // Filter to only yearly maturities for consistent calculations
+    const yearlyCurve = originalCurve.filter(item => item.maturity.endsWith('Y'))
+    const sortedCurve = [...yearlyCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
+    const allYields = sortedCurve.map(item => currentYields[item.maturity] || item.yield)
+    const minYield = Math.min(...allYields) - 0.5
+    const maxYield = Math.max(...allYields) + 0.5
+    
+    dragStateRef.current = {
+      startY: e.clientY,
+      startYield: point.currentYield,
+      maturity: point.maturity,
+      minYield,
+      maxYield,
+      plotHeight
+    }
+    setIsDragging(point.maturity)
+    e.preventDefault()
+  }
+
+
+  // Add global event listeners
+  useEffect(() => {
+    const handleMouseMoveGlobal = (e) => {
+      if (!isDragging || !svgRef.current || !dragStateRef.current.maturity) return
+      
+      const { startY, startYield, maturity, minYield, maxYield, plotHeight: plotH } = dragStateRef.current
+      const pixelsPerYield = plotH / (maxYield - minYield)
+      
+      const deltaY = (startY - e.clientY) / pixelsPerYield
+      const newYield = Math.max(0, Math.min(20, startYield + deltaY))
+      
+      onYieldChange(maturity, newYield)
+    }
+
+    const handleMouseUpGlobal = () => {
+      setIsDragging(null)
+      dragStateRef.current.maturity = null
+    }
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMoveGlobal)
+      window.addEventListener('mouseup', handleMouseUpGlobal)
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMoveGlobal)
+        window.removeEventListener('mouseup', handleMouseUpGlobal)
+      }
+    }
+  }, [isDragging, onYieldChange])
+
+  // Calculate yield range for Y-axis
+  const allYields = dataPoints.map(p => p.currentYield)
+  const minYield = Math.min(...allYields) - 0.5
+  const maxYield = Math.max(...allYields) + 0.5
+
+  // Generate Y-axis labels
+  const yAxisTicks = 5
+  const yAxisLabels = []
+  for (let i = 0; i <= yAxisTicks; i++) {
+    const yieldValue = minYield + (maxYield - minYield) * (i / yAxisTicks)
+    yAxisLabels.push(yieldValue.toFixed(2))
+  }
+
+  // Generate path for the yield curve (original) - only yearly with even spacing
+  const getOriginalCurvePath = () => {
+    if (dataPoints.length === 0) return ''
+    const yearlyCurve = originalCurve.filter(item => item.maturity.endsWith('Y'))
+    const sortedCurve = [...yearlyCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
+    const allYields = sortedCurve.map(item => item.yield)
+    const minYield = Math.min(...allYields) - 0.5
+    const maxYield = Math.max(...allYields) + 0.5
+    const numPoints = sortedCurve.length
+    
+    const points = sortedCurve.map((item, index) => {
+      // Even spacing
+      const x = margin.left + (index / (numPoints - 1)) * plotWidth
+      const y = margin.top + plotHeight - ((item.yield - minYield) / (maxYield - minYield)) * plotHeight
+      return `${x},${y}`
+    }).join(' L ')
+    return `M ${points}`
+  }
+
+  // Generate path for the current yield curve
+  const getCurvePath = () => {
+    if (dataPoints.length === 0) return ''
+    const points = dataPoints.map(p => `${p.x},${p.y}`).join(' L ')
+    return `M ${points}`
+  }
+
+  const hasChanges = dataPoints.some(p => Math.abs(p.currentYield - p.originalYield) > 0.01)
+  
+  // Get available yearly maturities for dropdown
+  const availableBonds = dataPoints.map(p => p.maturity).sort((a, b) => {
+    const aYears = maturityToYears(a)
+    const bYears = maturityToYears(b)
+    return aYears - bYears
+  })
+
+  return (
+    <div className="interactive-chart-container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <h4 style={{ color: '#4a9eff', fontSize: '1.1rem', margin: 0 }}>
+          Interactive Yield Curve & PNL Calculator
+        </h4>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <label style={{ color: '#8b95b2', fontSize: '0.9rem' }}>
+            Bond for PNL:
+            <select
+              value={selectedBond || '10Y'}
+              onChange={(e) => onBondChange(e.target.value)}
+              style={{
+                marginLeft: '0.5rem',
+                padding: '0.4rem 0.75rem',
+                background: '#0f1525',
+                border: '1px solid #1e2746',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '0.85rem',
+                cursor: 'pointer'
+              }}
+            >
+              {availableBonds.map(bond => (
+                <option key={bond} value={bond}>{bond}</option>
+              ))}
+            </select>
+          </label>
+          {onReset && (
+            <button
+              onClick={onReset}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#1e2746',
+                border: '1px solid #4a9eff',
+                borderRadius: '4px',
+                color: '#4a9eff',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: 600
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = '#4a9eff'
+                e.target.style.color = '#fff'
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = '#1e2746'
+                e.target.style.color = '#4a9eff'
+              }}
+            >
+              Reset to Original
+            </button>
+          )}
+        </div>
+      </div>
+      <div 
+        ref={containerRef}
+        style={{ 
+          background: '#0f1525', 
+          borderRadius: '6px', 
+          padding: '1rem',
+          border: '1px solid #1e2746'
+        }}
+      >
+        <svg 
+          ref={svgRef}
+          width={chartWidth} 
+          height={chartHeight}
+          style={{ display: 'block', margin: '0 auto', maxWidth: '100%' }}
+          onMouseLeave={() => {
+            setIsDragging(null)
+            dragStateRef.current.maturity = null
+          }}
+        >
+          {/* Grid lines */}
+          {yAxisLabels.map((label, i) => {
+            const y = margin.top + (plotHeight / yAxisTicks) * i
+            return (
+              <line
+                key={`grid-${i}`}
+                x1={margin.left}
+                y1={y}
+                x2={margin.left + plotWidth}
+                y2={y}
+                stroke="#1e2746"
+                strokeWidth="1"
+                strokeDasharray="3 3"
+              />
+            )
+          })}
+          
+          {/* Y-axis labels */}
+          {yAxisLabels.map((label, i) => {
+            const y = margin.top + (plotHeight / yAxisTicks) * i
+            return (
+              <text
+                key={`y-label-${i}`}
+                x={margin.left - 10}
+                y={y + 5}
+                fill="#8b95b2"
+                fontSize="11"
+                textAnchor="end"
+              >
+                {label}%
+              </text>
+            )
+          })}
+          
+          {/* X-axis labels */}
+          {dataPoints.map((point, i) => (
+            <text
+              key={`x-label-${i}`}
+              x={point.x}
+              y={chartHeight - margin.bottom + 20}
+              fill="#8b95b2"
+              fontSize="11"
+              textAnchor="middle"
+            >
+              {point.maturity}
+            </text>
+          ))}
+
+          {/* Original yield curve (dashed line) */}
+          <path
+            d={getOriginalCurvePath()}
+            fill="none"
+            stroke="#4a9eff"
+            strokeWidth="2"
+            strokeDasharray="5 5"
+            opacity="0.4"
+          />
+
+          {/* Current yield curve (solid line) */}
+          <path
+            d={getCurvePath()}
+            fill="none"
+            stroke="#4a9eff"
+            strokeWidth="3"
+          />
+
+          {/* Interactive points */}
+          {dataPoints.map((point, i) => {
+            const isChanged = Math.abs(point.currentYield - point.originalYield) > 0.01
+            return (
+              <g key={point.maturity}>
+                {/* Line to point */}
+                <line
+                  x1={point.x}
+                  y1={margin.top + plotHeight}
+                  x2={point.x}
+                  y2={point.y}
+                  stroke="#1e2746"
+                  strokeWidth="1"
+                  strokeDasharray="2 2"
+                />
+                {/* Draggable point */}
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={8}
+                  fill={isChanged ? "#4ade80" : "#4a9eff"}
+                  stroke="#fff"
+                  strokeWidth="2"
+                  style={{ cursor: 'ns-resize' }}
+                  onMouseDown={(e) => handleMouseDown(e, point)}
+                />
+                {/* Yield label above point */}
+                <text
+                  x={point.x}
+                  y={point.y - 15}
+                  fill={isChanged ? "#4ade80" : "#4a9eff"}
+                  fontSize="12"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                >
+                  {point.currentYield.toFixed(2)}%
+                </text>
+                {/* Change indicator */}
+                {isChanged && (
+                  <text
+                    x={point.x}
+                    y={point.y - 30}
+                    fill="#4ade80"
+                    fontSize="10"
+                    textAnchor="middle"
+                  >
+                    {point.currentYield > point.originalYield ? '▲' : '▼'} 
+                    {Math.abs(point.currentYield - point.originalYield).toFixed(2)}%
+                  </text>
+                )}
+              </g>
+            )
+          })}
+
+          {/* Axis labels */}
+          <text
+            x={chartWidth / 2}
+            y={chartHeight - 10}
+            fill="#8b95b2"
+            fontSize="12"
+            textAnchor="middle"
+          >
+            Maturity
+          </text>
+          <text
+            x={15}
+            y={chartHeight / 2}
+            fill="#8b95b2"
+            fontSize="12"
+            textAnchor="middle"
+            transform={`rotate(-90, 15, ${chartHeight / 2})`}
+          >
+            Yield (%)
+          </text>
+        </svg>
+        
+        {/* PNL Display */}
+        <div style={{
+          marginTop: '1.5rem',
+          padding: '1rem',
+          background: pnl >= 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)',
+          border: `1px solid ${pnl >= 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(248, 113, 113, 0.3)'}`,
+          borderRadius: '6px',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            color: '#8b95b2',
+            fontSize: '0.9rem',
+            marginBottom: '0.5rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}>
+            Estimated PNL ($10M {selectedBond || '10Y'} Position)
+          </div>
+          <div style={{
+            color: pnl >= 0 ? '#4ade80' : '#f87171',
+            fontSize: '2rem',
+            fontWeight: 'bold',
+            fontFamily: 'Courier New, monospace'
+          }}>
+            {pnl >= 0 ? '+' : ''}{pnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div style={{
+            color: '#8b95b2',
+            fontSize: '0.85rem',
+            marginTop: '0.5rem',
+            fontStyle: 'italic'
+          }}>
+            Drag the {selectedBond || '10Y'} point up or down to see PNL impact (includes convexity adjustment)
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function App() {
   const [macroData, setMacroData] = useState(null)
@@ -9,6 +437,12 @@ function App() {
   const [fedwatchData, setFedwatchData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [expandedCards, setExpandedCards] = useState({})
+  const [interactiveYields, setInteractiveYields] = useState(null)
+  const [selectedBond, setSelectedBond] = useState('10Y')
+  const [draggedPoint, setDraggedPoint] = useState(null)
+  const chartRef = useRef(null)
+  const [dataUpdated, setDataUpdated] = useState(false)
+  const [dataUpdateMessage, setDataUpdateMessage] = useState('')
 
   // Explanation data for each indicator
   const indicatorExplanations = {
@@ -17,25 +451,75 @@ function App() {
       goodScore: "Moderate increases (2-3% annually) indicate healthy inflation. Too high (>5%) suggests overheating; too low (<1%) may signal weak demand.",
       future: "Rising CPI suggests higher costs and potential Fed rate hikes. Falling CPI may indicate economic slowdown and potential rate cuts."
     },
+    "PCE Headline": {
+      what: "Personal Consumption Expenditures Price Index (Headline) measures changes in prices paid by consumers for all goods and services, including food and energy.",
+      goodScore: "Moderate increases (2-3% annually) indicate healthy inflation. The Fed targets 2% PCE inflation. Too high (>3%) suggests overheating; too low (<1%) may signal weak demand.",
+      future: "Rising PCE is the Fed's primary inflation metric for policy decisions. Higher PCE typically leads to rate hikes; lower PCE may prompt rate cuts."
+    },
+    "PCE Core": {
+      what: "Personal Consumption Expenditures Price Index (Core) excludes volatile food and energy prices, providing a more stable measure of underlying inflation trends.",
+      goodScore: "Core PCE is the Fed's preferred inflation gauge as it excludes volatile components. The Fed targets 2% core PCE. Moderate increases (2-3% annually) indicate healthy inflation.",
+      future: "Core PCE is closely watched by the Fed as it reflects underlying inflation trends without food/energy volatility. Rising core PCE typically leads to rate hikes."
+    },
     "PPI": {
       what: "Measures average changes in selling prices received by domestic producers for their output, tracking inflation at the wholesale level.",
       goodScore: "Stable or moderate increases (1-3%) indicate balanced supply chains. Sharp increases suggest cost pressures; declines may signal weak demand.",
       future: "Rising PPI often precedes CPI increases, signaling future consumer price inflation. Falling PPI may indicate deflationary pressures ahead."
     },
-    "Payrolls": {
+    "Non-Farm Payrolls": {
       what: "Total number of paid U.S. workers in non-farm establishments, excluding government, private households, and non-profit employees.",
       goodScore: "Consistent monthly growth (150K-250K) indicates healthy job market. Declines signal economic weakness; very high growth may indicate overheating.",
       future: "Strong payroll growth supports consumer spending and economic expansion. Weak growth suggests potential recession and Fed easing."
+    },
+    "Unemployment Rate": {
+      what: "Percentage of the labor force that is unemployed and actively seeking employment. A key measure of labor market slack.",
+      goodScore: "Lower is generally better. Rates below 4% indicate tight labor market. Rates above 6% suggest economic weakness. The Fed targets 'full employment' around 4-5%.",
+      future: "Falling unemployment supports wage growth and consumer spending, potentially leading to rate hikes. Rising unemployment signals economic weakness and potential rate cuts."
+    },
+    "Unemployment Claims": {
+      what: "Number of individuals filing for unemployment insurance benefits, indicating layoffs and labor market health.",
+      goodScore: "Lower is better. Claims below 250K indicate strong job market. Above 300K suggests labor market weakness.",
+      future: "Rising claims signal economic slowdown and potential Fed easing. Falling claims support economic strength and potential rate hikes."
+    },
+    "JOLTS": {
+      what: "Job Openings and Labor Turnover Survey (JOLTS) measures job openings, hires, and separations. Job openings indicate labor demand.",
+      goodScore: "Higher job openings relative to unemployed workers (ratio >1.0) indicates tight labor market. Declining openings suggest weakening labor demand.",
+      future: "High job openings support wage growth and economic strength, potentially leading to rate hikes. Declining openings signal economic slowdown and potential rate cuts."
     },
     "PMI": {
       what: "Purchasing Managers' Index measuring manufacturing activity. Values above 50 indicate expansion; below 50 indicates contraction.",
       goodScore: "Values above 50 indicate manufacturing growth. Above 55 suggests strong expansion; below 45 signals significant contraction.",
       future: "Rising PMI suggests economic strength and potential rate hikes. Falling PMI indicates weakening economy and potential rate cuts."
     },
-    "Unemployment Claims": {
-      what: "Number of individuals filing for unemployment insurance benefits, indicating layoffs and labor market health.",
-      goodScore: "Lower is better. Claims below 250K indicate strong job market. Above 300K suggests labor market weakness.",
-      future: "Rising claims signal economic slowdown and potential Fed easing. Falling claims support economic strength and potential rate hikes."
+    "Consumer Sentiment": {
+      what: "University of Michigan Consumer Sentiment Index measures how optimistic consumers feel about the economy and their personal finances.",
+      goodScore: "Higher values indicate positive consumer sentiment. Values above 90 suggest strong consumer confidence; below 70 may signal economic concerns.",
+      future: "Rising consumer sentiment supports increased spending and economic growth. Falling sentiment may signal reduced spending and economic slowdown."
+    },
+    "Consumer Confidence": {
+      what: "Conference Board Consumer Confidence Index measures consumers' assessment of current business and labor market conditions, and expectations for the next six months.",
+      goodScore: "Higher values indicate stronger consumer confidence. Values above 100 suggest optimistic consumers; below 80 may signal economic concerns.",
+      future: "Rising consumer confidence supports increased spending and economic expansion. Falling confidence may signal reduced spending and potential economic slowdown."
+    }
+  }
+
+  // Organize indicators by section
+  const organizeIndicatorsBySection = (data) => {
+    if (!data) return {}
+    
+    return {
+      "Inflation Indicators": {
+        indicators: ["CPI", "PCE Headline", "PCE Core", "PMI"].filter(key => data[key]),
+        description: "Measures of consumer price inflation, spending patterns, and manufacturing activity"
+      },
+      "Employment Indicators": {
+        indicators: ["Non-Farm Payrolls", "Unemployment Rate", "Unemployment Claims", "JOLTS"].filter(key => data[key]),
+        description: "Labor market health, job creation, and labor turnover metrics"
+      },
+      "Price & Activity Indexes": {
+        indicators: ["PPI", "Consumer Sentiment", "Consumer Confidence"].filter(key => data[key]),
+        description: "Wholesale price inflation, producer cost trends, and consumer sentiment"
+      }
     }
   }
 
@@ -44,6 +528,103 @@ function App() {
       ...prev,
       [key]: !prev[key]
     }))
+  }
+
+  // Calculate modified duration (duration adjusted for yield)
+  // Modified duration decreases as yield increases (convexity effect)
+  // Using approximation: Modified Duration ≈ Macaulay Duration / (1 + yield)
+  const calculateModifiedDuration = (macaulayDuration, yieldPercent) => {
+    return macaulayDuration / (1 + yieldPercent / 100)
+  }
+
+  // Calculate DV01 for a position at a specific yield
+  // DV01 changes as yield changes because duration changes
+  const calculateDV01 = (faceValue, macaulayDuration, yieldPercent) => {
+    const modifiedDuration = calculateModifiedDuration(macaulayDuration, yieldPercent)
+    // Approximate price at current yield (using par value as baseline)
+    // Price ≈ Face Value for approximation
+    return modifiedDuration * 0.0001 * faceValue
+  }
+
+  // Calculate PNL accounting for changing DV01 (convexity)
+  // As yield increases, DV01 decreases (duration decreases), so PNL increases at decreasing rate
+  // As yield decreases, DV01 increases (duration increases), so PNL moves faster
+  const calculatePNL = (originalYield, newYield, macaulayDuration, faceValue) => {
+    // Yield change in basis points
+    const yieldChangeBps = (newYield - originalYield) * 100
+    
+    // Calculate DV01 at original yield (this is the $8000 reference)
+    const originalDV01 = calculateDV01(faceValue, macaulayDuration, originalYield)
+    
+    // Calculate DV01 at new yield (changes due to duration change)
+    const newDV01 = calculateDV01(faceValue, macaulayDuration, newYield)
+    
+    // Average DV01 for the move (using average gives better approximation for convexity)
+    const avgDV01 = (originalDV01 + newDV01) / 2
+    
+    // PNL = -Average_DV01 * yield_change_in_bps
+    // Negative because bond prices move inversely to yields
+    // The convexity is built in because we're using average DV01 which accounts for duration change
+    return -avgDV01 * yieldChangeBps
+  }
+
+  // Get Macaulay duration estimate for different maturities (approximate)
+  // These are Macaulay durations (not modified durations)
+  const getMacaulayDuration = (maturity) => {
+    const maturityMap = {
+      '1Y': 1.0,
+      '2Y': 1.9,
+      '5Y': 4.5,
+      '7Y': 6.2,
+      '10Y': 8.0,
+      '30Y': 18.0
+    }
+    return maturityMap[maturity] || 8.0
+  }
+
+  // Get PNL for selected bond position
+  const getPNL = (selectedBond = '10Y') => {
+    if (!ratesData || !interactiveYields || !ratesData.yield_curve) {
+      console.log('PNL calc: Missing data', { ratesData: !!ratesData, interactiveYields: !!interactiveYields })
+      return 0
+    }
+    
+    const originalBond = ratesData.yield_curve.find(item => item.maturity === selectedBond)
+    if (!originalBond) {
+      console.log(`PNL calc: No ${selectedBond} found in yield curve`)
+      return 0
+    }
+    
+    const newYield = interactiveYields[selectedBond]
+    if (newYield === undefined) {
+      console.log(`PNL calc: No ${selectedBond} in interactive yields`, interactiveYields)
+      return 0
+    }
+    
+    // Calculate PNL for $10M position
+    const macaulayDuration = getMacaulayDuration(selectedBond)
+    const faceValue = 10000000
+    
+    // Calculate original DV01 (reference point, should be ~$8000 for 10Y)
+    const originalDV01 = calculateDV01(faceValue, macaulayDuration, originalBond.yield)
+    
+    // Calculate PNL with convexity (DV01 changes with yield)
+    const pnl = calculatePNL(originalBond.yield, newYield, macaulayDuration, faceValue)
+    
+    // Calculate new DV01 for reference
+    const newDV01 = calculateDV01(faceValue, macaulayDuration, newYield)
+    
+    console.log('PNL calculated:', { 
+      bond: selectedBond, 
+      originalYield: originalBond.yield, 
+      newYield: newYield,
+      yieldChangeBps: (newYield - originalBond.yield) * 100,
+      macaulayDuration,
+      originalDV01,
+      newDV01,
+      pnl 
+    })
+    return pnl
   }
 
   // Determine API URL (Localhost for dev, env variable for prod, or relative path)
@@ -66,6 +647,19 @@ function App() {
         setMacroData(macroRes.data)
         setRatesData(ratesRes.data)
         setFedwatchData(fedwatchRes.data)
+        // Initialize interactive yields with current rates data (only yearly maturities)
+        if (ratesRes.data && ratesRes.data.yield_curve) {
+          const yields = {}
+          ratesRes.data.yield_curve
+            .filter(item => item.maturity.endsWith('Y')) // Only yearly maturities
+            .forEach(item => {
+              yields[item.maturity] = item.yield
+            })
+          setInteractiveYields(yields)
+          console.log('Interactive yields initialized:', yields)
+        } else {
+          console.warn('No yield curve data available for interactive chart')
+        }
         setLoading(false)
       } catch (error) {
         console.error("Error fetching data", error)
@@ -73,12 +667,107 @@ function App() {
       }
     }
     fetchData()
+    
+    // Poll for data updates every 30 seconds
+    const pollInterval = setInterval(async () => {
+      try {
+        const updateRes = await axios.get(`${API_URL}/data-updated`)
+        if (updateRes.data.updated && Object.keys(updateRes.data.updated_data).length > 0) {
+          const updatedTypes = Object.keys(updateRes.data.updated_data).join(', ')
+          setDataUpdateMessage(`New data available for: ${updatedTypes}. Please reload to see updates.`)
+          setDataUpdated(true)
+        }
+      } catch (error) {
+        // Silently fail - don't interrupt user experience
+        console.log("Error checking for data updates:", error)
+      }
+    }, 30000) // Check every 30 seconds
+    
+    return () => clearInterval(pollInterval)
   }, [])
 
-  if (loading) return <div className="loading">Loading Market Data...</div>
+  if (loading) return (
+    <div className="loading" style={{ position: 'relative', height: '100vh' }}>
+      <div style={{ fontSize: '1.5rem', color: '#4a9eff' }}>Loading Market Data...</div>
+      <div style={{
+        position: 'absolute',
+        bottom: '2rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        padding: '0.75rem 1.5rem',
+        background: 'rgba(74, 158, 255, 0.1)',
+        border: '1px solid rgba(74, 158, 255, 0.3)',
+        borderRadius: '8px',
+        fontSize: '0.9rem',
+        color: '#8b95b2',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+      }}>
+        Loading market data (optimized for faster load times)
+      </div>
+    </div>
+  )
+
+  const handleReload = () => {
+    window.location.reload()
+  }
 
   return (
     <div className="dashboard-container">
+      {dataUpdated && (
+        <div style={{
+          position: 'fixed',
+          top: '1rem',
+          right: '1rem',
+          background: 'rgba(74, 222, 128, 0.15)',
+          border: '2px solid rgba(74, 222, 128, 0.5)',
+          borderRadius: '8px',
+          padding: '1rem 1.5rem',
+          color: '#4ade80',
+          zIndex: 1000,
+          maxWidth: '400px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>🔄 Data Updated</div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>{dataUpdateMessage}</div>
+          </div>
+          <button
+            onClick={handleReload}
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#4ade80',
+              border: 'none',
+              borderRadius: '4px',
+              color: '#0f1525',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '0.85rem'
+            }}
+            onMouseOver={(e) => e.target.style.background = '#4ade80'}
+            onMouseOut={(e) => e.target.style.background = '#4ade80'}
+          >
+            Reload
+          </button>
+          <button
+            onClick={() => setDataUpdated(false)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#4ade80',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              padding: '0.25rem 0.5rem'
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
       <header>
         <h1>Rates Dashboard</h1>
         <p>Macro Data • Yield Curve • Trade Pitches</p>
@@ -87,125 +776,144 @@ function App() {
       {/* SECTION 1: MACRO DATA */}
       <section className="macro-section">
         <h2>Economic Indicators</h2>
-        <div className="charts-grid">
-          {macroData && Object.entries(macroData).map(([key, data]) => {
-            // Format data for chart - data structure now has 'value' and 'pct_change'
-            const chartData = data.history ? data.history.map(item => ({
-              date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-              value: item.value,
-              pct_change: item.pct_change || 0,
-              fullDate: item.date
-            })) : [];
+        {macroData && (() => {
+          const sections = organizeIndicatorsBySection(macroData)
+          return Object.entries(sections).map(([sectionName, section]) => {
+            if (section.indicators.length === 0) return null
             
             return (
-              <div key={key} className="card">
-                <h3>{key}</h3>
-                <div className="stat-row">
-                  <span>Latest: <strong>{data.current?.toLocaleString()}</strong></span>
-                  <span className={data.change >= 0 ? 'green' : 'red'}>
-                    {data.change > 0 ? '▲' : '▼'} {data.change}%
-                  </span>
+              <div key={sectionName} className="indicator-section">
+                <div className="section-header">
+                  <h3>{sectionName}</h3>
+                  <p className="section-description">{section.description}</p>
                 </div>
-                <div className="chart-wrapper">
-                  {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
-                        <XAxis 
-                          dataKey="date" 
-                          stroke="#8b95b2"
-                          tick={{ fill: '#8b95b2', fontSize: 10 }}
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                        />
-                        <YAxis 
-                          domain={['auto', 'auto']}
-                          stroke="#8b95b2"
-                          tick={{ fill: '#8b95b2', fontSize: 10 }}
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#141b2d', 
-                            border: '1px solid #1e2746',
-                            color: '#e0e0e0'
-                          }}
-                          labelStyle={{ color: '#4a9eff' }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="value" 
-                          stroke="#4a9eff" 
-                          strokeWidth={2}
-                          dot={false}
-                          activeDot={{ r: 4, fill: '#4a9eff' }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: '#8b95b2' }}>
-                      No data available
-                    </div>
-                  )}
-                </div>
-                {/* Horizontal Data Table */}
-                {chartData.length > 0 && (
-                  <div className="data-table-wrapper">
-                    <div className="data-table-scroll">
-                      <table className="data-table">
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Value</th>
-                            <th>% Change</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {chartData.slice().reverse().map((item, idx) => (
-                            <tr key={idx}>
-                              <td>{item.date}</td>
-                              <td>{typeof item.value === 'number' ? item.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : item.value}</td>
-                              <td className={item.pct_change >= 0 ? 'green' : 'red'}>
-                                {item.pct_change > 0 ? '▲' : item.pct_change < 0 ? '▼' : ''} {item.pct_change.toFixed(2)}%
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-                {/* Explanation Dropdown */}
-                <div className="explanation-section">
-                  <button 
-                    className="explanation-toggle"
-                    onClick={() => toggleCard(key)}
-                    aria-expanded={expandedCards[key]}
-                  >
-                    <span>ℹ️ About {key}</span>
-                    <span className="toggle-icon">{expandedCards[key] ? '▼' : '▶'}</span>
-                  </button>
-                  {expandedCards[key] && indicatorExplanations[key] && (
-                    <div className="explanation-content">
-                      <div className="explanation-item">
-                        <h4>What It Measures</h4>
-                        <p>{indicatorExplanations[key].what}</p>
+                <div className="charts-grid">
+                  {section.indicators.map((key) => {
+                    const data = macroData[key]
+                    // Format data for chart - data structure now has 'value' and 'pct_change'
+                    const chartData = data.history ? data.history.map(item => ({
+                      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                      value: item.value,
+                      pct_change: item.pct_change || 0,
+                      fullDate: item.date
+                    })) : [];
+                    
+                    return (
+                      <div key={key} className="card">
+                        <h3>{key}</h3>
+                        <div className="stat-row">
+                          <span>Latest: <strong>{data.current?.toLocaleString()}</strong></span>
+                          <span className={(data.yoy_change !== undefined ? data.yoy_change : data.change) >= 0 ? 'green' : 'red'}>
+                            {(data.yoy_change !== undefined ? data.yoy_change : data.change) > 0 ? '▲' : '▼'} 
+                            {data.yoy_change !== undefined ? `${data.yoy_change}%` : `${data.change}%`}
+                            {data.yoy_change !== undefined && <span style={{fontSize: '0.75rem', marginLeft: '0.25rem', opacity: 0.7}}>YoY</span>}
+                          </span>
+                        </div>
+                        <div className="chart-wrapper">
+                          {chartData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={200}>
+                              <LineChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
+                                <XAxis 
+                                  dataKey="date" 
+                                  stroke="#8b95b2"
+                                  tick={{ fill: '#8b95b2', fontSize: 10 }}
+                                  angle={-45}
+                                  textAnchor="end"
+                                  height={60}
+                                />
+                                <YAxis 
+                                  domain={['auto', 'auto']}
+                                  stroke="#8b95b2"
+                                  tick={{ fill: '#8b95b2', fontSize: 10 }}
+                                />
+                                <Tooltip 
+                                  contentStyle={{ 
+                                    backgroundColor: '#141b2d', 
+                                    border: '1px solid #1e2746',
+                                    color: '#e0e0e0'
+                                  }}
+                                  labelStyle={{ color: '#4a9eff' }}
+                                />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="value" 
+                                  stroke="#4a9eff" 
+                                  strokeWidth={2}
+                                  dot={false}
+                                  activeDot={{ r: 4, fill: '#4a9eff' }}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          ) : (
+                            <div style={{ padding: '2rem', textAlign: 'center', color: '#8b95b2' }}>
+                              No data available
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Horizontal Data Table */}
+                        {chartData.length > 0 && (
+                          <div className="data-table-wrapper">
+                            <div className="data-table-scroll">
+                              <table className="data-table">
+                                <thead>
+                                  <tr>
+                                    <th>Date</th>
+                                    <th>Value</th>
+                                    <th>% Change</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {chartData.slice().reverse().map((item, idx) => (
+                                    <tr key={idx}>
+                                      <td>{item.date}</td>
+                                      <td>{typeof item.value === 'number' ? item.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : item.value}</td>
+                                      <td className={item.pct_change >= 0 ? 'green' : 'red'}>
+                                        {item.pct_change > 0 ? '▲' : item.pct_change < 0 ? '▼' : ''} {item.pct_change.toFixed(2)}%
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                        {/* Explanation Dropdown */}
+                        <div className="explanation-section">
+                          <button 
+                            className="explanation-toggle"
+                            onClick={() => toggleCard(key)}
+                            aria-expanded={expandedCards[key]}
+                          >
+                            <span>ℹ️ About {key}</span>
+                            <span className="toggle-icon">{expandedCards[key] ? '▼' : '▶'}</span>
+                          </button>
+                          {expandedCards[key] && indicatorExplanations[key] && (
+                            <div className="explanation-content">
+                              <div className="explanation-item">
+                                <h4>What It Measures</h4>
+                                <p>{indicatorExplanations[key].what}</p>
+                              </div>
+                              <div className="explanation-item">
+                                <h4>What's a Good Score</h4>
+                                <p>{indicatorExplanations[key].goodScore}</p>
+                              </div>
+                              <div className="explanation-item">
+                                <h4>What It Means for the Future</h4>
+                                <p>{indicatorExplanations[key].future}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="explanation-item">
-                        <h4>What's a Good Score</h4>
-                        <p>{indicatorExplanations[key].goodScore}</p>
-                      </div>
-                      <div className="explanation-item">
-                        <h4>What It Means for the Future</h4>
-                        <p>{indicatorExplanations[key].future}</p>
-                      </div>
-                    </div>
-                  )}
+                    )
+                  })}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            )
+          })
+        })()}
       </section>
 
       {/* SECTION 2: RATES & PITCHES */}
@@ -317,7 +1025,7 @@ function App() {
                       label={{ value: 'Maturity', position: 'insideBottom', offset: -5, fill: '#8b95b2' }}
                     />
                     <YAxis 
-                      domain={['auto', 'auto']}
+                      domain={[3, 'auto']}
                       stroke="#8b95b2"
                       tick={{ fill: '#8b95b2', fontSize: 12 }}
                       label={{ value: 'Yield (%)', angle: -90, position: 'insideLeft', fill: '#8b95b2' }}
@@ -394,6 +1102,52 @@ function App() {
                 <div className="value mono">{ratesData?.analysis.dv01_10m_position}</div>
               </div>
             </div>
+            
+            {/* Interactive Bond Trade Chart */}
+            {ratesData && ratesData.yield_curve ? (
+              interactiveYields ? (
+                <InteractiveYieldChart 
+                  originalCurve={ratesData.yield_curve}
+                  currentYields={interactiveYields}
+                  selectedBond={selectedBond}
+                  onBondChange={(bond) => setSelectedBond(bond)}
+                  onYieldChange={(maturity, newYield) => {
+                    setInteractiveYields(prev => ({
+                      ...prev,
+                      [maturity]: newYield
+                    }))
+                  }}
+                  onReset={() => {
+                    const yields = {}
+                    ratesData.yield_curve
+                      .filter(item => item.maturity.endsWith('Y')) // Only yearly maturities
+                      .forEach(item => {
+                        yields[item.maturity] = item.yield
+                      })
+                    setInteractiveYields(yields)
+                  }}
+                  pnl={getPNL(selectedBond)}
+                />
+              ) : (
+                <div style={{ 
+                  padding: '2rem', 
+                  textAlign: 'center', 
+                  color: '#8b95b2',
+                  fontStyle: 'italic'
+                }}>
+                  Initializing interactive chart...
+                </div>
+              )
+            ) : (
+              <div style={{ 
+                padding: '2rem', 
+                textAlign: 'center', 
+                color: '#8b95b2',
+                fontStyle: 'italic'
+              }}>
+                Loading yield curve data...
+              </div>
+            )}
           </div>
         </div>
       </section>
