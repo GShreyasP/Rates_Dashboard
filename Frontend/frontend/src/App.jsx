@@ -1177,6 +1177,26 @@ function App() {
             )}
           </div>
 
+          {/* Header Separator */}
+          <div style={{ 
+            gridColumn: '1 / -1', 
+            marginTop: '3rem', 
+            marginBottom: '1.5rem',
+            textAlign: 'center'
+          }}>
+            <h2 style={{ 
+              color: '#4a9eff', 
+              fontSize: '1.8rem', 
+              fontWeight: '600',
+              margin: 0,
+              paddingBottom: '0.5rem',
+              borderBottom: '2px solid #4a9eff',
+              display: 'inline-block'
+            }}>
+              Yield Curve & Analysis
+            </h2>
+          </div>
+
           {/* BEAR STEEPENER TRADE PITCH */}
           <div className="card" style={{ gridColumn: '1 / -1', marginTop: '2rem' }}>
             <h3 style={{ color: '#4a9eff', marginBottom: '1.5rem' }}>Bear Steepener Trade: Short 10Y / Long 2Y</h3>

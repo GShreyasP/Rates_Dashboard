@@ -224,6 +224,8 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
+            # Add cache headers for Vercel edge caching (5 minutes)
+            self.send_header('Cache-Control', 'public, s-maxage=300, max-age=300')
             self.end_headers()
             response_data = json.dumps(data).encode('utf-8')
             self.wfile.write(response_data)
