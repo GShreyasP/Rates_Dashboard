@@ -9,16 +9,45 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-try:
-    from shared import get_yield_curve, maturity_to_years, calculate_dv01
-except ImportError:
-    # Fallback: try importing from api.shared
-    from api.shared import get_yield_curve, maturity_to_years, calculate_dv01
+# Lazy import to avoid import errors at module load time
+_shared_imported = False
+_get_yield_curve = None
+_maturity_to_years = None
+_calculate_dv01 = None
+
+def _import_shared():
+    """Lazy import of shared functions"""
+    global _shared_imported, _get_yield_curve, _maturity_to_years, _calculate_dv01
+    if _shared_imported:
+        return
+    
+    try:
+        from shared import get_yield_curve, maturity_to_years, calculate_dv01
+        _get_yield_curve = get_yield_curve
+        _maturity_to_years = maturity_to_years
+        _calculate_dv01 = calculate_dv01
+        _shared_imported = True
+    except ImportError:
+        try:
+            from api.shared import get_yield_curve, maturity_to_years, calculate_dv01
+            _get_yield_curve = get_yield_curve
+            _maturity_to_years = maturity_to_years
+            _calculate_dv01 = calculate_dv01
+            _shared_imported = True
+        except ImportError as e:
+            print(f"Failed to import shared functions: {e}")
+            raise
 
 def fetch_rates_data():
     """Fetch rates data"""
     try:
-        yields = get_yield_curve()
+        # Import shared functions lazily
+        _import_shared()
+        
+        if not _shared_imported or not _get_yield_curve:
+            return {"error": "Failed to import required functions"}
+        
+        yields = _get_yield_curve()
         
         if not yields:
             return {"error": "Failed to fetch yields"}
@@ -36,14 +65,14 @@ def fetch_rates_data():
             trade_pitch = "Bull Steepener (Expecting cuts)"
 
         # DV01 Calculation
-        dv01 = calculate_dv01(10_000_000, 8.0, yields.get('10Y', 4.0))
+        dv01 = _calculate_dv01(10_000_000, 8.0, yields.get('10Y', 4.0))
 
         # Sort yields by maturity
-        sorted_yields = dict(sorted(yields.items(), key=lambda x: maturity_to_years(x[0])))
+        sorted_yields = dict(sorted(yields.items(), key=lambda x: _maturity_to_years(x[0])))
         
         # Create yield curve data for charting
         yield_curve_data = [
-            {"maturity": k, "years": maturity_to_years(k), "yield": v}
+            {"maturity": k, "years": _maturity_to_years(k), "yield": v}
             for k, v in sorted_yields.items()
         ]
 
@@ -60,11 +89,17 @@ def fetch_rates_data():
         }
     except Exception as e:
         import traceback
-        print(f"Error in fetch_rates_data: {e}")
-        traceback.print_exc()
-        return {"error": f"Failed to fetch rates data: {str(e)}"}
+        error_msg = str(e)
+        traceback_str = traceback.format_exc()
+        print(f"Error in fetch_rates_data: {error_msg}")
+        print(traceback_str)
+        return {"error": f"Failed to fetch rates data: {error_msg}"}
 
 class handler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        """Override to prevent logging errors"""
+        pass
+    
     def do_GET(self):
         try:
             data = fetch_rates_data()
@@ -80,23 +115,32 @@ class handler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
-            self.wfile.write(json.dumps(data).encode('utf-8'))
+            response_data = json.dumps(data).encode('utf-8')
+            self.wfile.write(response_data)
         except Exception as e:
             import traceback
             error_msg = str(e)
             traceback_str = traceback.format_exc()
             print(f"Error in /api/rates handler: {error_msg}")
             print(traceback_str)
-            self.send_response(500)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": error_msg, "traceback": traceback_str}).encode('utf-8'))
+            try:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                error_response = json.dumps({"error": error_msg, "traceback": traceback_str}).encode('utf-8')
+                self.wfile.write(error_response)
+            except:
+                # If we can't send response, just log it
+                print("Failed to send error response")
     
     def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
+        try:
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+            self.end_headers()
+        except:
+            pass
         return
