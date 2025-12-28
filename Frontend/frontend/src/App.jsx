@@ -1128,6 +1128,54 @@ function App() {
             </table>
           </div>
 
+          {/* Interactive Yield Curve & PNL Calculator */}
+          <div className="card">
+            {ratesData && ratesData.yield_curve ? (
+              interactiveYields ? (
+                <InteractiveYieldChart 
+                  originalCurve={ratesData.yield_curve}
+                  currentYields={interactiveYields}
+                  selectedBond={selectedBond}
+                  onBondChange={(bond) => setSelectedBond(bond)}
+                  onYieldChange={(maturity, newYield) => {
+                    setInteractiveYields(prev => ({
+                      ...prev,
+                      [maturity]: newYield
+                    }))
+                  }}
+                  onReset={() => {
+                    const yields = {}
+                    ratesData.yield_curve
+                      .filter(item => item.maturity.endsWith('Y')) // Only yearly maturities
+                      .forEach(item => {
+                        yields[item.maturity] = item.yield
+                      })
+                    setInteractiveYields(yields)
+                  }}
+                  pnl={getPNL(selectedBond)}
+                />
+              ) : (
+                <div style={{ 
+                  padding: '2rem', 
+                  textAlign: 'center', 
+                  color: '#8b95b2',
+                  fontStyle: 'italic'
+                }}>
+                  Initializing interactive chart...
+                </div>
+              )
+            ) : (
+              <div style={{ 
+                padding: '2rem', 
+                textAlign: 'center', 
+                color: '#8b95b2',
+                fontStyle: 'italic'
+              }}>
+                Loading yield curve data...
+              </div>
+            )}
+          </div>
+
           {/* BEAR STEEPENER TRADE PITCH */}
           <div className="card" style={{ gridColumn: '1 / -1', marginTop: '2rem' }}>
             <h3 style={{ color: '#4a9eff', marginBottom: '1.5rem' }}>Bear Steepener Trade: Short 10Y / Long 2Y</h3>
@@ -1515,75 +1563,6 @@ function App() {
             )}
           </div>
 
-          {/* TRADE PITCH */}
-          <div className="card pitch-card">
-            <h3>Desk Pitch & Risk</h3>
-            <div className="pitch-content">
-              <div className="metric">
-                <label>Curve Shape</label>
-                <div className="value">{ratesData?.analysis?.curve_shape || "Unknown"}</div>
-              </div>
-              <div className="metric">
-                <label>2s10s Spread</label>
-                <div className="value">{ratesData?.analysis?.spread_2s10s ?? 0} bps</div>
-              </div>
-              <div className="metric highlight">
-                <label>Trade Idea</label>
-                <div className="value">{ratesData?.analysis?.trade_pitch || "Data unavailable"}</div>
-              </div>
-              <hr />
-              <div className="metric">
-                <label>DV01 ($10M 10Y)</label>
-                <div className="value mono">{ratesData?.analysis?.dv01_10m_position || "$0.00"}</div>
-              </div>
-            </div>
-            
-            {/* Interactive Bond Trade Chart */}
-            {ratesData && ratesData.yield_curve ? (
-              interactiveYields ? (
-                <InteractiveYieldChart 
-                  originalCurve={ratesData.yield_curve}
-                  currentYields={interactiveYields}
-                  selectedBond={selectedBond}
-                  onBondChange={(bond) => setSelectedBond(bond)}
-                  onYieldChange={(maturity, newYield) => {
-                    setInteractiveYields(prev => ({
-                      ...prev,
-                      [maturity]: newYield
-                    }))
-                  }}
-                  onReset={() => {
-                    const yields = {}
-                    ratesData.yield_curve
-                      .filter(item => item.maturity.endsWith('Y')) // Only yearly maturities
-                      .forEach(item => {
-                        yields[item.maturity] = item.yield
-                      })
-                    setInteractiveYields(yields)
-                  }}
-                  pnl={getPNL(selectedBond)}
-                />
-              ) : (
-                <div style={{ 
-                  padding: '2rem', 
-                  textAlign: 'center', 
-                  color: '#8b95b2',
-                  fontStyle: 'italic'
-                }}>
-                  Initializing interactive chart...
-                </div>
-              )
-            ) : (
-              <div style={{ 
-                padding: '2rem', 
-                textAlign: 'center', 
-                color: '#8b95b2',
-                fontStyle: 'italic'
-              }}>
-                Loading yield curve data...
-              </div>
-            )}
-          </div>
         </div>
       </section>
     </div>
