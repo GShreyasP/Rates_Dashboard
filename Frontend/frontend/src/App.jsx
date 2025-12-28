@@ -1193,7 +1193,7 @@ function App() {
               borderBottom: '2px solid #4a9eff',
               display: 'inline-block'
             }}>
-              Yield Curve & Analysis
+              Trade Pitch
             </h2>
           </div>
 
