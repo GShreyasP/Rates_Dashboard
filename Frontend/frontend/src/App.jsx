@@ -1166,8 +1166,8 @@ function App() {
               const pnl_spread_widen_10bps = 10 * (dv01_10Y + (dv01_2Y * long2YNotional / 10_000_000));
               
               const chartData = [
-                { maturity: '2Y', yield: yield2Y, color: '#4ade80' },
-                { maturity: '10Y', yield: yield10Y, color: '#f87171' }
+                { maturity: '2Y', yield: yield2Y, color: '#4ade80', originalYield: original2Y },
+                { maturity: '10Y', yield: yield10Y, color: '#f87171', originalYield: original10Y }
               ];
               
               return (
