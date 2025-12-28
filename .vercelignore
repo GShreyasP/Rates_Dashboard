@@ -1,0 +1,12 @@
+# Don't ignore the api directory - Vercel needs it for serverless functions
+# Only ignore build artifacts and dependencies
+
+Backend/venv/
+Backend/__pycache__/
+Frontend/frontend/node_modules/
+Frontend/frontend/.vite/
+__pycache__/
+*.pyc
+.env
+.env.local
+
