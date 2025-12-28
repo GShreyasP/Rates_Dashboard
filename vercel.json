@@ -2,19 +2,10 @@
   "buildCommand": "cd Frontend/frontend && npm install && npm run build",
   "outputDirectory": "Frontend/frontend/dist",
   "framework": "vite",
-  "functions": {
-    "api/**/*.py": {
-      "runtime": "@vercel/python"
-    }
-  },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }
