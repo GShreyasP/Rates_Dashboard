@@ -389,6 +389,17 @@ section h2 {
   gap: 2rem;
 }
 
+/* Override for specific layout where table should be narrow and chart wide */
+.analysis-grid[style*="grid-template-columns: auto 1fr"] {
+  grid-template-columns: auto 1fr !important;
+}
+
+@media (max-width: 768px) {
+  .analysis-grid[style*="grid-template-columns: auto 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

@@ -33,7 +33,8 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
     const updateWidth = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth
-        setChartWidth(Math.min(700, containerWidth - 32)) // 32px for padding
+        // Use full available width, minimum 400px
+        setChartWidth(Math.max(400, containerWidth - 32)) // 32px for padding
       }
     }
     
@@ -1106,9 +1107,9 @@ function App() {
           </div>
         </div>
 
-        <div className="analysis-grid">
+        <div className="analysis-grid" style={{ gridTemplateColumns: 'auto 1fr', gap: '2rem' }}>
           {/* YIELD CURVE TABLE */}
-          <div className="card">
+          <div className="card" style={{ minWidth: '300px' }}>
             <h3>Live Treasury Yields</h3>
             <table>
               <thead>
@@ -1129,7 +1130,7 @@ function App() {
           </div>
 
           {/* Interactive Yield Curve & PNL Calculator */}
-          <div className="card">
+          <div className="card" style={{ minWidth: 0 }}>
             {ratesData && ratesData.yield_curve ? (
               interactiveYields ? (
                 <InteractiveYieldChart 
