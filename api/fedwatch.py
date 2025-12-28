@@ -19,7 +19,7 @@ class handler(BaseHTTPRequestHandler):
             most_likely = max(target_rate_probabilities.items(), key=lambda x: x[1])
             
             response_data = {
-                "next_meeting_date": next_meeting.strftime("%B %d, %Y"),
+                "next_meeting_date": next_meeting.strftime("%d %b %Y"),  # Format: "28 Jan 2026"
                 "target_rate_probabilities": target_rate_probabilities,
                 "most_likely_change": most_likely[0],
                 "most_likely_probability": round(most_likely[1], 1),
