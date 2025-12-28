@@ -53,12 +53,12 @@ def get_yield_curve():
     
     try:
         # FRED API Treasury constant maturity rates (PRIMARY SOURCE)
-        # Fetching all requested maturities: 1,3,6,13 mo and 1,3,5,7,20,30 yr
+        # Fetching all requested maturities: 1,3,6 mo and 1,3,5,7,20,30 yr
+        # Note: 13M doesn't exist in FRED, removed it
         fred_series = {
             '1M': 'DGS1MO',   # 1-month
             '3M': 'DGS3MO',   # 3-month
             '6M': 'DGS6MO',   # 6-month
-            '13M': 'DGS13MO', # 13-month (may not exist, will skip if unavailable)
             '1Y': 'DGS1',    # 1-year
             '3Y': 'DGS3',    # 3-year
             '5Y': 'DGS5',    # 5-year
@@ -68,11 +68,16 @@ def get_yield_curve():
             '30Y': 'DGS30'   # 30-year
         }
         
+        # Check if FRED API key is set
+        api_key_set = FRED_API_KEY and FRED_API_KEY != "YOUR_API_KEY_HERE" and len(FRED_API_KEY) > 10
+        print(f"FRED_API_KEY check: {'SET' if api_key_set else 'NOT SET'} (length: {len(FRED_API_KEY) if FRED_API_KEY else 0})")
+        
         # Fetch from FRED first (primary source)
-        if FRED_API_KEY != "YOUR_API_KEY_HERE":
+        if api_key_set:
             try:
                 end_date = datetime.now()
                 start_date = end_date - timedelta(days=5)
+                print(f"Fetching FRED data from {start_date} to {end_date}")
                 
                 for label, series_id in fred_series.items():
                     try:
@@ -81,13 +86,19 @@ def get_yield_curve():
                             series_data = df[series_id].dropna()
                             if len(series_data) > 0:
                                 data[label] = float(series_data.iloc[-1])
-                                print(f"Successfully fetched {label} from FRED: {data[label]}")
+                                print(f"✓ Successfully fetched {label} ({series_id}) from FRED: {data[label]}")
+                            else:
+                                print(f"✗ No valid data for {label} ({series_id}) - empty after dropna")
+                        else:
+                            print(f"✗ Empty dataframe for {label} ({series_id})")
                     except Exception as e:
-                        print(f"Error fetching {label} ({series_id}) from FRED: {e}")
+                        print(f"✗ Error fetching {label} ({series_id}) from FRED: {str(e)}")
             except Exception as e:
-                print(f"Error fetching yields from FRED: {e}")
+                print(f"✗ Error in FRED fetch loop: {str(e)}")
+                import traceback
+                traceback.print_exc()
         else:
-            print("Warning: FRED_API_KEY not set, will use yfinance as fallback")
+            print("⚠ Warning: FRED_API_KEY not properly set, will use yfinance as fallback")
         
         # Yahoo Finance tickers (as backup for maturities not available from FRED)
         yf_tickers = {
