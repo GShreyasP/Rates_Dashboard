@@ -7,10 +7,14 @@
       "runtime": "@vercel/python"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
