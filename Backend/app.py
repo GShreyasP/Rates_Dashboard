@@ -564,14 +564,14 @@ def fetch_fedwatch_data():
     """Fetch FedWatch interest rate cut odds - hardcoded data"""
     from datetime import datetime, timedelta
     
-    # Calculate next FOMC meeting date (December 10, 2025 based on image)
-    next_meeting = datetime(2025, 12, 10)
+    # Calculate next FOMC meeting date (January 28, 2026)
+    next_meeting = datetime(2026, 1, 28)
     
     # Hardcoded target rate probabilities
-    # 350-375: 89.2%, 375-400: 10.8%
+    # 325-350: 18.8%, 350-375: 81.2%
     target_rate_probabilities = {
-        "350-375": 89.2,
-        "375-400": 10.8
+        "325-350": 18.8,
+        "350-375": 81.2
     }
     
     most_likely = max(target_rate_probabilities.items(), key=lambda x: x[1])
@@ -581,8 +581,8 @@ def fetch_fedwatch_data():
         "target_rate_probabilities": target_rate_probabilities,
         "most_likely_change": most_likely[0],
         "most_likely_probability": round(most_likely[1], 1),
-        "current_target_rate": "375-400",
-        "current_fed_rate": 3.75,
+        "current_target_rate": "350-375",
+        "current_fed_rate": 3.5,
         "source": "FedWatch Data"
     }
 

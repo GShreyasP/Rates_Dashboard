@@ -970,7 +970,7 @@ function App() {
         {/* FEDWATCH DATA */}
         {fedwatchData && !fedwatchData.error && (
           <div className="fedwatch-card">
-            <h3>Target Rate Probabilities for {fedwatchData.next_meeting_date || 'Next Fed Meeting'}</h3>
+            <h3>Target Rate Probabilities for {fedwatchData.next_meeting_date ? fedwatchData.next_meeting_date.replace('January', 'Jan') + ' Fed Meeting' : 'Next Fed Meeting'}</h3>
             {fedwatchData.current_target_rate && (
               <div className="fedwatch-note" style={{background: 'rgba(74, 158, 255, 0.15)', borderColor: 'rgba(74, 158, 255, 0.4)'}}>
                 <span className="note-icon">📊</span>
