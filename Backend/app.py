@@ -393,138 +393,168 @@ def fetch_macro_data():
 
 @app.route('/api/macro')
 def macro_data():
-    # Check memory cache first (for fast repeated requests)
-    cached = get_cached_data('macro')
-    if cached:
-        return jsonify(cached)
-    
-    # ALWAYS load from cache first for fast response (even if stale)
-    csv_data = load_from_cache('macro')
-    if csv_data:
-        # Store in memory cache for faster subsequent requests
-        set_cached_data('macro', csv_data)
+    try:
+        # Check memory cache first (for fast repeated requests)
+        cached = get_cached_data('macro')
+        if cached:
+            return jsonify(cached)
         
-        # Always update in background after returning cached data
-        def update_in_background():
-            try:
-                print("Background: Fetching fresh macro data from API...")
-                fresh_data = fetch_macro_data()
-                if 'error' not in fresh_data:
-                    # Compare with cached data
-                    data_changed = compare_data(csv_data, fresh_data)
-                    if data_changed:
-                        print("Background: Macro data has changed, updating cache...")
-                    save_to_cache('macro', fresh_data, data_changed=data_changed)
-                    set_cached_data('macro', fresh_data)
-            except Exception as e:
-                print(f"Background: Error updating macro data: {e}")
+        # ALWAYS load from cache first for fast response (even if stale)
+        csv_data = load_from_cache('macro')
+        if csv_data:
+            # Store in memory cache for faster subsequent requests
+            set_cached_data('macro', csv_data)
+            
+            # Always update in background after returning cached data
+            def update_in_background():
+                try:
+                    print("Background: Fetching fresh macro data from API...")
+                    fresh_data = fetch_macro_data()
+                    if 'error' not in fresh_data:
+                        # Compare with cached data
+                        data_changed = compare_data(csv_data, fresh_data)
+                        if data_changed:
+                            print("Background: Macro data has changed, updating cache...")
+                        save_to_cache('macro', fresh_data, data_changed=data_changed)
+                        set_cached_data('macro', fresh_data)
+                except Exception as e:
+                    print(f"Background: Error updating macro data: {e}")
+                    import traceback
+                    traceback.print_exc()
+            
+            # Start background update thread
+            threading.Thread(target=update_in_background, daemon=True).start()
+            
+            # Return cached data immediately (fast!)
+            return jsonify(csv_data)
         
-        # Start background update thread
-        threading.Thread(target=update_in_background, daemon=True).start()
+        # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
+        print("No cache found, fetching fresh macro data from API...")
+        response_data = fetch_macro_data()
         
-        # Return cached data immediately (fast!)
-        return jsonify(csv_data)
-    
-    # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
-    print("No cache found, fetching fresh macro data from API...")
-    response_data = fetch_macro_data()
-    
-    # Save to CSV cache and memory cache
-    if 'error' not in response_data:
+        # Check if there's an error in the response
+        if 'error' in response_data:
+            # Return error response with appropriate status code
+            return jsonify(response_data), 400
+        
+        # Save to CSV cache and memory cache
         save_to_cache('macro', response_data, data_changed=False)
         set_cached_data('macro', response_data)
-    
-    return jsonify(response_data)
+        
+        return jsonify(response_data)
+    except Exception as e:
+        print(f"Error in /api/macro endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 def fetch_rates_data():
     """Fetch rates data (used for caching)"""
-    yields = get_yield_curve()
-    
-    if not yields:
-        return {"error": "Failed to fetch yields"}
+    try:
+        yields = get_yield_curve()
+        
+        if not yields:
+            return {"error": "Failed to fetch yields"}
 
-    # 1. Curve Shape Analysis (2s10s and 5s30s)
-    # Use 2Y if available, otherwise fall back to 1Y, then 3M
-    short_term_yield = yields.get('2Y') or yields.get('1Y') or yields.get('3M', 0)
-    spread_2s10s = yields.get('10Y', 0) - short_term_yield
-    spread_5s30s = yields.get('30Y', 0) - yields.get('5Y', 0)
-    
-    curve_shape = "Normal"
-    trade_pitch = "Bear Flattener (Rates rising)"
-    
-    if spread_2s10s < 0:
-        curve_shape = "Inverted"
-        trade_pitch = "Bull Steepener (Expecting cuts)"
+        # 1. Curve Shape Analysis (2s10s and 5s30s)
+        # Use 2Y if available, otherwise fall back to 1Y, then 3M
+        short_term_yield = yields.get('2Y') or yields.get('1Y') or yields.get('3M', 0)
+        spread_2s10s = yields.get('10Y', 0) - short_term_yield
+        spread_5s30s = yields.get('30Y', 0) - yields.get('5Y', 0)
+        
+        curve_shape = "Normal"
+        trade_pitch = "Bear Flattener (Rates rising)"
+        
+        if spread_2s10s < 0:
+            curve_shape = "Inverted"
+            trade_pitch = "Bull Steepener (Expecting cuts)"
 
-    # 2. DV01 Example Calculation (for a standard $10M 10Y position)
-    # Assuming standard 10Y duration ~8 years
-    dv01 = calculate_dv01(10_000_000, 8.0, yields.get('10Y', 4.0))
+        # 2. DV01 Example Calculation (for a standard $10M 10Y position)
+        # Assuming standard 10Y duration ~8 years
+        dv01 = calculate_dv01(10_000_000, 8.0, yields.get('10Y', 4.0))
 
-    # Sort yields by maturity (convert to years for sorting)
-    sorted_yields = dict(sorted(yields.items(), key=lambda x: maturity_to_years(x[0])))
-    
-    # Create yield curve data for charting
-    yield_curve_data = [
-        {"maturity": k, "years": maturity_to_years(k), "yield": v}
-        for k, v in sorted_yields.items()
-    ]
+        # Sort yields by maturity (convert to years for sorting)
+        sorted_yields = dict(sorted(yields.items(), key=lambda x: maturity_to_years(x[0])))
+        
+        # Create yield curve data for charting
+        yield_curve_data = [
+            {"maturity": k, "years": maturity_to_years(k), "yield": v}
+            for k, v in sorted_yields.items()
+        ]
 
-    return {
-        "yields": sorted_yields,
-        "yield_curve": yield_curve_data,
-        "analysis": {
-            "spread_2s10s": round(spread_2s10s, 2),
-            "spread_5s30s": round(spread_5s30s, 2),
-            "curve_shape": curve_shape,
-            "trade_pitch": trade_pitch,
-            "dv01_10m_position": f"${dv01:,.2f}"
+        return {
+            "yields": sorted_yields,
+            "yield_curve": yield_curve_data,
+            "analysis": {
+                "spread_2s10s": round(spread_2s10s, 2),
+                "spread_5s30s": round(spread_5s30s, 2),
+                "curve_shape": curve_shape,
+                "trade_pitch": trade_pitch,
+                "dv01_10m_position": f"${dv01:,.2f}"
+            }
         }
-    }
+    except Exception as e:
+        print(f"Error in fetch_rates_data: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": f"Failed to fetch rates data: {str(e)}"}
 
 @app.route('/api/rates')
 def rates_analysis():
-    # Check memory cache first (for fast repeated requests)
-    cached = get_cached_data('rates')
-    if cached:
-        return jsonify(cached)
-    
-    # ALWAYS load from cache first for fast response (even if stale)
-    csv_data = load_from_cache('rates')
-    if csv_data:
-        # Store in memory cache for faster subsequent requests
-        set_cached_data('rates', csv_data)
+    try:
+        # Check memory cache first (for fast repeated requests)
+        cached = get_cached_data('rates')
+        if cached:
+            return jsonify(cached)
         
-        # Always update in background after returning cached data
-        def update_in_background():
-            try:
-                print("Background: Fetching fresh rates data from API...")
-                fresh_data = fetch_rates_data()
-                if 'error' not in fresh_data:
-                    # Compare with cached data
-                    data_changed = compare_data(csv_data, fresh_data)
-                    if data_changed:
-                        print("Background: Rates data has changed, updating cache...")
-                    save_to_cache('rates', fresh_data, data_changed=data_changed)
-                    set_cached_data('rates', fresh_data)
-            except Exception as e:
-                print(f"Background: Error updating rates data: {e}")
+        # ALWAYS load from cache first for fast response (even if stale)
+        csv_data = load_from_cache('rates')
+        if csv_data:
+            # Store in memory cache for faster subsequent requests
+            set_cached_data('rates', csv_data)
+            
+            # Always update in background after returning cached data
+            def update_in_background():
+                try:
+                    print("Background: Fetching fresh rates data from API...")
+                    fresh_data = fetch_rates_data()
+                    if 'error' not in fresh_data:
+                        # Compare with cached data
+                        data_changed = compare_data(csv_data, fresh_data)
+                        if data_changed:
+                            print("Background: Rates data has changed, updating cache...")
+                        save_to_cache('rates', fresh_data, data_changed=data_changed)
+                        set_cached_data('rates', fresh_data)
+                except Exception as e:
+                    print(f"Background: Error updating rates data: {e}")
+                    import traceback
+                    traceback.print_exc()
+            
+            # Start background update thread
+            threading.Thread(target=update_in_background, daemon=True).start()
+            
+            # Return cached data immediately (fast!)
+            return jsonify(csv_data)
         
-        # Start background update thread
-        threading.Thread(target=update_in_background, daemon=True).start()
+        # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
+        print("No cache found, fetching fresh rates data from API...")
+        response_data = fetch_rates_data()
         
-        # Return cached data immediately (fast!)
-        return jsonify(csv_data)
-    
-    # No cache exists, fetch fresh data (shouldn't happen if initial cache files are set up)
-    print("No cache found, fetching fresh rates data from API...")
-    response_data = fetch_rates_data()
-    
-    # Save to CSV cache and memory cache
-    if 'error' not in response_data:
+        # Check if there's an error in the response
+        if 'error' in response_data:
+            # Return error response with appropriate status code
+            return jsonify(response_data), 400
+        
+        # Save to CSV cache and memory cache
         save_to_cache('rates', response_data, data_changed=False)
         set_cached_data('rates', response_data)
-    
-    return jsonify(response_data)
+        
+        return jsonify(response_data)
+    except Exception as e:
+        print(f"Error in /api/rates endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 def fetch_fedwatch_data():
     """Fetch FedWatch interest rate cut odds - hardcoded data"""

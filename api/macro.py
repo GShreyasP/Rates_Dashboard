@@ -111,15 +111,25 @@ def fetch_macro_data():
             print(f"Error fetching {name} ({series_id}): {str(e)}")
             return None
     
-    # Fetch all series in parallel
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = {executor.submit(fetch_series, name, series_id): name 
-                  for name, series_id in series_map.items()}
-        
-        for future in as_completed(futures):
-            result = future.result()
-            if result:
-                response_data[result['name']] = result['data']
+    try:
+        # Fetch all series in parallel
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            futures = {executor.submit(fetch_series, name, series_id): name 
+                      for name, series_id in series_map.items()}
+            
+            for future in as_completed(futures):
+                try:
+                    result = future.result()
+                    if result:
+                        response_data[result['name']] = result['data']
+                except Exception as e:
+                    print(f"Error getting result from future: {e}")
+                    continue
+    except Exception as e:
+        import traceback
+        print(f"Error in fetch_macro_data: {e}")
+        traceback.print_exc()
+        return {"error": f"Failed to fetch macro data: {str(e)}"}
     
     return response_data
 
@@ -129,12 +139,19 @@ class handler(BaseHTTPRequestHandler):
             # Fetch fresh data (no caching in serverless - Vercel handles it at CDN level)
             data = fetch_macro_data()
             
-            if 'error' in data:
-                self.send_response(500)
+            # Check if data is empty (no FRED API key) or has error
+            if not data or 'error' in data:
+                # Return 200 with empty data or error message (not 500)
+                # Frontend can handle empty data gracefully
+                self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
-                self.wfile.write(json.dumps(data).encode('utf-8'))
+                if 'error' in data:
+                    self.wfile.write(json.dumps(data).encode('utf-8'))
+                else:
+                    # Return empty object if no data (FRED API key missing)
+                    self.wfile.write(json.dumps({}).encode('utf-8'))
                 return
             
             self.send_response(200)
@@ -144,11 +161,15 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(data).encode('utf-8'))
         except Exception as e:
             import traceback
+            error_msg = str(e)
+            traceback_str = traceback.format_exc()
+            print(f"Error in /api/macro handler: {error_msg}")
+            print(traceback_str)
             self.send_response(500)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
-            self.wfile.write(json.dumps({"error": str(e), "traceback": traceback.format_exc()}).encode('utf-8'))
+            self.wfile.write(json.dumps({"error": error_msg, "traceback": traceback_str}).encode('utf-8'))
     
     def do_OPTIONS(self):
         self.send_response(200)
