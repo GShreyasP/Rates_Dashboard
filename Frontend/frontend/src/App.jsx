@@ -1218,15 +1218,15 @@ function App() {
               const fullCurveData = ratesData.yield_curve
                 .map(item => {
                   const maturity = item.maturity;
-                  let yield = item.yield;
+                  let yieldValue = item.yield;
                   let isHighlighted = false;
                   
                   // Use interactive yields for 2Y and 10Y if set
                   if (maturity === '2Y' && tradeYields['2Y'] !== null) {
-                    yield = tradeYields['2Y'];
+                    yieldValue = tradeYields['2Y'];
                     isHighlighted = true;
                   } else if (maturity === '10Y' && tradeYields['10Y'] !== null) {
-                    yield = tradeYields['10Y'];
+                    yieldValue = tradeYields['10Y'];
                     isHighlighted = true;
                   } else if (maturity === '2Y' || maturity === '10Y') {
                     isHighlighted = true;
@@ -1234,7 +1234,7 @@ function App() {
                   
                   return {
                     maturity,
-                    yield,
+                    yield: yieldValue,
                     originalYield: item.yield,
                     isHighlighted,
                     color: maturity === '2Y' ? '#4ade80' : maturity === '10Y' ? '#f87171' : '#4a9eff'
