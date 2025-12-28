@@ -144,6 +144,7 @@ def get_yield_curve():
         '3M': 'DGS3MO',   # 3-month
         '6M': 'DGS6MO',   # 6-month
         '1Y': 'DGS1',    # 1-year
+        '2Y': 'DGS2',    # 2-year
         '3Y': 'DGS3',    # 3-year
         '5Y': 'DGS5',    # 5-year
         '7Y': 'DGS7',    # 7-year

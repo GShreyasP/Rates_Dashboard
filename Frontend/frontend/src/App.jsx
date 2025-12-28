@@ -689,7 +689,7 @@ function App() {
         if (ratesRes.data && ratesRes.data.yield_curve && Array.isArray(ratesRes.data.yield_curve) && ratesRes.data.yield_curve.length > 0) {
           const yields = {}
           ratesRes.data.yield_curve
-            .filter(item => item.maturity && item.maturity.endsWith('Y')) // Only yearly maturities
+            .filter(item => item.maturity && (item.maturity.endsWith('Y') || item.maturity.endsWith('M'))) // Yearly and monthly maturities
             .forEach(item => {
               yields[item.maturity] = item.yield
             })
@@ -1214,10 +1214,35 @@ function App() {
               const pnl_2Y_down_1bp = dv01_2Y * (long2YNotional / 10_000_000); // Long gains
               const pnl_spread_widen_10bps = 10 * (dv01_10Y + (dv01_2Y * long2YNotional / 10_000_000));
               
-              const chartData = [
-                { maturity: '2Y', yield: yield2Y, color: '#4ade80', originalYield: original2Y },
-                { maturity: '10Y', yield: yield10Y, color: '#f87171', originalYield: original10Y }
-              ];
+              // Build full yield curve data with 2Y and 10Y highlighted
+              const fullCurveData = ratesData.yield_curve
+                .map(item => {
+                  const maturity = item.maturity;
+                  let yield = item.yield;
+                  let isHighlighted = false;
+                  
+                  // Use interactive yields for 2Y and 10Y if set
+                  if (maturity === '2Y' && tradeYields['2Y'] !== null) {
+                    yield = tradeYields['2Y'];
+                    isHighlighted = true;
+                  } else if (maturity === '10Y' && tradeYields['10Y'] !== null) {
+                    yield = tradeYields['10Y'];
+                    isHighlighted = true;
+                  } else if (maturity === '2Y' || maturity === '10Y') {
+                    isHighlighted = true;
+                  }
+                  
+                  return {
+                    maturity,
+                    yield,
+                    originalYield: item.yield,
+                    isHighlighted,
+                    color: maturity === '2Y' ? '#4ade80' : maturity === '10Y' ? '#f87171' : '#4a9eff'
+                  };
+                })
+                .sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity));
+              
+              const chartData = fullCurveData;
               
               return (
                 <div>
@@ -1293,7 +1318,7 @@ function App() {
                       <LineChart 
                         data={chartData}
                         onMouseDown={(e) => {
-                          if (e && e.activeLabel) {
+                          if (e && e.activeLabel && (e.activeLabel === '2Y' || e.activeLabel === '10Y')) {
                             const maturity = e.activeLabel;
                             const chart = e.chart;
                             const activeCoordinate = e.activeCoordinate;
@@ -1310,7 +1335,7 @@ function App() {
                         <XAxis 
                           dataKey="maturity" 
                           stroke="#8b95b2"
-                          tick={{ fill: '#8b95b2', fontSize: 14, fontWeight: 'bold' }}
+                          tick={{ fill: '#8b95b2', fontSize: 12 }}
                         />
                         <YAxis 
                           domain={['auto', 'auto']}
@@ -1325,51 +1350,58 @@ function App() {
                             color: '#e0e0e0'
                           }}
                           formatter={(value, name, props) => {
-                            const change = props.payload.maturity === '2Y' 
-                              ? ((value - original2Y) * 100).toFixed(1)
-                              : ((value - original10Y) * 100).toFixed(1);
+                            const maturity = props.payload.maturity;
+                            const original = props.payload.originalYield;
+                            const change = ((value - original) * 100).toFixed(1);
+                            const changeText = Math.abs(value - original) > 0.001 
+                              ? ` (${change > 0 ? '+' : ''}${change} bps)`
+                              : '';
                             return [
-                              `${value.toFixed(2)}% (${change > 0 ? '+' : ''}${change} bps)`,
+                              `${value.toFixed(2)}%${changeText}`,
                               'Yield'
                             ];
                           }}
                         />
+                        {/* Full yield curve line */}
                         <Line 
                           type="monotone" 
                           dataKey="yield" 
                           stroke="#4a9eff" 
-                          strokeWidth={3}
-                          dot={(props) => {
-                            const { cx, cy, payload } = props;
-                            const isChanged = (payload.maturity === '2Y' && Math.abs(payload.yield - original2Y) > 0.001) ||
-                                            (payload.maturity === '10Y' && Math.abs(payload.yield - original10Y) > 0.001);
-                            return (
-                              <g>
-                                <circle 
-                                  cx={cx} 
-                                  cy={cy} 
-                                  r={10} 
-                                  fill={payload.color || '#4a9eff'}
-                                  stroke={isChanged ? '#4ade80' : '#fff'}
-                                  strokeWidth={isChanged ? 3 : 2}
-                                  style={{ cursor: 'pointer' }}
-                                />
-                                {isChanged && (
-                                  <circle 
-                                    cx={cx} 
-                                    cy={cy} 
-                                    r={12} 
-                                    fill="none"
-                                    stroke="#4ade80"
-                                    strokeWidth={2}
-                                    strokeDasharray="4 4"
-                                    opacity={0.6}
-                                  />
-                                )}
-                              </g>
-                            );
-                          }}
+                          strokeWidth={2}
+                          strokeOpacity={0.4}
+                          dot={false}
+                          activeDot={false}
                         />
+                        {/* Highlighted 2Y and 10Y points */}
+                        {chartData.map((point, index) => {
+                          if (point.isHighlighted) {
+                            const isChanged = Math.abs(point.yield - point.originalYield) > 0.001;
+                            return (
+                              <Line
+                                key={`highlight-${point.maturity}`}
+                                type="monotone"
+                                dataKey="yield"
+                                data={[point]}
+                                stroke={point.color}
+                                strokeWidth={0}
+                                dot={{
+                                  r: isChanged ? 12 : 10,
+                                  fill: point.color,
+                                  stroke: isChanged ? '#4ade80' : '#fff',
+                                  strokeWidth: isChanged ? 3 : 2,
+                                  style: { cursor: 'pointer' }
+                                }}
+                                activeDot={{
+                                  r: 14,
+                                  fill: point.color,
+                                  stroke: '#fff',
+                                  strokeWidth: 3
+                                }}
+                              />
+                            );
+                          }
+                          return null;
+                        })}
                       </LineChart>
                     </ResponsiveContainer>
                     <div style={{ 
