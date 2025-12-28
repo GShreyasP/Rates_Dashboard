@@ -1317,25 +1317,13 @@ function App() {
                     <ResponsiveContainer width="100%" height={300}>
                       <LineChart 
                         data={chartData}
-                        onMouseDown={(e) => {
-                          if (e && e.activeLabel && (e.activeLabel === '2Y' || e.activeLabel === '10Y')) {
-                            const maturity = e.activeLabel;
-                            const chart = e.chart;
-                            const activeCoordinate = e.activeCoordinate;
-                            if (chart && activeCoordinate) {
-                              // Calculate yield from Y coordinate
-                              const yAxis = chart.yAxisMap[0];
-                              const yValue = yAxis.scale.invert(activeCoordinate.y);
-                              setTradeYields(prev => ({ ...prev, [maturity]: yValue }));
-                            }
-                          }
-                        }}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
                         <XAxis 
                           dataKey="maturity" 
                           stroke="#8b95b2"
-                          tick={{ fill: '#8b95b2', fontSize: 12 }}
+                          tick={{ fill: '#8b95b2', fontSize: 11 }}
                         />
                         <YAxis 
                           domain={['auto', 'auto']}
@@ -1362,46 +1350,67 @@ function App() {
                             ];
                           }}
                         />
-                        {/* Full yield curve line */}
+                        {/* Full yield curve line - all points */}
                         <Line 
                           type="monotone" 
                           dataKey="yield" 
                           stroke="#4a9eff" 
                           strokeWidth={2}
-                          strokeOpacity={0.4}
-                          dot={false}
-                          activeDot={false}
+                          strokeOpacity={0.3}
+                          dot={(props) => {
+                            const { cx, cy, payload } = props;
+                            // Only show dots for highlighted points (2Y and 10Y)
+                            if (payload.isHighlighted) {
+                              const isChanged = Math.abs(payload.yield - payload.originalYield) > 0.001;
+                              return (
+                                <g>
+                                  <circle 
+                                    cx={cx} 
+                                    cy={cy} 
+                                    r={isChanged ? 12 : 10} 
+                                    fill={payload.color}
+                                    stroke={isChanged ? '#4ade80' : '#fff'}
+                                    strokeWidth={isChanged ? 3 : 2}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // Allow dragging by clicking and moving
+                                    }}
+                                  />
+                                  {isChanged && (
+                                    <circle 
+                                      cx={cx} 
+                                      cy={cy} 
+                                      r={14} 
+                                      fill="none"
+                                      stroke="#4ade80"
+                                      strokeWidth={2}
+                                      strokeDasharray="4 4"
+                                      opacity={0.6}
+                                    />
+                                  )}
+                                </g>
+                              );
+                            }
+                            return null;
+                          }}
+                          activeDot={(props) => {
+                            const { cx, cy, payload } = props;
+                            if (payload.isHighlighted) {
+                              return (
+                                <circle 
+                                  cx={cx} 
+                                  cy={cy} 
+                                  r={14} 
+                                  fill={payload.color}
+                                  stroke="#fff"
+                                  strokeWidth={3}
+                                />
+                              );
+                            }
+                            return null;
+                          }}
                         />
-                        {/* Highlighted 2Y and 10Y points */}
-                        {chartData.map((point, index) => {
-                          if (point.isHighlighted) {
-                            const isChanged = Math.abs(point.yield - point.originalYield) > 0.001;
-                            return (
-                              <Line
-                                key={`highlight-${point.maturity}`}
-                                type="monotone"
-                                dataKey="yield"
-                                data={[point]}
-                                stroke={point.color}
-                                strokeWidth={0}
-                                dot={{
-                                  r: isChanged ? 12 : 10,
-                                  fill: point.color,
-                                  stroke: isChanged ? '#4ade80' : '#fff',
-                                  strokeWidth: isChanged ? 3 : 2,
-                                  style: { cursor: 'pointer' }
-                                }}
-                                activeDot={{
-                                  r: 14,
-                                  fill: point.color,
-                                  stroke: '#fff',
-                                  strokeWidth: 3
-                                }}
-                              />
-                            );
-                          }
-                          return null;
-                        })}
                       </LineChart>
                     </ResponsiveContainer>
                     <div style={{ 
@@ -1410,38 +1419,42 @@ function App() {
                       marginTop: '1rem',
                       padding: '1rem',
                       background: 'rgba(74, 158, 255, 0.05)',
-                      borderRadius: '6px'
+                      borderRadius: '6px',
+                      flexWrap: 'wrap',
+                      gap: '1rem'
                     }}>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ color: '#8b95b2', fontSize: '0.85rem' }}>2Y Yield</div>
+                      <div style={{ textAlign: 'center', minWidth: '120px' }}>
+                        <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.25rem' }}>2Y Yield</div>
                         <div style={{ color: '#4ade80', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                          {yield2Y.toFixed(2)}%
-                          {Math.abs(yield2Y - original2Y) > 0.001 && (
-                            <span style={{ fontSize: '0.9rem', marginLeft: '0.5rem' }}>
+                          {yield2Y > 0 ? yield2Y.toFixed(2) + '%' : 'N/A'}
+                          {yield2Y > 0 && Math.abs(yield2Y - original2Y) > 0.001 && (
+                            <span style={{ fontSize: '0.9rem', marginLeft: '0.5rem', display: 'block', marginTop: '0.25rem' }}>
                               ({((yield2Y - original2Y) * 100) > 0 ? '+' : ''}{((yield2Y - original2Y) * 100).toFixed(1)} bps)
                             </span>
                           )}
                         </div>
                       </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ color: '#8b95b2', fontSize: '0.85rem' }}>10Y Yield</div>
+                      <div style={{ textAlign: 'center', minWidth: '120px' }}>
+                        <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.25rem' }}>10Y Yield</div>
                         <div style={{ color: '#f87171', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                          {yield10Y.toFixed(2)}%
-                          {Math.abs(yield10Y - original10Y) > 0.001 && (
-                            <span style={{ fontSize: '0.9rem', marginLeft: '0.5rem' }}>
+                          {yield10Y > 0 ? yield10Y.toFixed(2) + '%' : 'N/A'}
+                          {yield10Y > 0 && Math.abs(yield10Y - original10Y) > 0.001 && (
+                            <span style={{ fontSize: '0.9rem', marginLeft: '0.5rem', display: 'block', marginTop: '0.25rem' }}>
                               ({((yield10Y - original10Y) * 100) > 0 ? '+' : ''}{((yield10Y - original10Y) * 100).toFixed(1)} bps)
                             </span>
                           )}
                         </div>
                       </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ color: '#8b95b2', fontSize: '0.85rem' }}>2s10s Spread</div>
+                      <div style={{ textAlign: 'center', minWidth: '140px' }}>
+                        <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.25rem' }}>2s10s Spread</div>
                         <div style={{ color: '#4a9eff', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                          {(spread * 100).toFixed(2)} bps
-                          {Math.abs(spreadChange) > 0.1 && (
+                          {yield2Y > 0 && yield10Y > 0 ? (spread * 100).toFixed(2) + ' bps' : 'N/A'}
+                          {yield2Y > 0 && yield10Y > 0 && Math.abs(spreadChange) > 0.1 && (
                             <span style={{ 
                               fontSize: '0.9rem', 
                               marginLeft: '0.5rem',
+                              display: 'block',
+                              marginTop: '0.25rem',
                               color: spreadChange > 0 ? '#4ade80' : '#f87171'
                             }}>
                               ({spreadChange > 0 ? '+' : ''}{spreadChange.toFixed(1)} bps)
