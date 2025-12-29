@@ -225,7 +225,8 @@ def fetch_macro_data():
     }
     
     # Alternative PMI series IDs to try if primary fails
-    pmi_alternatives = ["MANPMI", "UMCSENT"]  # Manufacturing PMI alternatives
+    # Note: Do NOT include UMCSENT (Consumer Sentiment) as it's a different metric
+    pmi_alternatives = ["MANPMI"]  # Manufacturing PMI alternatives (excluding UMCSENT)
     
     response_data = {}
     # Historical data from 18 months ago to reduce load time while maintaining context

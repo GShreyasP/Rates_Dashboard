@@ -87,7 +87,9 @@ def fetch_macro_data():
             "Consumer Confidence": "CONCCONF",
         }
         
-        pmi_alternatives = ["MANPMI", "UMCSENT"]
+        # Alternative PMI series IDs to try if primary fails
+        # Note: Do NOT include UMCSENT (Consumer Sentiment) as it's a different metric
+        pmi_alternatives = ["MANPMI"]  # Manufacturing PMI alternatives (excluding UMCSENT)
         response_data = {}
         FRED_API_KEY = _get_fred_api_key()
         start_date = _datetime.now() - _timedelta(days=550)  # ~18 months
