@@ -511,7 +511,7 @@ function App() {
     
     return {
       "Inflation Indicators": {
-        indicators: ["CPI", "PCE Headline", "PCE Core", "PMI"].filter(key => data[key]),
+        indicators: ["CPI", "PCE Headline", "PCE Core", "PPI"].filter(key => data[key]),
         description: "Measures of consumer price inflation, spending patterns, and manufacturing activity"
       },
       "Employment Indicators": {
@@ -519,7 +519,7 @@ function App() {
         description: "Labor market health, job creation, and labor turnover metrics"
       },
       "Price & Activity Indexes": {
-        indicators: ["PPI", "Consumer Sentiment", "Consumer Confidence"].filter(key => data[key]),
+        indicators: ["PMI", "Consumer Sentiment", "Consumer Confidence"].filter(key => data[key]),
         description: "Wholesale price inflation, producer cost trends, and consumer sentiment"
       }
     }
