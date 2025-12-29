@@ -1299,13 +1299,6 @@ function App() {
                                 setTradeYields(prev => ({ ...prev, '2Y': null }));
                               }
                             }}
-                            onBlur={(e) => {
-                              // Ensure valid value on blur
-                              const val = parseFloat(e.target.value);
-                              if (isNaN(val) || val < 0) {
-                                setTradeYields(prev => ({ ...prev, '2Y': original2Y }));
-                              }
-                            }}
                             placeholder={original2Y > 0 ? original2Y.toFixed(2) : '0.00'}
                             style={{
                               width: '100px',
@@ -1327,6 +1320,11 @@ function App() {
                             onBlur={(e) => {
                               e.target.style.borderColor = '#4ade80';
                               e.target.style.boxShadow = 'none';
+                              // Ensure valid value on blur
+                              const val = parseFloat(e.target.value);
+                              if (isNaN(val) || val < 0) {
+                                setTradeYields(prev => ({ ...prev, '2Y': original2Y }));
+                              }
                             }}
                           />
                           <span style={{ color: '#8b95b2', fontSize: '0.9rem', fontWeight: '500' }}>%</span>
@@ -1346,13 +1344,6 @@ function App() {
                               } else if (e.target.value === '' || e.target.value === '.') {
                                 // Allow empty input while typing
                                 setTradeYields(prev => ({ ...prev, '10Y': null }));
-                              }
-                            }}
-                            onBlur={(e) => {
-                              // Ensure valid value on blur
-                              const val = parseFloat(e.target.value);
-                              if (isNaN(val) || val < 0) {
-                                setTradeYields(prev => ({ ...prev, '10Y': original10Y }));
                               }
                             }}
                             placeholder={original10Y > 0 ? original10Y.toFixed(2) : '0.00'}
@@ -1376,6 +1367,11 @@ function App() {
                             onBlur={(e) => {
                               e.target.style.borderColor = '#f87171';
                               e.target.style.boxShadow = 'none';
+                              // Ensure valid value on blur
+                              const val = parseFloat(e.target.value);
+                              if (isNaN(val) || val < 0) {
+                                setTradeYields(prev => ({ ...prev, '10Y': original10Y }));
+                              }
                             }}
                           />
                           <span style={{ color: '#8b95b2', fontSize: '0.9rem', fontWeight: '500' }}>%</span>
