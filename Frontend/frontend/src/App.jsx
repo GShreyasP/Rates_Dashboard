@@ -1283,52 +1283,102 @@ function App() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
                       <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <label style={{ color: '#8b95b2', fontSize: '0.9rem' }}>2Y Yield:</label>
+                          <label style={{ color: '#8b95b2', fontSize: '0.9rem', fontWeight: '500' }}>2Y Yield:</label>
                           <input
                             type="number"
                             step="0.01"
-                            value={yield2Y.toFixed(2)}
+                            min="0"
+                            max="20"
+                            value={yield2Y > 0 ? yield2Y.toFixed(2) : ''}
                             onChange={(e) => {
                               const val = parseFloat(e.target.value);
-                              if (!isNaN(val)) {
+                              if (!isNaN(val) && val >= 0) {
                                 setTradeYields(prev => ({ ...prev, '2Y': val }));
+                              } else if (e.target.value === '' || e.target.value === '.') {
+                                // Allow empty input while typing
+                                setTradeYields(prev => ({ ...prev, '2Y': null }));
                               }
                             }}
+                            onBlur={(e) => {
+                              // Ensure valid value on blur
+                              const val = parseFloat(e.target.value);
+                              if (isNaN(val) || val < 0) {
+                                setTradeYields(prev => ({ ...prev, '2Y': original2Y }));
+                              }
+                            }}
+                            placeholder={original2Y > 0 ? original2Y.toFixed(2) : '0.00'}
                             style={{
-                              width: '80px',
-                              padding: '0.25rem 0.5rem',
+                              width: '100px',
+                              padding: '0.5rem 0.75rem',
                               background: '#1e2746',
-                              border: '1px solid #4a9eff',
-                              borderRadius: '4px',
+                              border: '2px solid #4ade80',
+                              borderRadius: '6px',
                               color: '#e0e0e0',
-                              fontSize: '0.9rem'
+                              fontSize: '1rem',
+                              fontWeight: '500',
+                              cursor: 'text',
+                              outline: 'none',
+                              transition: 'all 0.2s'
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.borderColor = '#4ade80';
+                              e.target.style.boxShadow = '0 0 0 3px rgba(74, 222, 128, 0.2)';
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.borderColor = '#4ade80';
+                              e.target.style.boxShadow = 'none';
                             }}
                           />
-                          <span style={{ color: '#8b95b2', fontSize: '0.85rem' }}>%</span>
+                          <span style={{ color: '#8b95b2', fontSize: '0.9rem', fontWeight: '500' }}>%</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <label style={{ color: '#8b95b2', fontSize: '0.9rem' }}>10Y Yield:</label>
+                          <label style={{ color: '#8b95b2', fontSize: '0.9rem', fontWeight: '500' }}>10Y Yield:</label>
                           <input
                             type="number"
                             step="0.01"
-                            value={yield10Y.toFixed(2)}
+                            min="0"
+                            max="20"
+                            value={yield10Y > 0 ? yield10Y.toFixed(2) : ''}
                             onChange={(e) => {
                               const val = parseFloat(e.target.value);
-                              if (!isNaN(val)) {
+                              if (!isNaN(val) && val >= 0) {
                                 setTradeYields(prev => ({ ...prev, '10Y': val }));
+                              } else if (e.target.value === '' || e.target.value === '.') {
+                                // Allow empty input while typing
+                                setTradeYields(prev => ({ ...prev, '10Y': null }));
                               }
                             }}
+                            onBlur={(e) => {
+                              // Ensure valid value on blur
+                              const val = parseFloat(e.target.value);
+                              if (isNaN(val) || val < 0) {
+                                setTradeYields(prev => ({ ...prev, '10Y': original10Y }));
+                              }
+                            }}
+                            placeholder={original10Y > 0 ? original10Y.toFixed(2) : '0.00'}
                             style={{
-                              width: '80px',
-                              padding: '0.25rem 0.5rem',
+                              width: '100px',
+                              padding: '0.5rem 0.75rem',
                               background: '#1e2746',
-                              border: '1px solid #f87171',
-                              borderRadius: '4px',
+                              border: '2px solid #f87171',
+                              borderRadius: '6px',
                               color: '#e0e0e0',
-                              fontSize: '0.9rem'
+                              fontSize: '1rem',
+                              fontWeight: '500',
+                              cursor: 'text',
+                              outline: 'none',
+                              transition: 'all 0.2s'
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.borderColor = '#f87171';
+                              e.target.style.boxShadow = '0 0 0 3px rgba(248, 113, 113, 0.2)';
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.borderColor = '#f87171';
+                              e.target.style.boxShadow = 'none';
                             }}
                           />
-                          <span style={{ color: '#8b95b2', fontSize: '0.85rem' }}>%</span>
+                          <span style={{ color: '#8b95b2', fontSize: '0.9rem', fontWeight: '500' }}>%</span>
                         </div>
                       </div>
                       <button
@@ -1620,7 +1670,7 @@ function App() {
                   </div>
 
                   {/* Risk Factors */}
-                  <div>
+                  <div style={{ marginBottom: '2rem' }}>
                     <h4 style={{ color: '#f87171', marginBottom: '1rem' }}>Risk Factors</h4>
                     <div style={{ 
                       padding: '1.5rem', 
@@ -1633,6 +1683,76 @@ function App() {
                       <p>
                         <strong style={{ color: '#f87171' }}>The "Bull Flattener" Risk:</strong> If a sudden recessionary shock occurs (e.g., unemployment spikes toward 5%), the Fed would likely slash rates aggressively. In that scenario, the 2-year would crash much faster than the 10-year, causing the curve to "Bull Steepen" instead. While you still profit from the widening spread, the "Short 10Y" leg would lose money on a nominal basis.
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Cost of Carry */}
+                  <div>
+                    <h4 style={{ color: '#fbbf24', marginBottom: '1rem' }}>Cost of Carry & Roll-Down</h4>
+                    <div style={{ 
+                      padding: '1.5rem', 
+                      background: 'rgba(251, 191, 36, 0.05)', 
+                      border: '1px solid rgba(251, 191, 36, 0.2)',
+                      borderRadius: '6px',
+                      color: '#e0e0e0',
+                      lineHeight: '1.8'
+                    }}>
+                      <p style={{ marginBottom: '1rem' }}>
+                        <strong style={{ color: '#fbbf24' }}>The "Rent" to Stay in the Position:</strong> This trade has a negative carry and roll-down, meaning it costs money to hold the position if the curve stays static.
+                      </p>
+                      
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <h5 style={{ color: '#fbbf24', marginBottom: '0.75rem', fontSize: '1rem' }}>1. Carry Calculation (Cash Flow)</h5>
+                        <div style={{ marginLeft: '1rem', fontSize: '0.9rem' }}>
+                          <p style={{ marginBottom: '0.5rem' }}>
+                            <strong>Long 2Y Side:</strong> Earn yield ({yield2Y > 0 ? yield2Y.toFixed(2) : 'N/A'}%) but pay repo financing (~{yield2Y > 0 ? (yield2Y + 0.15).toFixed(2) : 'N/A'}%). 
+                            <span style={{ color: '#f87171' }}> Net Carry: ~-0.15% (Negative)</span>
+                          </p>
+                          <p style={{ marginBottom: '0.5rem' }}>
+                            <strong>Short 10Y Side:</strong> Pay coupon ({yield10Y > 0 ? yield10Y.toFixed(2) : 'N/A'}%) but earn rebate on cash collateral. 
+                            <span style={{ color: '#f87171' }}> Net Carry: Typically negative for on-the-run bonds</span>
+                          </p>
+                          <p style={{ marginTop: '0.75rem', color: '#8b95b2', fontStyle: 'italic' }}>
+                            Total Monthly Carry Cost: ~${((Math.abs(yield2Y - (yield2Y + 0.15)) / 100) * long2YNotional / 12 + (yield10Y / 100) * 10_000_000 / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <h5 style={{ color: '#fbbf24', marginBottom: '0.75rem', fontSize: '1rem' }}>2. Roll-Down (Price Appreciation)</h5>
+                        <div style={{ marginLeft: '1rem', fontSize: '0.9rem' }}>
+                          <p style={{ marginBottom: '0.5rem' }}>
+                            As bonds approach maturity, they "roll down" the yield curve. In an upward-sloping curve, this means prices naturally rise.
+                          </p>
+                          <p style={{ marginBottom: '0.5rem' }}>
+                            <strong>Critical Point:</strong> Since you are <strong style={{ color: '#f87171' }}>SHORT</strong> the 10Y, roll-down works <strong style={{ color: '#f87171' }}>AGAINST</strong> you. As the 10Y bond's price rises from rolling down, your short position loses money.
+                          </p>
+                          <p style={{ marginTop: '0.75rem', color: '#8b95b2', fontStyle: 'italic' }}>
+                            Estimated Monthly Roll-Down Cost: ~${((0.10 * dv01_10Y / 12)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div style={{ 
+                        marginTop: '1.5rem', 
+                        padding: '1rem', 
+                        background: 'rgba(251, 191, 36, 0.1)', 
+                        border: '1px solid rgba(251, 191, 36, 0.3)',
+                        borderRadius: '4px'
+                      }}>
+                        <p style={{ marginBottom: '0.75rem' }}>
+                          <strong style={{ color: '#fbbf24' }}>Total Monthly Cost (Carry + Roll):</strong> 
+                          <span style={{ color: '#f87171', fontSize: '1.1rem', marginLeft: '0.5rem' }}>
+                            ~${yield2Y > 0 && yield10Y > 0 ? ((((0.15 / 100) * long2YNotional / 12) + ((0.10 / 100) * 10_000_000 / 12) + (0.10 * dv01_10Y / 12)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })) : 'N/A'}
+                          </span>
+                        </p>
+                        <p style={{ marginBottom: '0.75rem', fontSize: '0.9rem' }}>
+                          <strong style={{ color: '#4a9eff' }}>Breakeven Analysis:</strong> The trade has a negative carry and roll of approximately <strong>-1.2 basis points per month</strong>. This means if the yield curve stays static, the position loses about <strong>${yield2Y > 0 && yield10Y > 0 ? ((((0.15 / 100) * long2YNotional / 12) + ((0.10 / 100) * 10_000_000 / 12) + (0.10 * dv01_10Y / 12)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })) : 'N/A'}</strong> per month in "theta" decay.
+                        </p>
+                        <p style={{ fontSize: '0.9rem', color: '#4ade80' }}>
+                          <strong>Conviction:</strong> However, fiscal supply pressure is expected to steepen the 2s10s spread by 25-30 bps over the next quarter, offering a risk-reward ratio of roughly <strong>8-to-1</strong> against the carry cost.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
