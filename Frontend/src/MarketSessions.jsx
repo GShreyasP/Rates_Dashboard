@@ -1,13 +1,35 @@
 import { useEffect, useState } from 'react'
 
-// Standard FX trading sessions expressed in UTC. End < start ⇒ session
-// spans midnight UTC.
+// FX trading sessions defined by each city's LOCAL business hours.
+// The UTC window is derived at render time from the city's current
+// UTC offset, so DST shifts (BST↔GMT, EDT↔EST, AEDT↔AEST) are always
+// handled correctly.
 const SESSIONS = [
-  { name: 'Sydney',   tz: 'Australia/Sydney',   startUtc: 22, endUtc: 7  },
-  { name: 'Tokyo',    tz: 'Asia/Tokyo',         startUtc: 0,  endUtc: 9  },
-  { name: 'London',   tz: 'Europe/London',      startUtc: 7,  endUtc: 16 },
-  { name: 'New York', tz: 'America/New_York',   startUtc: 13, endUtc: 22 },
+  { name: 'Sydney',   tz: 'Australia/Sydney', localOpen: 8, localClose: 17 },
+  { name: 'Tokyo',    tz: 'Asia/Tokyo',       localOpen: 9, localClose: 18 },
+  { name: 'London',   tz: 'Europe/London',    localOpen: 8, localClose: 17 },
+  { name: 'New York', tz: 'America/New_York', localOpen: 8, localClose: 17 },
 ]
+
+// Returns the city's current UTC offset in hours (e.g. -4 for NY EDT).
+function tzOffsetHours(tz, date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, timeZoneName: 'longOffset',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  }).formatToParts(date)
+  const raw = parts.find(p => p.type === 'timeZoneName')?.value || ''
+  const m = /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(raw)
+  if (!m) return 0
+  const sign = m[1] === '-' ? -1 : 1
+  return sign * (parseInt(m[2], 10) + parseInt(m[3] || '0', 10) / 60)
+}
+
+function normHour(h) {
+  let x = h % 24
+  if (x < 0) x += 24
+  return x
+}
 
 const ROW_HEIGHT = 34
 const AXIS_HEIGHT = 28
@@ -31,9 +53,8 @@ function utcToLocalHours(utcHour, offsetH) {
   return x
 }
 
-function isOpenNow(session, nowUtcH) {
-  const { startUtc, endUtc } = session
-  if (endUtc >= startUtc) return nowUtcH >= startUtc && nowUtcH < endUtc
+function isOpenNow(startUtc, endUtc, nowUtcH) {
+  if (endUtc > startUtc) return nowUtcH >= startUtc && nowUtcH < endUtc
   return nowUtcH >= startUtc || nowUtcH < endUtc
 }
 
@@ -49,26 +70,29 @@ export default function MarketSessions() {
   const nowLocalH = utcToLocalHours(nowUtcH, offsetH)
   const nowPct = (nowLocalH / 24) * 100
 
-  // Position sessions on a LOCAL 24h axis. Convert their UTC window to local
-  // and split into two pieces if it wraps past local midnight.
+  // For each session, derive today's UTC window from the city's LOCAL
+  // business hours + its current UTC offset. Then re-project onto the
+  // viewer's local-time axis. Handles both wraps (session past city
+  // midnight, session past viewer midnight).
   const rows = SESSIONS.map((s) => {
-    const localStart = utcToLocalHours(s.startUtc, offsetH)
-    const utcDuration = s.endUtc >= s.startUtc ? (s.endUtc - s.startUtc) : (24 - s.startUtc + s.endUtc)
-    const localEnd = (localStart + utcDuration) % 24
-    let bars
-    if (localEnd >= localStart) {
-      bars = [{ left: localStart, width: localEnd - localStart }]
-    } else {
-      bars = [
-        { left: localStart, width: 24 - localStart },
-        { left: 0,          width: localEnd        },
-      ]
-    }
+    const cityOffset = tzOffsetHours(s.tz, now)  // e.g. -4 for NY EDT
+    const utcOpen  = normHour(s.localOpen  - cityOffset)
+    const utcClose = normHour(s.localClose - cityOffset)
+    const utcDuration = s.localClose - s.localOpen
+
+    const localStart = normHour(utcOpen + offsetH)
+    const localEnd   = normHour(localStart + utcDuration)
+
+    const bars = localEnd > localStart
+      ? [{ left: localStart, width: localEnd - localStart }]
+      : [
+          { left: localStart, width: 24 - localStart },
+          { left: 0,          width: localEnd        },
+        ]
     return {
       ...s,
-      open: isOpenNow(s, nowUtcH),
+      open: isOpenNow(utcOpen, utcClose, nowUtcH),
       bars,
-      labelStart: localStart, // where to try to draw the label
     }
   })
 
