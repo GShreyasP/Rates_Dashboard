@@ -130,6 +130,7 @@ def get_yield_curve():
 # ============================================================
 MACRO_SERIES = {
     "CPI":                 "CPIAUCSL",
+    "Core CPI":            "CPILFESL",   # CPI excluding food & energy
     "PCE Headline":        "PCEPI",
     "PCE Core":            "PCEPILFE",   # PCE excluding food & energy (true core)
     "PPI":                 "PPIFIS",     # PPI Final Demand (the headline print)
@@ -142,8 +143,8 @@ MACRO_SERIES = {
     "Consumer Confidence": "CONCCONF",
 }
 PMI_FALLBACKS = ["MANPMI"]
-YOY_SERIES = {"CPI", "PCE Headline", "PCE Core", "PPI", "Non-Farm Payrolls", "JOLTS"}
-QOQ_SERIES = {"CPI", "PCE Headline", "PCE Core", "PPI"}
+YOY_SERIES = {"CPI", "Core CPI", "PCE Headline", "PCE Core", "PPI", "Non-Farm Payrolls", "JOLTS"}
+QOQ_SERIES = {"CPI", "Core CPI", "PCE Headline", "PCE Core", "PPI"}
 
 
 def _closest_on_or_before(obs, target_date_str):

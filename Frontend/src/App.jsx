@@ -456,6 +456,11 @@ function App() {
       goodScore: "Moderate increases (2-3% annually) indicate healthy inflation. Too high (>5%) suggests overheating; too low (<1%) may signal weak demand.",
       future: "Rising CPI suggests higher costs and potential Fed rate hikes. Falling CPI may indicate economic slowdown and potential rate cuts."
     },
+    "Core CPI": {
+      what: "Consumer Price Index excluding volatile food and energy prices — the underlying trend in consumer inflation once monthly gas/grocery swings are stripped out.",
+      goodScore: "The Fed watches this closely alongside core PCE. 2% y/y is target; sustained prints above 3% keep policy tight; below 1.5% signals disinflation risk.",
+      future: "Sticky core CPI (services, shelter) is the main argument for keeping rates higher for longer. Cooling core CPI opens the door to cuts."
+    },
     "PCE Headline": {
       what: "Personal Consumption Expenditures Price Index (Headline) measures changes in prices paid by consumers for all goods and services, including food and energy.",
       goodScore: "Moderate increases (2-3% annually) indicate healthy inflation. The Fed targets 2% PCE inflation. Too high (>3%) suggests overheating; too low (<1%) may signal weak demand.",
@@ -514,7 +519,7 @@ function App() {
     
     return {
       "Inflation Indicators": {
-        indicators: ["CPI", "PCE Headline", "PCE Core", "PPI"].filter(key => data[key]),
+        indicators: ["CPI", "Core CPI", "PCE Headline", "PCE Core", "PPI"].filter(key => data[key]),
         description: "Measures of consumer price inflation, spending patterns, and manufacturing activity"
       },
       "Employment Indicators": {
