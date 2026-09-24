@@ -444,6 +444,7 @@ function App() {
   const chartRef = useRef(null)
   const [dataUpdated, setDataUpdated] = useState(false)
   const [dataUpdateMessage, setDataUpdateMessage] = useState('')
+  const [selectedMeetingIdx, setSelectedMeetingIdx] = useState(0)
   const [tradeYields, setTradeYields] = useState({ '2Y': null, '10Y': null })
 
   // Explanation data for each indicator
@@ -629,13 +630,11 @@ function App() {
     return pnl
   }
 
-  // Determine API URL 
-  // - Development: localhost
-  // - Production on Vercel: use relative paths (/api)
-  // - Production with separate backend: use VITE_API_URL env var
-  const API_URL = import.meta.env.DEV 
-    ? 'http://localhost:5001/api' 
-    : (import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api');
+  // Vercel serves both frontend and /api. Use relative paths.
+  // For local dev, run `vercel dev` (not `vite dev`) so /api works, or set VITE_API_URL.
+  const API_URL = import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api`
+    : '/api';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -841,8 +840,9 @@ function App() {
                     const data = macroData[key]
                     // Format data for chart - data structure now has 'value' and 'pct_change'
                     const chartData = data.history ? data.history.map(item => ({
-                      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                       value: item.value,
+                      previous: item.previous,
                       pct_change: item.pct_change || 0,
                       fullDate: item.date
                     })) : [];
@@ -908,21 +908,33 @@ function App() {
                               <table className="data-table">
                                 <thead>
                                   <tr>
-                                    <th>Date</th>
-                                    <th>Value</th>
-                                    <th>% Change</th>
+                                    <th>Release Date</th>
+                                    <th>Expected</th>
+                                    <th>Actual</th>
+                                    <th>Surprise</th>
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {chartData.slice().reverse().map((item, idx) => (
-                                    <tr key={idx}>
-                                      <td>{item.date}</td>
-                                      <td>{typeof item.value === 'number' ? item.value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : item.value}</td>
-                                      <td className={item.pct_change >= 0 ? 'green' : 'red'}>
-                                        {item.pct_change > 0 ? '▲' : item.pct_change < 0 ? '▼' : ''} {item.pct_change.toFixed(2)}%
-                                      </td>
-                                    </tr>
-                                  ))}
+                                  {chartData.slice().reverse().map((item, idx) => {
+                                    const expected = item.previous
+                                    const actual = item.value
+                                    const surprise = (typeof expected === 'number' && expected !== 0 && typeof actual === 'number')
+                                      ? ((actual - expected) / Math.abs(expected)) * 100
+                                      : null
+                                    const fmt = (v) => typeof v === 'number'
+                                      ? v.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                                      : (v ?? '—')
+                                    return (
+                                      <tr key={idx}>
+                                        <td>{item.date}</td>
+                                        <td>{fmt(expected)}</td>
+                                        <td><strong style={{color: '#0a2540'}}>{fmt(actual)}</strong></td>
+                                        <td className={surprise === null ? '' : surprise >= 0 ? 'green' : 'red'}>
+                                          {surprise === null ? '—' : `${surprise > 0 ? '+' : ''}${surprise.toFixed(2)}%`}
+                                        </td>
+                                      </tr>
+                                    )
+                                  })}
                                 </tbody>
                               </table>
                             </div>
@@ -970,93 +982,127 @@ function App() {
         <h2>Yield Curve & Analysis</h2>
         
         {/* FEDWATCH DATA */}
-        {fedwatchData && !fedwatchData.error && (
+        {fedwatchData && !fedwatchData.error && (() => {
+          const meetings = (fedwatchData.meetings && fedwatchData.meetings.length > 0)
+            ? fedwatchData.meetings
+            : [{
+                date: fedwatchData.next_meeting_date,
+                target_rate_probabilities: fedwatchData.target_rate_probabilities || {},
+                most_likely_change: fedwatchData.most_likely_change,
+                most_likely_probability: fedwatchData.most_likely_probability,
+                implied_rate: null,
+              }]
+          const idx = Math.min(selectedMeetingIdx, meetings.length - 1)
+          const active = meetings[idx]
+          return (
           <div className="fedwatch-card">
-            <h3>Target Rate Probabilities for {fedwatchData.next_meeting_date ? fedwatchData.next_meeting_date + ' Fed Meeting' : 'Next Fed Meeting'}</h3>
-            {fedwatchData.current_target_rate && (
-              <div className="fedwatch-note" style={{background: 'rgba(99, 91, 255, 0.15)', borderColor: 'rgba(99, 91, 255, 0.4)'}}>
-                <span className="note-icon">📊</span>
-                <span>Current target rate is {fedwatchData.current_target_rate} bps</span>
-              </div>
-            )}
+            <h3>FOMC Target-Rate Probabilities</h3>
+            <div className="fedwatch-note">
+              <span className="note-icon">▸</span>
+              <span>
+                {fedwatchData.source || 'CME Fed Funds futures'}
+                {fedwatchData.current_target_rate && ` · Current target ${fedwatchData.current_target_rate} bps`}
+                {fedwatchData.current_fed_rate !== undefined && fedwatchData.current_fed_rate !== null && ` · EFFR ${fedwatchData.current_fed_rate}%`}
+              </span>
+            </div>
             {fedwatchData.note && (
               <div className="fedwatch-note">
-                <span className="note-icon">ℹ️</span>
+                <span className="note-icon">ℹ</span>
                 <span>{fedwatchData.note}</span>
               </div>
             )}
+
+            {meetings.length > 1 && (
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px'}}>
+                {meetings.map((m, i) => (
+                  <button
+                    key={m.date_iso || m.date || i}
+                    onClick={() => setSelectedMeetingIdx(i)}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      border: '1px solid ' + (i === idx ? '#635bff' : '#e3e8ee'),
+                      background: i === idx ? '#635bff' : '#ffffff',
+                      color: i === idx ? '#ffffff' : '#425466',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 120ms ease',
+                    }}
+                  >
+                    {m.date}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="fedwatch-content">
-              {fedwatchData.current_fed_rate !== undefined && (
+              <div className="fedwatch-meeting">
+                <span className="fedwatch-label">Meeting</span>
+                <span className="fedwatch-value">{active.date}</span>
+              </div>
+              {active.implied_rate !== null && active.implied_rate !== undefined && (
                 <div className="fedwatch-meeting">
-                  <span className="fedwatch-label">Current Fed Funds Rate:</span>
-                  <span className="fedwatch-value">{fedwatchData.current_fed_rate}%</span>
+                  <span className="fedwatch-label">Implied Post-Meeting Rate</span>
+                  <span className="fedwatch-value">{active.implied_rate.toFixed(3)}%</span>
                 </div>
               )}
-              {fedwatchData.target_rate_probabilities && Object.keys(fedwatchData.target_rate_probabilities).length > 0 && (
+
+              {active.target_rate_probabilities && Object.keys(active.target_rate_probabilities).length > 0 && (
                 <div className="fedwatch-chart-wrapper">
-                  <ResponsiveContainer width="100%" height={350}>
-                    <BarChart 
-                      data={Object.entries(fedwatchData.target_rate_probabilities)
-                        .sort((a, b) => {
-                          const aVal = parseInt(a[0].split('-')[0]);
-                          const bVal = parseInt(b[0].split('-')[0]);
-                          return aVal - bVal;
-                        })
-                        .map(([range, prob]) => ({
-                          range: range,
-                          probability: prob
-                        }))}
-                      margin={{ top: 20, right: 50, left: 20, bottom: 80 }}
-                      barCategoryGap="30%"
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart
+                      data={Object.entries(active.target_rate_probabilities)
+                        .sort((a, b) => parseInt(a[0].split('-')[0]) - parseInt(b[0].split('-')[0]))
+                        .map(([range, prob]) => ({ range, probability: prob }))}
+                      margin={{ top: 24, right: 30, left: 10, bottom: 60 }}
+                      barCategoryGap="35%"
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e3e8ee" />
-                      <XAxis 
-                        dataKey="range" 
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e3e8ee" vertical={false} />
+                      <XAxis
+                        dataKey="range"
                         stroke="#697386"
                         tick={{ fill: '#697386', fontSize: 12 }}
-                        label={{ value: 'Target Rate (in bps)', position: 'insideBottom', offset: -5, fill: '#697386' }}
-                        angle={-45}
+                        label={{ value: 'Target Rate (bps)', position: 'insideBottom', offset: -5, fill: '#697386' }}
+                        angle={-30}
                         textAnchor="end"
-                        height={80}
+                        height={70}
                       />
-                      <YAxis 
+                      <YAxis
                         domain={[0, 100]}
                         stroke="#697386"
                         tick={{ fill: '#697386', fontSize: 12 }}
-                        label={{ value: 'Probability', angle: -90, position: 'insideLeft', fill: '#697386' }}
-                        tickFormatter={(value) => `${value}%`}
+                        tickFormatter={(v) => `${v}%`}
                       />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#ffffff', 
-                          border: '1px solid #e3e8ee',
-                          color: '#0a2540'
-                        }}
-                        labelStyle={{ color: '#635bff' }}
-                        formatter={(value) => [`${value}%`, 'Probability']}
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e3e8ee', color: '#0a2540', borderRadius: 6 }}
+                        labelStyle={{ color: '#635bff', fontWeight: 600 }}
+                        formatter={(v) => [`${v}%`, 'Probability']}
                       />
-                      <Bar 
-                        dataKey="probability" 
+                      <Bar
+                        dataKey="probability"
                         fill="#635bff"
                         radius={[4, 4, 0, 0]}
-                        label={{ position: 'top', fill: '#fff', fontSize: 14, fontWeight: 'bold' }}
+                        label={{ position: 'top', fill: '#0a2540', fontSize: 12, fontWeight: 600, formatter: (v) => `${v}%` }}
                       />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               )}
-              {fedwatchData.most_likely_change && fedwatchData.most_likely_probability !== undefined && (
+
+              {active.most_likely_change && active.most_likely_probability !== undefined && (
                 <div className="fedwatch-probability">
-                  <span className="fedwatch-label">Most Likely Target Rate:</span>
+                  <span className="fedwatch-label">Most Likely Target Rate</span>
                   <span className="fedwatch-value highlight">
-                    {fedwatchData.most_likely_change} bps
-                    <span className="probability-badge">{fedwatchData.most_likely_probability}%</span>
+                    {active.most_likely_change} bps
+                    <span className="probability-badge">{active.most_likely_probability}%</span>
                   </span>
                 </div>
               )}
             </div>
           </div>
-        )}
+          )
+        })()}
         
         <div className="yield-curve-grid">
           {/* YIELD CURVE CHART */}

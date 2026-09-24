@@ -1,7 +1,1 @@
-pandas
-pandas-datareader
-yfinance
-numpy
 requests
-beautifulsoup4
-setuptools
