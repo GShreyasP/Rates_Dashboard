@@ -851,6 +851,8 @@ function App() {
                       value: item.value,
                       previous: item.previous,
                       pct_change: item.pct_change || 0,
+                      forecast: (typeof item.forecast === 'number') ? item.forecast : null,
+                      forecast_source: item.forecast_source || null,
                       fullDate: item.date
                     })) : [];
                     
@@ -919,33 +921,46 @@ function App() {
                                 <thead>
                                   <tr>
                                     <th>Reference Month</th>
-                                    <th>Expected</th>
+                                    <th title="Analyst consensus (ForexFactory) when available, else prior release">Forecast</th>
                                     <th>Actual</th>
                                     <th>Surprise</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {(() => {
-                                    // Unemployment Rate is already in %; show its raw level.
-                                    // Everything else: show period-over-period % change (like CPI m/m).
                                     const isRateNative = key === 'Unemployment Rate'
                                     const rows = chartData.slice().reverse()
                                     return rows.map((item, idx) => {
                                       const prevRow = rows[idx + 1]  // one period earlier (list is newest-first)
                                       const actual = isRateNative ? item.value : item.pct_change
-                                      const expected = isRateNative
-                                        ? (prevRow ? prevRow.value : null)
-                                        : (prevRow ? prevRow.pct_change : null)
-                                      const surprise = (typeof expected === 'number' && typeof actual === 'number')
-                                        ? actual - expected
+                                      // Prefer FF consensus forecast on the row it applies to; otherwise fall back to prior release.
+                                      let forecast, forecastFromFF = false
+                                      if (typeof item.forecast === 'number') {
+                                        forecast = item.forecast
+                                        forecastFromFF = item.forecast_source === 'ff'
+                                      } else if (isRateNative) {
+                                        forecast = prevRow ? prevRow.value : null
+                                      } else {
+                                        forecast = prevRow ? prevRow.pct_change : null
+                                      }
+                                      const surprise = (typeof forecast === 'number' && typeof actual === 'number')
+                                        ? actual - forecast
                                         : null
                                       const fmtPct = (v) => typeof v === 'number'
-                                        ? `${v >= 0 ? '' : ''}${v.toFixed(2)}%`
+                                        ? `${v.toFixed(2)}%`
                                         : '—'
                                       return (
                                         <tr key={idx}>
                                           <td>{item.date}</td>
-                                          <td>{fmtPct(expected)}</td>
+                                          <td>
+                                            {fmtPct(forecast)}
+                                            {forecastFromFF && (
+                                              <span title="Analyst consensus from ForexFactory" style={{
+                                                marginLeft: 6, fontSize: 10, fontWeight: 600, color: '#635bff',
+                                                background: 'rgba(99,91,255,0.1)', padding: '1px 5px', borderRadius: 4
+                                              }}>FF</span>
+                                            )}
+                                          </td>
                                           <td><strong style={{color: '#0a2540'}}>{fmtPct(actual)}</strong></td>
                                           <td className={surprise === null ? '' : surprise >= 0 ? 'green' : 'red'}>
                                             {surprise === null ? '—' : `${surprise > 0 ? '+' : ''}${surprise.toFixed(2)} pp`}

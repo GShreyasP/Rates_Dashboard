@@ -214,6 +214,92 @@ def _build_series_payload(name, obs):
     return payload
 
 
+# ------------------------------------------------------------
+# ForexFactory forecasts (analyst consensus).
+# Public XML export is capped at ~1 request/hour by FF, so cache
+# aggressively and fall back silently on rate-limit HTML.
+# ------------------------------------------------------------
+FF_XML_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.xml"
+FF_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0 Safari/537.36",
+    "Accept": "application/xml, text/xml, */*",
+}
+FF_TITLE_TO_INDICATOR = {
+    "CPI m/m":                       "CPI",
+    "PPI m/m":                       "PPI",
+    "Core PCE Price Index m/m":      "PCE Core",
+    "PCE Price Index m/m":           "PCE Headline",
+    "Non-Farm Employment Change":    "Non-Farm Payrolls",
+    "Unemployment Rate":             "Unemployment Rate",
+    "Unemployment Claims":           "Unemployment Claims",
+    "JOLTS Job Openings":            "JOLTS",
+    "ISM Manufacturing PMI":         "PMI",
+    "CB Consumer Confidence":        "Consumer Confidence",
+    "Prelim UoM Consumer Sentiment": "Consumer Sentiment",
+    "Revised UoM Consumer Sentiment":"Consumer Sentiment",
+}
+
+def _parse_ff_value(s):
+    if not s:
+        return None
+    s = s.strip().replace('%', '')
+    # 200K -> 200000, 4.5M -> 4500000
+    mult = 1
+    if s.endswith('K'): mult, s = 1e3, s[:-1]
+    elif s.endswith('M'): mult, s = 1e6, s[:-1]
+    elif s.endswith('B'): mult, s = 1e9, s[:-1]
+    try:
+        return float(s) * mult
+    except ValueError:
+        return None
+
+@memoize("ff_forecasts", ttl=3600)  # 1 hour — FF's own limit
+def fetch_ff_forecasts():
+    """Returns {indicator_name: {'forecast': float, 'previous': float, 'release_date': 'YYYY-MM-DD'}}."""
+    try:
+        r = requests.get(FF_XML_URL, headers=FF_HEADERS, timeout=HTTP_TIMEOUT)
+        # FF returns 200 + HTML "Rate Limited" page when throttled; check content.
+        body = r.text
+        if not body.lstrip().startswith('<?xml') and '<weeklyevents' not in body:
+            print("[ff] rate-limited or unexpected response")
+            return {}
+    except Exception as e:
+        print(f"[ff] fetch failed: {e}")
+        return {}
+
+    import re
+    out = {}
+    events = re.findall(r'<event>(.*?)</event>', body, re.DOTALL)
+    for ev in events:
+        def get(tag):
+            m = re.search(rf'<{tag}[^/]*?>(?:<!\[CDATA\[)?([^<]*?)(?:\]\]>)?</{tag}>', ev, re.DOTALL)
+            return m.group(1).strip() if m else ''
+        if get('country') != 'USD':
+            continue
+        title = get('title')
+        if title not in FF_TITLE_TO_INDICATOR:
+            continue
+        forecast = _parse_ff_value(get('forecast'))
+        if forecast is None:
+            continue
+        name = FF_TITLE_TO_INDICATOR[title]
+        # Normalize date MM-DD-YYYY -> YYYY-MM-DD
+        raw = get('date')
+        iso = raw
+        try:
+            mo, d, y = raw.split('-')
+            iso = f"{y}-{mo}-{d}"
+        except ValueError:
+            pass
+        out[name] = {
+            'forecast': round(forecast, 3),
+            'previous': _parse_ff_value(get('previous')),
+            'release_date': iso,
+        }
+    return out
+
+
 @memoize("macro", ttl=1800)
 def fetch_macro_data():
     if not _api_key_ok():
@@ -240,6 +326,27 @@ def fetch_macro_data():
             name, payload = f.result()
             if payload:
                 out[name] = payload
+
+    # Merge FF analyst forecasts onto the latest release of each indicator.
+    try:
+        ff = fetch_ff_forecasts()
+    except Exception as e:
+        print(f"[macro] FF merge skipped: {e}")
+        ff = {}
+    for name, payload in out.items():
+        entry = ff.get(name)
+        if not entry:
+            continue
+        hist = payload.get('history') or []
+        if not hist:
+            continue
+        # FF forecasts are m/m for CPI/PPI/PCE; level for rate/count series.
+        payload['ff_forecast'] = entry['forecast']
+        payload['ff_forecast_release_date'] = entry.get('release_date')
+        payload['ff_forecast_source'] = 'ForexFactory'
+        # Attach to the latest history row too, so the frontend table can pick it up.
+        hist[-1]['forecast'] = entry['forecast']
+        hist[-1]['forecast_source'] = 'ff'
     return out
 
 
