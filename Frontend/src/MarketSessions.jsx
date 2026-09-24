@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 // UTC offset, so DST shifts (BST↔GMT, EDT↔EST, AEDT↔AEST) are always
 // handled correctly.
 const SESSIONS = [
-  { name: 'Sydney',   tz: 'Australia/Sydney', localOpen: 8, localClose: 17 },
+  { name: 'Sydney',   tz: 'Australia/Sydney', localOpen: 8, localClose: 16 },
   { name: 'Tokyo',    tz: 'Asia/Tokyo',       localOpen: 9, localClose: 18 },
   { name: 'London',   tz: 'Europe/London',    localOpen: 8, localClose: 17 },
   { name: 'New York', tz: 'America/New_York', localOpen: 8, localClose: 17 },
