@@ -855,9 +855,24 @@ function App() {
                       date: new Date(item.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
                       value: item.value,
                       previous: item.previous,
+                      delta: (typeof item.value === 'number' && typeof item.previous === 'number') ? item.value - item.previous : 0,
                       pct_change: item.pct_change || 0,
                       fullDate: item.date
                     })) : [];
+                    // Count-based indicators are quoted in raw units (jobs, claims), not %.
+                    const COUNT_KEYS = new Set(['Non-Farm Payrolls', 'Unemployment Claims', 'JOLTS'])
+                    const isCount = COUNT_KEYS.has(key)
+                    const isRateNative = key === 'Unemployment Rate'
+                    const fmtCount = (v) => {
+                      if (typeof v !== 'number') return '—'
+                      const abs = Math.abs(v)
+                      const sign = v < 0 ? '-' : ''
+                      if (abs >= 1e6) return `${sign}${(abs/1e6).toFixed(2)}M`
+                      if (abs >= 1e3) return `${sign}${(abs/1e3).toFixed(0)}K`
+                      return `${sign}${abs.toFixed(0)}`
+                    }
+                    const fmtSignedCount = (v) => (typeof v === 'number' && v >= 0 ? '+' : '') + fmtCount(v)
+                    const fmtPct = (v) => typeof v === 'number' ? `${v.toFixed(2)}%` : '—'
                     
                     return (
                       <div key={key} className="card">
@@ -872,10 +887,17 @@ function App() {
                         </div>
                         <div className="chart-wrapper">
                           {chartData.length > 0 ? (() => {
-                            const isRateNative = key === 'Unemployment Rate'
-                            const barKey = isRateNative ? 'value' : 'pct_change'
-                            const suffix = '%'
-                            const barData = chartData.slice(-24)  // last ~2 years for legibility
+                            // Chart series per indicator type:
+                            //   rate-native (UR): raw level in %
+                            //   count-based (NFP, Claims, JOLTS): m/m delta in count units
+                            //   everything else: m/m % change
+                            const barKey = isRateNative ? 'value' : isCount ? 'delta' : 'pct_change'
+                            const isPctAxis = !isCount
+                            const tickFmt = isPctAxis ? ((v) => `${v}%`) : fmtCount
+                            const tipFmt = isPctAxis
+                              ? ((v) => [`${(+v).toFixed(2)}%`, isRateNative ? 'Level' : 'm/m'])
+                              : ((v) => [fmtSignedCount(+v), 'm/m change'])
+                            const barData = chartData.slice(-24)
                             return (
                             <ResponsiveContainer width="100%" height={200}>
                               <BarChart data={barData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
@@ -892,18 +914,18 @@ function App() {
                                   domain={['auto', 'auto']}
                                   stroke="#697386"
                                   tick={{ fill: '#697386', fontSize: 10 }}
-                                  tickFormatter={(v) => `${v}${suffix}`}
-                                  width={44}
+                                  tickFormatter={tickFmt}
+                                  width={isCount ? 52 : 44}
                                 />
                                 <Tooltip
                                   contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e3e8ee', color: '#0a2540', borderRadius: 6 }}
                                   labelStyle={{ color: '#635bff', fontWeight: 600 }}
-                                  formatter={(v) => [`${(+v).toFixed(2)}${suffix}`, isRateNative ? 'Level' : 'm/m']}
+                                  formatter={tipFmt}
                                 />
                                 <ReferenceLine y={0} stroke="#cfd7df" />
                                 <Bar dataKey={barKey} radius={[3, 3, 0, 0]}>
                                   {barData.map((d, i) => (
-                                    <Cell key={i} fill={(isRateNative ? d.value : d.pct_change) >= 0 ? '#635bff' : '#b42318'} />
+                                    <Cell key={i} fill={d[barKey] >= 0 ? '#635bff' : '#b42318'} />
                                   ))}
                                 </Bar>
                               </BarChart>
@@ -930,22 +952,29 @@ function App() {
                                 </thead>
                                 <tbody>
                                   {(() => {
-                                    const isRateNative = key === 'Unemployment Rate'
                                     const rows = chartData.slice().reverse()
                                     return rows.map((item, idx) => {
-                                      const prevRow = rows[idx + 1]  // one period earlier (list is newest-first)
-                                      const actual = isRateNative ? item.value : item.pct_change
-                                      const previous = isRateNative
-                                        ? (prevRow ? prevRow.value : null)
-                                        : (prevRow ? prevRow.pct_change : null)
-                                      const fmtPct = (v) => typeof v === 'number'
-                                        ? `${v.toFixed(2)}%`
-                                        : '—'
+                                      const prevRow = rows[idx + 1]
+                                      let previous, actual, fmt
+                                      if (isCount) {
+                                        // Level (jobs, claims, openings) in raw units.
+                                        actual = item.value
+                                        previous = prevRow ? prevRow.value : null
+                                        fmt = fmtCount
+                                      } else if (isRateNative) {
+                                        actual = item.value
+                                        previous = prevRow ? prevRow.value : null
+                                        fmt = fmtPct
+                                      } else {
+                                        actual = item.pct_change
+                                        previous = prevRow ? prevRow.pct_change : null
+                                        fmt = fmtPct
+                                      }
                                       return (
                                         <tr key={idx}>
                                           <td>{item.date}</td>
-                                          <td>{fmtPct(previous)}</td>
-                                          <td><strong style={{color: '#0a2540'}}>{fmtPct(actual)}</strong></td>
+                                          <td>{fmt(previous)}</td>
+                                          <td><strong style={{color: '#0a2540'}}>{fmt(actual)}</strong></td>
                                         </tr>
                                       )
                                     })
