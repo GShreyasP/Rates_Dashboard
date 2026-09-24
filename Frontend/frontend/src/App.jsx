@@ -179,11 +179,11 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
   return (
     <div className="interactive-chart-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h4 style={{ color: '#4a9eff', fontSize: '1.1rem', margin: 0 }}>
+        <h4 style={{ color: '#635bff', fontSize: '1.1rem', margin: 0 }}>
           Interactive Yield Curve & PNL Calculator
         </h4>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <label style={{ color: '#8b95b2', fontSize: '0.9rem' }}>
+          <label style={{ color: '#697386', fontSize: '0.9rem' }}>
             Bond for PNL:
             <select
               value={selectedBond || '10Y'}
@@ -191,10 +191,10 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
               style={{
                 marginLeft: '0.5rem',
                 padding: '0.4rem 0.75rem',
-                background: '#0f1525',
-                border: '1px solid #1e2746',
+                background: '#f7fafc',
+                border: '1px solid #e3e8ee',
                 borderRadius: '4px',
-                color: '#fff',
+                color: '#0a2540',
                 fontSize: '0.85rem',
                 cursor: 'pointer'
               }}
@@ -209,21 +209,21 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
               onClick={onReset}
               style={{
                 padding: '0.5rem 1rem',
-                background: '#1e2746',
-                border: '1px solid #4a9eff',
+                background: '#e3e8ee',
+                border: '1px solid #635bff',
                 borderRadius: '4px',
-                color: '#4a9eff',
+                color: '#635bff',
                 cursor: 'pointer',
                 fontSize: '0.85rem',
                 fontWeight: 600
               }}
               onMouseOver={(e) => {
-                e.target.style.background = '#4a9eff'
+                e.target.style.background = '#635bff'
                 e.target.style.color = '#fff'
               }}
               onMouseOut={(e) => {
-                e.target.style.background = '#1e2746'
-                e.target.style.color = '#4a9eff'
+                e.target.style.background = '#e3e8ee'
+                e.target.style.color = '#635bff'
               }}
             >
               Reset to Original
@@ -234,10 +234,10 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
       <div 
         ref={containerRef}
         style={{ 
-          background: '#0f1525', 
+          background: '#f7fafc', 
           borderRadius: '6px', 
           padding: '1rem',
-          border: '1px solid #1e2746'
+          border: '1px solid #e3e8ee'
         }}
       >
         <svg 
@@ -260,7 +260,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
                 y1={y}
                 x2={margin.left + plotWidth}
                 y2={y}
-                stroke="#1e2746"
+                stroke="#e3e8ee"
                 strokeWidth="1"
                 strokeDasharray="3 3"
               />
@@ -275,7 +275,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
                 key={`y-label-${i}`}
                 x={margin.left - 10}
                 y={y + 5}
-                fill="#8b95b2"
+                fill="#697386"
                 fontSize="11"
                 textAnchor="end"
               >
@@ -290,7 +290,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
               key={`x-label-${i}`}
               x={point.x}
               y={chartHeight - margin.bottom + 20}
-              fill="#8b95b2"
+              fill="#697386"
               fontSize="11"
               textAnchor="middle"
             >
@@ -302,7 +302,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
           <path
             d={getOriginalCurvePath()}
             fill="none"
-            stroke="#4a9eff"
+            stroke="#635bff"
             strokeWidth="2"
             strokeDasharray="5 5"
             opacity="0.4"
@@ -312,7 +312,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
           <path
             d={getCurvePath()}
             fill="none"
-            stroke="#4a9eff"
+            stroke="#635bff"
             strokeWidth="3"
           />
 
@@ -327,7 +327,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
                   y1={margin.top + plotHeight}
                   x2={point.x}
                   y2={point.y}
-                  stroke="#1e2746"
+                  stroke="#e3e8ee"
                   strokeWidth="1"
                   strokeDasharray="2 2"
                 />
@@ -336,7 +336,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
                   cx={point.x}
                   cy={point.y}
                   r={8}
-                  fill={isChanged ? "#4ade80" : "#4a9eff"}
+                  fill={isChanged ? "#067647" : "#635bff"}
                   stroke="#fff"
                   strokeWidth="2"
                   style={{ cursor: 'ns-resize' }}
@@ -346,7 +346,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
                 <text
                   x={point.x}
                   y={point.y - 15}
-                  fill={isChanged ? "#4ade80" : "#4a9eff"}
+                  fill={isChanged ? "#067647" : "#635bff"}
                   fontSize="12"
                   fontWeight="bold"
                   textAnchor="middle"
@@ -358,7 +358,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
                   <text
                     x={point.x}
                     y={point.y - 30}
-                    fill="#4ade80"
+                    fill="#067647"
                     fontSize="10"
                     textAnchor="middle"
                   >
@@ -374,7 +374,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
           <text
             x={chartWidth / 2}
             y={chartHeight - 10}
-            fill="#8b95b2"
+            fill="#697386"
             fontSize="12"
             textAnchor="middle"
           >
@@ -383,7 +383,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
           <text
             x={15}
             y={chartHeight / 2}
-            fill="#8b95b2"
+            fill="#697386"
             fontSize="12"
             textAnchor="middle"
             transform={`rotate(-90, 15, ${chartHeight / 2})`}
@@ -396,13 +396,13 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
         <div style={{
           marginTop: '1.5rem',
           padding: '1rem',
-          background: pnl >= 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)',
-          border: `1px solid ${pnl >= 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(248, 113, 113, 0.3)'}`,
+          background: pnl >= 0 ? 'rgba(6, 118, 71, 0.1)' : 'rgba(180, 35, 24, 0.1)',
+          border: `1px solid ${pnl >= 0 ? 'rgba(6, 118, 71, 0.3)' : 'rgba(180, 35, 24, 0.3)'}`,
           borderRadius: '6px',
           textAlign: 'center'
         }}>
           <div style={{
-            color: '#8b95b2',
+            color: '#697386',
             fontSize: '0.9rem',
             marginBottom: '0.5rem',
             textTransform: 'uppercase',
@@ -411,7 +411,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
             Estimated PNL ($10M {selectedBond || '10Y'} Position)
           </div>
           <div style={{
-            color: pnl >= 0 ? '#4ade80' : '#f87171',
+            color: pnl >= 0 ? '#067647' : '#f87171',
             fontSize: '2rem',
             fontWeight: 'bold',
             fontFamily: 'Courier New, monospace'
@@ -419,7 +419,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
             {pnl >= 0 ? '+' : ''}{pnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{
-            color: '#8b95b2',
+            color: '#697386',
             fontSize: '0.85rem',
             marginTop: '0.5rem',
             fontStyle: 'italic'
@@ -737,18 +737,18 @@ function App() {
 
   if (loading) return (
     <div className="loading" style={{ position: 'relative', height: '100vh' }}>
-      <div style={{ fontSize: '1.5rem', color: '#4a9eff' }}>Loading Market Data...</div>
+      <div style={{ fontSize: '1.5rem', color: '#635bff' }}>Loading Market Data...</div>
       <div style={{
         position: 'absolute',
         bottom: '2rem',
         left: '50%',
         transform: 'translateX(-50%)',
         padding: '0.75rem 1.5rem',
-        background: 'rgba(74, 158, 255, 0.1)',
-        border: '1px solid rgba(74, 158, 255, 0.3)',
+        background: 'rgba(99, 91, 255, 0.1)',
+        border: '1px solid rgba(99, 91, 255, 0.3)',
         borderRadius: '8px',
         fontSize: '0.9rem',
-        color: '#8b95b2',
+        color: '#697386',
         fontStyle: 'italic',
         textAlign: 'center',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
@@ -769,11 +769,11 @@ function App() {
           position: 'fixed',
           top: '1rem',
           right: '1rem',
-          background: 'rgba(74, 222, 128, 0.15)',
-          border: '2px solid rgba(74, 222, 128, 0.5)',
+          background: 'rgba(6, 118, 71, 0.15)',
+          border: '2px solid rgba(6, 118, 71, 0.5)',
           borderRadius: '8px',
           padding: '1rem 1.5rem',
-          color: '#4ade80',
+          color: '#067647',
           zIndex: 1000,
           maxWidth: '400px',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
@@ -789,16 +789,16 @@ function App() {
             onClick={handleReload}
             style={{
               padding: '0.5rem 1rem',
-              background: '#4ade80',
+              background: '#067647',
               border: 'none',
               borderRadius: '4px',
-              color: '#0f1525',
+              color: '#f7fafc',
               cursor: 'pointer',
               fontWeight: 'bold',
               fontSize: '0.85rem'
             }}
-            onMouseOver={(e) => e.target.style.background = '#4ade80'}
-            onMouseOut={(e) => e.target.style.background = '#4ade80'}
+            onMouseOver={(e) => e.target.style.background = '#067647'}
+            onMouseOut={(e) => e.target.style.background = '#067647'}
           >
             Reload
           </button>
@@ -807,7 +807,7 @@ function App() {
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#4ade80',
+              color: '#067647',
               cursor: 'pointer',
               fontSize: '1.2rem',
               padding: '0.25rem 0.5rem'
@@ -862,40 +862,40 @@ function App() {
                           {chartData.length > 0 ? (
                             <ResponsiveContainer width="100%" height={200}>
                               <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e3e8ee" />
                                 <XAxis 
                                   dataKey="date" 
-                                  stroke="#8b95b2"
-                                  tick={{ fill: '#8b95b2', fontSize: 10 }}
+                                  stroke="#697386"
+                                  tick={{ fill: '#697386', fontSize: 10 }}
                                   angle={-45}
                                   textAnchor="end"
                                   height={60}
                                 />
                                 <YAxis 
                                   domain={['auto', 'auto']}
-                                  stroke="#8b95b2"
-                                  tick={{ fill: '#8b95b2', fontSize: 10 }}
+                                  stroke="#697386"
+                                  tick={{ fill: '#697386', fontSize: 10 }}
                                 />
                                 <Tooltip 
                                   contentStyle={{ 
-                                    backgroundColor: '#141b2d', 
-                                    border: '1px solid #1e2746',
-                                    color: '#e0e0e0'
+                                    backgroundColor: '#ffffff', 
+                                    border: '1px solid #e3e8ee',
+                                    color: '#0a2540'
                                   }}
-                                  labelStyle={{ color: '#4a9eff' }}
+                                  labelStyle={{ color: '#635bff' }}
                                 />
                                 <Line 
                                   type="monotone" 
                                   dataKey="value" 
-                                  stroke="#4a9eff" 
+                                  stroke="#635bff" 
                                   strokeWidth={2}
                                   dot={false}
-                                  activeDot={{ r: 4, fill: '#4a9eff' }}
+                                  activeDot={{ r: 4, fill: '#635bff' }}
                                 />
                               </LineChart>
                             </ResponsiveContainer>
                           ) : (
-                            <div style={{ padding: '2rem', textAlign: 'center', color: '#8b95b2' }}>
+                            <div style={{ padding: '2rem', textAlign: 'center', color: '#697386' }}>
                               No data available
                             </div>
                           )}
@@ -974,7 +974,7 @@ function App() {
           <div className="fedwatch-card">
             <h3>Target Rate Probabilities for {fedwatchData.next_meeting_date ? fedwatchData.next_meeting_date + ' Fed Meeting' : 'Next Fed Meeting'}</h3>
             {fedwatchData.current_target_rate && (
-              <div className="fedwatch-note" style={{background: 'rgba(74, 158, 255, 0.15)', borderColor: 'rgba(74, 158, 255, 0.4)'}}>
+              <div className="fedwatch-note" style={{background: 'rgba(99, 91, 255, 0.15)', borderColor: 'rgba(99, 91, 255, 0.4)'}}>
                 <span className="note-icon">📊</span>
                 <span>Current target rate is {fedwatchData.current_target_rate} bps</span>
               </div>
@@ -1009,35 +1009,35 @@ function App() {
                       margin={{ top: 20, right: 50, left: 20, bottom: 80 }}
                       barCategoryGap="30%"
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e3e8ee" />
                       <XAxis 
                         dataKey="range" 
-                        stroke="#8b95b2"
-                        tick={{ fill: '#8b95b2', fontSize: 12 }}
-                        label={{ value: 'Target Rate (in bps)', position: 'insideBottom', offset: -5, fill: '#8b95b2' }}
+                        stroke="#697386"
+                        tick={{ fill: '#697386', fontSize: 12 }}
+                        label={{ value: 'Target Rate (in bps)', position: 'insideBottom', offset: -5, fill: '#697386' }}
                         angle={-45}
                         textAnchor="end"
                         height={80}
                       />
                       <YAxis 
                         domain={[0, 100]}
-                        stroke="#8b95b2"
-                        tick={{ fill: '#8b95b2', fontSize: 12 }}
-                        label={{ value: 'Probability', angle: -90, position: 'insideLeft', fill: '#8b95b2' }}
+                        stroke="#697386"
+                        tick={{ fill: '#697386', fontSize: 12 }}
+                        label={{ value: 'Probability', angle: -90, position: 'insideLeft', fill: '#697386' }}
                         tickFormatter={(value) => `${value}%`}
                       />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: '#141b2d', 
-                          border: '1px solid #1e2746',
-                          color: '#e0e0e0'
+                          backgroundColor: '#ffffff', 
+                          border: '1px solid #e3e8ee',
+                          color: '#0a2540'
                         }}
-                        labelStyle={{ color: '#4a9eff' }}
+                        labelStyle={{ color: '#635bff' }}
                         formatter={(value) => [`${value}%`, 'Probability']}
                       />
                       <Bar 
                         dataKey="probability" 
-                        fill="#4a9eff"
+                        fill="#635bff"
                         radius={[4, 4, 0, 0]}
                         label={{ position: 'top', fill: '#fff', fontSize: 14, fontWeight: 'bold' }}
                       />
@@ -1066,41 +1066,41 @@ function App() {
               <div className="chart-wrapper">
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={ratesData.yield_curve}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e3e8ee" />
                     <XAxis 
                       dataKey="maturity" 
-                      stroke="#8b95b2"
-                      tick={{ fill: '#8b95b2', fontSize: 12 }}
-                      label={{ value: 'Maturity', position: 'insideBottom', offset: -5, fill: '#8b95b2' }}
+                      stroke="#697386"
+                      tick={{ fill: '#697386', fontSize: 12 }}
+                      label={{ value: 'Maturity', position: 'insideBottom', offset: -5, fill: '#697386' }}
                     />
                     <YAxis 
                       domain={[3, 'auto']}
-                      stroke="#8b95b2"
-                      tick={{ fill: '#8b95b2', fontSize: 12 }}
-                      label={{ value: 'Yield (%)', angle: -90, position: 'insideLeft', fill: '#8b95b2' }}
+                      stroke="#697386"
+                      tick={{ fill: '#697386', fontSize: 12 }}
+                      label={{ value: 'Yield (%)', angle: -90, position: 'insideLeft', fill: '#697386' }}
                     />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: '#141b2d', 
-                        border: '1px solid #1e2746',
-                        color: '#e0e0e0'
+                        backgroundColor: '#ffffff', 
+                        border: '1px solid #e3e8ee',
+                        color: '#0a2540'
                       }}
-                      labelStyle={{ color: '#4a9eff' }}
+                      labelStyle={{ color: '#635bff' }}
                       formatter={(value) => [`${value.toFixed(2)}%`, 'Yield']}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="yield" 
-                      stroke="#4a9eff" 
+                      stroke="#635bff" 
                       strokeWidth={3}
-                      dot={{ r: 5, fill: '#4a9eff' }}
-                      activeDot={{ r: 7, fill: '#4ade80' }}
+                      dot={{ r: 5, fill: '#635bff' }}
+                      activeDot={{ r: 7, fill: '#067647' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div style={{ padding: '2rem', textAlign: 'center', color: '#8b95b2' }}>
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#697386' }}>
                 No yield data available
               </div>
             )}
@@ -1159,7 +1159,7 @@ function App() {
                 <div style={{ 
                   padding: '2rem', 
                   textAlign: 'center', 
-                  color: '#8b95b2',
+                  color: '#697386',
                   fontStyle: 'italic'
                 }}>
                   Initializing interactive chart...
@@ -1169,7 +1169,7 @@ function App() {
               <div style={{ 
                 padding: '2rem', 
                 textAlign: 'center', 
-                color: '#8b95b2',
+                color: '#697386',
                 fontStyle: 'italic'
               }}>
                 Loading yield curve data...
@@ -1185,12 +1185,12 @@ function App() {
             textAlign: 'center'
           }}>
             <h2 style={{ 
-              color: '#4a9eff', 
+              color: '#635bff', 
               fontSize: '1.8rem', 
               fontWeight: '600',
               margin: 0,
               paddingBottom: '0.5rem',
-              borderBottom: '2px solid #4a9eff',
+              borderBottom: '2px solid #635bff',
               display: 'inline-block'
             }}>
               Trade Pitch
@@ -1199,7 +1199,7 @@ function App() {
 
           {/* BEAR STEEPENER TRADE PITCH */}
           <div className="card" style={{ gridColumn: '1 / -1', marginTop: '2rem' }}>
-            <h3 style={{ color: '#4a9eff', marginBottom: '1.5rem' }}>Bear Steepener Trade: Short 10Y / Long 2Y</h3>
+            <h3 style={{ color: '#635bff', marginBottom: '1.5rem' }}>Bear Steepener Trade: Short 10Y / Long 2Y</h3>
             
             {/* Interactive 2Y vs 10Y Chart */}
             {ratesData && ratesData.yield_curve && ratesData.yields ? (() => {
@@ -1269,7 +1269,7 @@ function App() {
                     yield: yieldValue,
                     originalYield: item.yield,
                     isHighlighted,
-                    color: maturity === '2Y' ? '#4ade80' : maturity === '10Y' ? '#f87171' : '#4a9eff'
+                    color: maturity === '2Y' ? '#067647' : maturity === '10Y' ? '#f87171' : '#635bff'
                   };
                 })
                 .sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity));
@@ -1283,7 +1283,7 @@ function App() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
                       <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <label style={{ color: '#8b95b2', fontSize: '0.9rem', fontWeight: '500' }}>2Y Yield:</label>
+                          <label style={{ color: '#697386', fontSize: '0.9rem', fontWeight: '500' }}>2Y Yield:</label>
                           <input
                             type="number"
                             step="0.01"
@@ -1303,10 +1303,10 @@ function App() {
                             style={{
                               width: '100px',
                               padding: '0.5rem 0.75rem',
-                              background: '#1e2746',
-                              border: '2px solid #4ade80',
+                              background: '#e3e8ee',
+                              border: '2px solid #067647',
                               borderRadius: '6px',
-                              color: '#e0e0e0',
+                              color: '#0a2540',
                               fontSize: '1rem',
                               fontWeight: '500',
                               cursor: 'text',
@@ -1314,11 +1314,11 @@ function App() {
                               transition: 'all 0.2s'
                             }}
                             onFocus={(e) => {
-                              e.target.style.borderColor = '#4ade80';
-                              e.target.style.boxShadow = '0 0 0 3px rgba(74, 222, 128, 0.2)';
+                              e.target.style.borderColor = '#067647';
+                              e.target.style.boxShadow = '0 0 0 3px rgba(6, 118, 71, 0.2)';
                             }}
                             onBlur={(e) => {
-                              e.target.style.borderColor = '#4ade80';
+                              e.target.style.borderColor = '#067647';
                               e.target.style.boxShadow = 'none';
                               // Ensure valid value on blur
                               const val = parseFloat(e.target.value);
@@ -1327,10 +1327,10 @@ function App() {
                               }
                             }}
                           />
-                          <span style={{ color: '#8b95b2', fontSize: '0.9rem', fontWeight: '500' }}>%</span>
+                          <span style={{ color: '#697386', fontSize: '0.9rem', fontWeight: '500' }}>%</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <label style={{ color: '#8b95b2', fontSize: '0.9rem', fontWeight: '500' }}>10Y Yield:</label>
+                          <label style={{ color: '#697386', fontSize: '0.9rem', fontWeight: '500' }}>10Y Yield:</label>
                           <input
                             type="number"
                             step="0.01"
@@ -1350,10 +1350,10 @@ function App() {
                             style={{
                               width: '100px',
                               padding: '0.5rem 0.75rem',
-                              background: '#1e2746',
+                              background: '#e3e8ee',
                               border: '2px solid #f87171',
                               borderRadius: '6px',
-                              color: '#e0e0e0',
+                              color: '#0a2540',
                               fontSize: '1rem',
                               fontWeight: '500',
                               cursor: 'text',
@@ -1362,7 +1362,7 @@ function App() {
                             }}
                             onFocus={(e) => {
                               e.target.style.borderColor = '#f87171';
-                              e.target.style.boxShadow = '0 0 0 3px rgba(248, 113, 113, 0.2)';
+                              e.target.style.boxShadow = '0 0 0 3px rgba(180, 35, 24, 0.2)';
                             }}
                             onBlur={(e) => {
                               e.target.style.borderColor = '#f87171';
@@ -1374,17 +1374,17 @@ function App() {
                               }
                             }}
                           />
-                          <span style={{ color: '#8b95b2', fontSize: '0.9rem', fontWeight: '500' }}>%</span>
+                          <span style={{ color: '#697386', fontSize: '0.9rem', fontWeight: '500' }}>%</span>
                         </div>
                       </div>
                       <button
                         onClick={() => setTradeYields({ '2Y': null, '10Y': null })}
                         style={{
                           padding: '0.5rem 1rem',
-                          background: '#1e2746',
-                          border: '1px solid #4a9eff',
+                          background: '#e3e8ee',
+                          border: '1px solid #635bff',
                           borderRadius: '4px',
-                          color: '#4a9eff',
+                          color: '#635bff',
                           cursor: 'pointer',
                           fontSize: '0.85rem'
                         }}
@@ -1397,23 +1397,23 @@ function App() {
                         data={chartData}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1e2746" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e3e8ee" />
                         <XAxis 
                           dataKey="maturity" 
-                          stroke="#8b95b2"
-                          tick={{ fill: '#8b95b2', fontSize: 11 }}
+                          stroke="#697386"
+                          tick={{ fill: '#697386', fontSize: 11 }}
                         />
                         <YAxis 
                           domain={['auto', 'auto']}
-                          stroke="#8b95b2"
-                          tick={{ fill: '#8b95b2', fontSize: 12 }}
-                          label={{ value: 'Yield (%)', angle: -90, position: 'insideLeft', fill: '#8b95b2' }}
+                          stroke="#697386"
+                          tick={{ fill: '#697386', fontSize: 12 }}
+                          label={{ value: 'Yield (%)', angle: -90, position: 'insideLeft', fill: '#697386' }}
                         />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: '#141b2d', 
-                            border: '1px solid #1e2746',
-                            color: '#e0e0e0'
+                            backgroundColor: '#ffffff', 
+                            border: '1px solid #e3e8ee',
+                            color: '#0a2540'
                           }}
                           formatter={(value, name, props) => {
                             const maturity = props.payload.maturity;
@@ -1432,7 +1432,7 @@ function App() {
                         <Line 
                           type="monotone" 
                           dataKey="yield" 
-                          stroke="#4a9eff" 
+                          stroke="#635bff" 
                           strokeWidth={2}
                           strokeOpacity={0.3}
                           dot={(props) => {
@@ -1447,7 +1447,7 @@ function App() {
                                     cy={cy} 
                                     r={isChanged ? 12 : 10} 
                                     fill={payload.color}
-                                    stroke={isChanged ? '#4ade80' : '#fff'}
+                                    stroke={isChanged ? '#067647' : '#fff'}
                                     strokeWidth={isChanged ? 3 : 2}
                                     style={{ cursor: 'pointer' }}
                                     onClick={(e) => {
@@ -1461,7 +1461,7 @@ function App() {
                                       cy={cy} 
                                       r={14} 
                                       fill="none"
-                                      stroke="#4ade80"
+                                      stroke="#067647"
                                       strokeWidth={2}
                                       strokeDasharray="4 4"
                                       opacity={0.6}
@@ -1496,14 +1496,14 @@ function App() {
                       justifyContent: 'space-around', 
                       marginTop: '1rem',
                       padding: '1rem',
-                      background: 'rgba(74, 158, 255, 0.05)',
+                      background: 'rgba(99, 91, 255, 0.05)',
                       borderRadius: '6px',
                       flexWrap: 'wrap',
                       gap: '1rem'
                     }}>
                       <div style={{ textAlign: 'center', minWidth: '120px' }}>
-                        <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.25rem' }}>2Y Yield</div>
-                        <div style={{ color: '#4ade80', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                        <div style={{ color: '#697386', fontSize: '0.85rem', marginBottom: '0.25rem' }}>2Y Yield</div>
+                        <div style={{ color: '#067647', fontSize: '1.1rem', fontWeight: 'bold' }}>
                           {yield2Y > 0 ? yield2Y.toFixed(2) + '%' : 'N/A'}
                           {yield2Y > 0 && Math.abs(yield2Y - original2Y) > 0.001 && (
                             <span style={{ fontSize: '0.9rem', marginLeft: '0.5rem', display: 'block', marginTop: '0.25rem' }}>
@@ -1513,7 +1513,7 @@ function App() {
                         </div>
                       </div>
                       <div style={{ textAlign: 'center', minWidth: '120px' }}>
-                        <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.25rem' }}>10Y Yield</div>
+                        <div style={{ color: '#697386', fontSize: '0.85rem', marginBottom: '0.25rem' }}>10Y Yield</div>
                         <div style={{ color: '#f87171', fontSize: '1.1rem', fontWeight: 'bold' }}>
                           {yield10Y > 0 ? yield10Y.toFixed(2) + '%' : 'N/A'}
                           {yield10Y > 0 && Math.abs(yield10Y - original10Y) > 0.001 && (
@@ -1524,8 +1524,8 @@ function App() {
                         </div>
                       </div>
                       <div style={{ textAlign: 'center', minWidth: '140px' }}>
-                        <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.25rem' }}>2s10s Spread</div>
-                        <div style={{ color: '#4a9eff', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                        <div style={{ color: '#697386', fontSize: '0.85rem', marginBottom: '0.25rem' }}>2s10s Spread</div>
+                        <div style={{ color: '#635bff', fontSize: '1.1rem', fontWeight: 'bold' }}>
                           {yield2Y > 0 && yield10Y > 0 ? (spread * 100).toFixed(2) + ' bps' : 'N/A'}
                           {yield2Y > 0 && yield10Y > 0 && Math.abs(spreadChange) > 0.1 && (
                             <span style={{ 
@@ -1533,7 +1533,7 @@ function App() {
                               marginLeft: '0.5rem',
                               display: 'block',
                               marginTop: '0.25rem',
-                              color: spreadChange > 0 ? '#4ade80' : '#f87171'
+                              color: spreadChange > 0 ? '#067647' : '#f87171'
                             }}>
                               ({spreadChange > 0 ? '+' : ''}{spreadChange.toFixed(1)} bps)
                             </span>
@@ -1552,40 +1552,40 @@ function App() {
                   }}>
                     <div style={{ 
                       padding: '1rem', 
-                      background: 'rgba(74, 222, 128, 0.1)', 
-                      border: '1px solid rgba(74, 222, 128, 0.3)',
+                      background: 'rgba(6, 118, 71, 0.1)', 
+                      border: '1px solid rgba(6, 118, 71, 0.3)',
                       borderRadius: '6px'
                     }}>
-                      <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Long Position</div>
-                      <div style={{ color: '#4ade80', fontSize: '1.2rem', fontWeight: 'bold' }}>2Y Treasury</div>
-                      <div style={{ color: '#e0e0e0', marginTop: '0.5rem' }}>Notional: ${(long2YNotional / 1_000_000).toFixed(2)}M</div>
-                      <div style={{ color: '#8b95b2', fontSize: '0.9rem', marginTop: '0.25rem' }}>DV01: ${(dv01_2Y * long2YNotional / 10_000_000).toLocaleString()}</div>
+                      <div style={{ color: '#697386', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Long Position</div>
+                      <div style={{ color: '#067647', fontSize: '1.2rem', fontWeight: 'bold' }}>2Y Treasury</div>
+                      <div style={{ color: '#0a2540', marginTop: '0.5rem' }}>Notional: ${(long2YNotional / 1_000_000).toFixed(2)}M</div>
+                      <div style={{ color: '#697386', fontSize: '0.9rem', marginTop: '0.25rem' }}>DV01: ${(dv01_2Y * long2YNotional / 10_000_000).toLocaleString()}</div>
                     </div>
                     
                     <div style={{ 
                       padding: '1rem', 
-                      background: 'rgba(248, 113, 113, 0.1)', 
-                      border: '1px solid rgba(248, 113, 113, 0.3)',
+                      background: 'rgba(180, 35, 24, 0.1)', 
+                      border: '1px solid rgba(180, 35, 24, 0.3)',
                       borderRadius: '6px'
                     }}>
-                      <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Short Position</div>
+                      <div style={{ color: '#697386', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Short Position</div>
                       <div style={{ color: '#f87171', fontSize: '1.2rem', fontWeight: 'bold' }}>10Y Treasury</div>
-                      <div style={{ color: '#e0e0e0', marginTop: '0.5rem' }}>Notional: $10.00M</div>
-                      <div style={{ color: '#8b95b2', fontSize: '0.9rem', marginTop: '0.25rem' }}>DV01: ${dv01_10Y.toLocaleString()}</div>
+                      <div style={{ color: '#0a2540', marginTop: '0.5rem' }}>Notional: $10.00M</div>
+                      <div style={{ color: '#697386', fontSize: '0.9rem', marginTop: '0.25rem' }}>DV01: ${dv01_10Y.toLocaleString()}</div>
                     </div>
                     
                     <div style={{ 
                       padding: '1rem', 
-                      background: Math.abs(totalPnl) > 0.01 ? (totalPnl > 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)') : 'rgba(74, 158, 255, 0.1)', 
-                      border: `1px solid ${Math.abs(totalPnl) > 0.01 ? (totalPnl > 0 ? 'rgba(74, 222, 128, 0.3)' : 'rgba(248, 113, 113, 0.3)') : 'rgba(74, 158, 255, 0.3)'}`,
+                      background: Math.abs(totalPnl) > 0.01 ? (totalPnl > 0 ? 'rgba(6, 118, 71, 0.1)' : 'rgba(180, 35, 24, 0.1)') : 'rgba(99, 91, 255, 0.1)', 
+                      border: `1px solid ${Math.abs(totalPnl) > 0.01 ? (totalPnl > 0 ? 'rgba(6, 118, 71, 0.3)' : 'rgba(180, 35, 24, 0.3)') : 'rgba(99, 91, 255, 0.3)'}`,
                       borderRadius: '6px'
                     }}>
-                      <div style={{ color: '#8b95b2', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                      <div style={{ color: '#697386', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
                         {Math.abs(totalPnl) > 0.01 ? 'Current P&L' : 'P&L Scenarios'}
                       </div>
                       {Math.abs(totalPnl) > 0.01 ? (
                         <div style={{ 
-                          color: totalPnl > 0 ? '#4ade80' : '#f87171', 
+                          color: totalPnl > 0 ? '#067647' : '#f87171', 
                           fontSize: '1.3rem', 
                           fontWeight: 'bold',
                           textAlign: 'center'
@@ -1593,12 +1593,12 @@ function App() {
                           {totalPnl > 0 ? '+' : ''}${totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                       ) : (
-                        <div style={{ color: '#e0e0e0', fontSize: '0.9rem', lineHeight: '1.6' }}>
-                          <div>10Y ↑1bp, 2Y flat: <span style={{ color: '#4ade80' }}>+${dv01_10Y.toLocaleString()}</span></div>
-                          <div>2Y ↓1bp, 10Y flat: <span style={{ color: '#4ade80' }}>+${dv01_2Y_scaled.toLocaleString()}</span></div>
-                          <div>Spread widens 10bps: <span style={{ color: '#4ade80' }}>+${(totalDv01 * 10).toLocaleString()}</span></div>
+                        <div style={{ color: '#0a2540', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                          <div>10Y ↑1bp, 2Y flat: <span style={{ color: '#067647' }}>+${dv01_10Y.toLocaleString()}</span></div>
+                          <div>2Y ↓1bp, 10Y flat: <span style={{ color: '#067647' }}>+${dv01_2Y_scaled.toLocaleString()}</span></div>
+                          <div>Spread widens 10bps: <span style={{ color: '#067647' }}>+${(totalDv01 * 10).toLocaleString()}</span></div>
                           <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(139, 149, 178, 0.2)' }}>
-                            <div style={{ color: '#8b95b2', fontSize: '0.8rem' }}>Trade DV01: ${totalDv01.toLocaleString()}</div>
+                            <div style={{ color: '#697386', fontSize: '0.8rem' }}>Trade DV01: ${totalDv01.toLocaleString()}</div>
                           </div>
                         </div>
                       )}
@@ -1607,50 +1607,50 @@ function App() {
 
                   {/* Trade Explanation */}
                   <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ color: '#4a9eff', marginBottom: '1rem' }}>The Trade</h4>
+                    <h4 style={{ color: '#635bff', marginBottom: '1rem' }}>The Trade</h4>
                     <div style={{ 
                       padding: '1.5rem', 
-                      background: 'rgba(74, 158, 255, 0.05)', 
-                      border: '1px solid rgba(74, 158, 255, 0.2)',
+                      background: 'rgba(99, 91, 255, 0.05)', 
+                      border: '1px solid rgba(99, 91, 255, 0.2)',
                       borderRadius: '6px',
-                      color: '#e0e0e0',
+                      color: '#0a2540',
                       lineHeight: '1.8'
                     }}>
                       <p style={{ marginBottom: '1rem' }}>
-                        <strong style={{ color: '#4a9eff' }}>Action:</strong> Short the 10-year Treasury Note (sell futures) and Long the 2-year Treasury Note (buy futures).
+                        <strong style={{ color: '#635bff' }}>Action:</strong> Short the 10-year Treasury Note (sell futures) and Long the 2-year Treasury Note (buy futures).
                       </p>
                       <p style={{ marginBottom: '1rem' }}>
-                        <strong style={{ color: '#4a9eff' }}>Target:</strong> Current 2s10s spread is {(spread * 100).toFixed(0)} bps. Target a widening to +100 bps as the "term premium" returns to historical norms.
+                        <strong style={{ color: '#635bff' }}>Target:</strong> Current 2s10s spread is {(spread * 100).toFixed(0)} bps. Target a widening to +100 bps as the "term premium" returns to historical norms.
                       </p>
                       <p>
-                        <strong style={{ color: '#4a9eff' }}>Duration Neutrality:</strong> Position is weighted by DV01 to ensure this is a "curve play" and not just a bet on direction. The trade profits from curve steepening regardless of parallel rate moves.
+                        <strong style={{ color: '#635bff' }}>Duration Neutrality:</strong> Position is weighted by DV01 to ensure this is a "curve play" and not just a bet on direction. The trade profits from curve steepening regardless of parallel rate moves.
                       </p>
                     </div>
                   </div>
 
                   {/* Why This Trade */}
                   <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ color: '#4a9eff', marginBottom: '1rem' }}>Why This Trade: The "Hawkish Easing" Cycle</h4>
+                    <h4 style={{ color: '#635bff', marginBottom: '1rem' }}>Why This Trade: The "Hawkish Easing" Cycle</h4>
                     <div style={{ 
                       padding: '1.5rem', 
-                      background: 'rgba(74, 158, 255, 0.05)', 
-                      border: '1px solid rgba(74, 158, 255, 0.2)',
+                      background: 'rgba(99, 91, 255, 0.05)', 
+                      border: '1px solid rgba(99, 91, 255, 0.2)',
                       borderRadius: '6px',
-                      color: '#e0e0e0',
+                      color: '#0a2540',
                       lineHeight: '1.8'
                     }}>
                       <p style={{ marginBottom: '1rem' }}>
                         Based on market data from late December 2025, we are witnessing a unique "Hawkish Easing" cycle. The Federal Reserve recently delivered a 25bps cut (bringing the target to 3.50%–3.75%), but coupled it with a "dot plot" that signaled only one more cut for all of 2026.
                       </p>
                       <p style={{ marginBottom: '1rem' }}>
-                        This has resulted in a <strong style={{ color: '#4a9eff' }}>Bear Steepening</strong> of the yield curve. While short-term rates are drifting lower due to the actual cuts, long-term yields (10Y and 30Y) are rising as investors demand a higher "term premium" to compensate for persistent inflation risks (Core PCE at 2.8%) and massive Treasury supply.
+                        This has resulted in a <strong style={{ color: '#635bff' }}>Bear Steepening</strong> of the yield curve. While short-term rates are drifting lower due to the actual cuts, long-term yields (10Y and 30Y) are rising as investors demand a higher "term premium" to compensate for persistent inflation risks (Core PCE at 2.8%) and massive Treasury supply.
                       </p>
                       
                       <div style={{ marginTop: '1.5rem' }}>
-                        <h5 style={{ color: '#4a9eff', marginBottom: '0.75rem' }}>The Thesis</h5>
+                        <h5 style={{ color: '#635bff', marginBottom: '0.75rem' }}>The Thesis</h5>
                         <div style={{ marginLeft: '1rem' }}>
                           <p style={{ marginBottom: '0.75rem' }}>
-                            <strong style={{ color: '#4ade80' }}>The Front End is Anchored:</strong> The Fed has entered a "wait and see" mode. Even if they don't cut aggressively, the 2-year yield is unlikely to spike because the hiking cycle is definitively over.
+                            <strong style={{ color: '#067647' }}>The Front End is Anchored:</strong> The Fed has entered a "wait and see" mode. Even if they don't cut aggressively, the 2-year yield is unlikely to spike because the hiking cycle is definitively over.
                           </p>
                           <p style={{ marginBottom: '0.75rem' }}>
                             <strong style={{ color: '#f87171' }}>The Back End is Unbound:</strong> Several factors are pushing long-term yields higher:
@@ -1670,10 +1670,10 @@ function App() {
                     <h4 style={{ color: '#f87171', marginBottom: '1rem' }}>Risk Factors</h4>
                     <div style={{ 
                       padding: '1.5rem', 
-                      background: 'rgba(248, 113, 113, 0.05)', 
-                      border: '1px solid rgba(248, 113, 113, 0.2)',
+                      background: 'rgba(180, 35, 24, 0.05)', 
+                      border: '1px solid rgba(180, 35, 24, 0.2)',
                       borderRadius: '6px',
-                      color: '#e0e0e0',
+                      color: '#0a2540',
                       lineHeight: '1.8'
                     }}>
                       <p>
@@ -1690,7 +1690,7 @@ function App() {
                       background: 'rgba(251, 191, 36, 0.05)', 
                       border: '1px solid rgba(251, 191, 36, 0.2)',
                       borderRadius: '6px',
-                      color: '#e0e0e0',
+                      color: '#0a2540',
                       lineHeight: '1.8'
                     }}>
                       <p style={{ marginBottom: '1rem' }}>
@@ -1708,7 +1708,7 @@ function App() {
                             <strong>Short 10Y Side:</strong> Pay coupon ({yield10Y > 0 ? yield10Y.toFixed(2) : 'N/A'}%) but earn rebate on cash collateral. 
                             <span style={{ color: '#f87171' }}> Net Carry: Typically negative for on-the-run bonds</span>
                           </p>
-                          <p style={{ marginTop: '0.75rem', color: '#8b95b2', fontStyle: 'italic' }}>
+                          <p style={{ marginTop: '0.75rem', color: '#697386', fontStyle: 'italic' }}>
                             Total Monthly Carry Cost: ~${((Math.abs(yield2Y - (yield2Y + 0.15)) / 100) * long2YNotional / 12 + (yield10Y / 100) * 10_000_000 / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                         </div>
@@ -1723,7 +1723,7 @@ function App() {
                           <p style={{ marginBottom: '0.5rem' }}>
                             <strong>Critical Point:</strong> Since you are <strong style={{ color: '#f87171' }}>SHORT</strong> the 10Y, roll-down works <strong style={{ color: '#f87171' }}>AGAINST</strong> you. As the 10Y bond's price rises from rolling down, your short position loses money.
                           </p>
-                          <p style={{ marginTop: '0.75rem', color: '#8b95b2', fontStyle: 'italic' }}>
+                          <p style={{ marginTop: '0.75rem', color: '#697386', fontStyle: 'italic' }}>
                             Estimated Monthly Roll-Down Cost: ~${((0.10 * dv01_10Y / 12)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                         </div>
@@ -1743,9 +1743,9 @@ function App() {
                           </span>
                         </p>
                         <p style={{ marginBottom: '0.75rem', fontSize: '0.9rem' }}>
-                          <strong style={{ color: '#4a9eff' }}>Breakeven Analysis:</strong> The trade has a negative carry and roll of approximately <strong>-1.2 basis points per month</strong>. This means if the yield curve stays static, the position loses about <strong>${yield2Y > 0 && yield10Y > 0 ? ((((0.15 / 100) * long2YNotional / 12) + ((0.10 / 100) * 10_000_000 / 12) + (0.10 * dv01_10Y / 12)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })) : 'N/A'}</strong> per month in "theta" decay.
+                          <strong style={{ color: '#635bff' }}>Breakeven Analysis:</strong> The trade has a negative carry and roll of approximately <strong>-1.2 basis points per month</strong>. This means if the yield curve stays static, the position loses about <strong>${yield2Y > 0 && yield10Y > 0 ? ((((0.15 / 100) * long2YNotional / 12) + ((0.10 / 100) * 10_000_000 / 12) + (0.10 * dv01_10Y / 12)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })) : 'N/A'}</strong> per month in "theta" decay.
                         </p>
-                        <p style={{ fontSize: '0.9rem', color: '#4ade80' }}>
+                        <p style={{ fontSize: '0.9rem', color: '#067647' }}>
                           <strong>Conviction:</strong> However, fiscal supply pressure is expected to steepen the 2s10s spread by 25-30 bps over the next quarter, offering a risk-reward ratio of roughly <strong>8-to-1</strong> against the carry cost.
                         </p>
                       </div>
@@ -1754,7 +1754,7 @@ function App() {
                 </div>
               );
             })() : (
-              <div style={{ padding: '2rem', textAlign: 'center', color: '#8b95b2' }}>
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#697386' }}>
                 Loading trade data...
               </div>
             )}
