@@ -3,6 +3,10 @@ import axios from 'axios'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import './App.css'
 
+// Maturities shown on the interactive PNL chart (whitelist keeps it uncluttered).
+const CALC_MATURITIES = ['1M', '6M', '1Y', '2Y', '5Y', '7Y', '10Y', '30Y']
+const isCalcMaturity = (m) => CALC_MATURITIES.includes(m)
+
 // Helper function to convert maturity string to years
 const maturityToYears = (maturity) => {
   if (maturity.endsWith('W')) {
@@ -45,10 +49,9 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
 
   // Prepare data points - only yearly maturities with even spacing
   const getDataPoints = () => {
-    // Filter to only yearly maturities (1Y, 2Y, 5Y, 7Y, 10Y, 30Y)
-    const yearlyCurve = originalCurve.filter(item => item.maturity.endsWith('Y'))
+    const yearlyCurve = originalCurve.filter(item => isCalcMaturity(item.maturity))
     const sortedCurve = [...yearlyCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
-    
+
     // Find min/max yields for scaling
     const allYields = sortedCurve.map(item => currentYields[item.maturity] || item.yield)
     const minYield = Math.min(...allYields) - 0.5
@@ -79,8 +82,7 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
   const dataPoints = getDataPoints()
 
   const handleMouseDown = (e, point) => {
-    // Filter to only yearly maturities for consistent calculations
-    const yearlyCurve = originalCurve.filter(item => item.maturity.endsWith('Y'))
+    const yearlyCurve = originalCurve.filter(item => isCalcMaturity(item.maturity))
     const sortedCurve = [...yearlyCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
     const allYields = sortedCurve.map(item => currentYields[item.maturity] || item.yield)
     const minYield = Math.min(...allYields) - 0.5
@@ -141,10 +143,10 @@ function InteractiveYieldChart({ originalCurve, currentYields, onYieldChange, on
     yAxisLabels.push(yieldValue.toFixed(2))
   }
 
-  // Generate path for the yield curve (original) - only yearly with even spacing
+  // Generate path for the yield curve (original) - whitelist with even spacing
   const getOriginalCurvePath = () => {
     if (dataPoints.length === 0) return ''
-    const yearlyCurve = originalCurve.filter(item => item.maturity.endsWith('Y'))
+    const yearlyCurve = originalCurve.filter(item => isCalcMaturity(item.maturity))
     const sortedCurve = [...yearlyCurve].sort((a, b) => maturityToYears(a.maturity) - maturityToYears(b.maturity))
     const allYields = sortedCurve.map(item => item.yield)
     const minYield = Math.min(...allYields) - 0.5
@@ -574,13 +576,18 @@ function App() {
   // Get Macaulay duration estimate for different maturities (approximate)
   // These are Macaulay durations (not modified durations)
   const getMacaulayDuration = (maturity) => {
+    // T-bills (< 1Y) have effectively no coupon reinvestment, so duration ≈ time to maturity.
     const maturityMap = {
+      '1M': 1 / 12,
+      '3M': 3 / 12,
+      '6M': 0.5,
       '1Y': 1.0,
       '2Y': 1.9,
       '5Y': 4.5,
       '7Y': 6.2,
       '10Y': 8.0,
-      '30Y': 18.0
+      '20Y': 14.0,
+      '30Y': 18.0,
     }
     return maturityMap[maturity] || 8.0
   }
