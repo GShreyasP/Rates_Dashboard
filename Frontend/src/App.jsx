@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine } from 'recharts'
+import MarketSessions from './MarketSessions.jsx'
 import './App.css'
 
 // Maturities shown on the interactive PNL chart (whitelist keeps it uncluttered).
@@ -832,6 +833,8 @@ function App() {
         <h1>Rates Dashboard</h1>
         <p>Macro Data • Yield Curve • Trade Pitches</p>
       </header>
+
+      <MarketSessions />
 
       {/* SECTION 1: MACRO DATA */}
       <section className="macro-section">
