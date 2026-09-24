@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import axios from 'axios'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine } from 'recharts'
 import './App.css'
 
 // Maturities shown on the interactive PNL chart (whitelist keeps it uncluttered).
@@ -866,42 +866,45 @@ function App() {
                           </span>
                         </div>
                         <div className="chart-wrapper">
-                          {chartData.length > 0 ? (
+                          {chartData.length > 0 ? (() => {
+                            const isRateNative = key === 'Unemployment Rate'
+                            const barKey = isRateNative ? 'value' : 'pct_change'
+                            const suffix = '%'
+                            const barData = chartData.slice(-24)  // last ~2 years for legibility
+                            return (
                             <ResponsiveContainer width="100%" height={200}>
-                              <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e3e8ee" />
-                                <XAxis 
-                                  dataKey="date" 
+                              <BarChart data={barData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e3e8ee" vertical={false} />
+                                <XAxis
+                                  dataKey="date"
                                   stroke="#697386"
                                   tick={{ fill: '#697386', fontSize: 10 }}
-                                  angle={-45}
-                                  textAnchor="end"
-                                  height={60}
+                                  interval="preserveStartEnd"
+                                  minTickGap={20}
+                                  height={40}
                                 />
-                                <YAxis 
+                                <YAxis
                                   domain={['auto', 'auto']}
                                   stroke="#697386"
                                   tick={{ fill: '#697386', fontSize: 10 }}
+                                  tickFormatter={(v) => `${v}${suffix}`}
+                                  width={44}
                                 />
-                                <Tooltip 
-                                  contentStyle={{ 
-                                    backgroundColor: '#ffffff', 
-                                    border: '1px solid #e3e8ee',
-                                    color: '#0a2540'
-                                  }}
-                                  labelStyle={{ color: '#635bff' }}
+                                <Tooltip
+                                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e3e8ee', color: '#0a2540', borderRadius: 6 }}
+                                  labelStyle={{ color: '#635bff', fontWeight: 600 }}
+                                  formatter={(v) => [`${(+v).toFixed(2)}${suffix}`, isRateNative ? 'Level' : 'm/m']}
                                 />
-                                <Line 
-                                  type="monotone" 
-                                  dataKey="value" 
-                                  stroke="#635bff" 
-                                  strokeWidth={2}
-                                  dot={false}
-                                  activeDot={{ r: 4, fill: '#635bff' }}
-                                />
-                              </LineChart>
+                                <ReferenceLine y={0} stroke="#cfd7df" />
+                                <Bar dataKey={barKey} radius={[3, 3, 0, 0]}>
+                                  {barData.map((d, i) => (
+                                    <Cell key={i} fill={(isRateNative ? d.value : d.pct_change) >= 0 ? '#635bff' : '#b42318'} />
+                                  ))}
+                                </Bar>
+                              </BarChart>
                             </ResponsiveContainer>
-                          ) : (
+                            )
+                          })() : (
                             <div style={{ padding: '2rem', textAlign: 'center', color: '#697386' }}>
                               No data available
                             </div>
