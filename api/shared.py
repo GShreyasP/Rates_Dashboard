@@ -131,8 +131,8 @@ def get_yield_curve():
 MACRO_SERIES = {
     "CPI":                 "CPIAUCSL",
     "PCE Headline":        "PCEPI",
-    "PCE Core":            "PCECTPI",
-    "PPI":                 "PPIACO",
+    "PCE Core":            "PCEPILFE",   # PCE excluding food & energy (true core)
+    "PPI":                 "PPIFIS",     # PPI Final Demand (the headline print)
     "PMI":                 "NAPM",
     "Non-Farm Payrolls":   "PAYEMS",
     "Unemployment Rate":   "UNRATE",
