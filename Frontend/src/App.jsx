@@ -915,26 +915,35 @@ function App() {
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {chartData.slice().reverse().map((item, idx) => {
-                                    const expected = item.previous
-                                    const actual = item.value
-                                    const surprise = (typeof expected === 'number' && expected !== 0 && typeof actual === 'number')
-                                      ? ((actual - expected) / Math.abs(expected)) * 100
-                                      : null
-                                    const fmt = (v) => typeof v === 'number'
-                                      ? v.toLocaleString(undefined, { maximumFractionDigits: 2 })
-                                      : (v ?? '—')
-                                    return (
-                                      <tr key={idx}>
-                                        <td>{item.date}</td>
-                                        <td>{fmt(expected)}</td>
-                                        <td><strong style={{color: '#0a2540'}}>{fmt(actual)}</strong></td>
-                                        <td className={surprise === null ? '' : surprise >= 0 ? 'green' : 'red'}>
-                                          {surprise === null ? '—' : `${surprise > 0 ? '+' : ''}${surprise.toFixed(2)}%`}
-                                        </td>
-                                      </tr>
-                                    )
-                                  })}
+                                  {(() => {
+                                    // Unemployment Rate is already in %; show its raw level.
+                                    // Everything else: show period-over-period % change (like CPI m/m).
+                                    const isRateNative = key === 'Unemployment Rate'
+                                    const rows = chartData.slice().reverse()
+                                    return rows.map((item, idx) => {
+                                      const prevRow = rows[idx + 1]  // one period earlier (list is newest-first)
+                                      const actual = isRateNative ? item.value : item.pct_change
+                                      const expected = isRateNative
+                                        ? (prevRow ? prevRow.value : null)
+                                        : (prevRow ? prevRow.pct_change : null)
+                                      const surprise = (typeof expected === 'number' && typeof actual === 'number')
+                                        ? actual - expected
+                                        : null
+                                      const fmtPct = (v) => typeof v === 'number'
+                                        ? `${v >= 0 ? '' : ''}${v.toFixed(2)}%`
+                                        : '—'
+                                      return (
+                                        <tr key={idx}>
+                                          <td>{item.date}</td>
+                                          <td>{fmtPct(expected)}</td>
+                                          <td><strong style={{color: '#0a2540'}}>{fmtPct(actual)}</strong></td>
+                                          <td className={surprise === null ? '' : surprise >= 0 ? 'green' : 'red'}>
+                                            {surprise === null ? '—' : `${surprise > 0 ? '+' : ''}${surprise.toFixed(2)} pp`}
+                                          </td>
+                                        </tr>
+                                      )
+                                    })
+                                  })()}
                                 </tbody>
                               </table>
                             </div>
