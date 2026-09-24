@@ -847,7 +847,7 @@ function App() {
                     const data = macroData[key]
                     // Format data for chart - data structure now has 'value' and 'pct_change'
                     const chartData = data.history ? data.history.map(item => ({
-                      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                      date: new Date(item.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
                       value: item.value,
                       previous: item.previous,
                       pct_change: item.pct_change || 0,
@@ -915,7 +915,7 @@ function App() {
                               <table className="data-table">
                                 <thead>
                                   <tr>
-                                    <th>Release Date</th>
+                                    <th>Reference Month</th>
                                     <th>Expected</th>
                                     <th>Actual</th>
                                     <th>Surprise</th>
