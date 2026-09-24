@@ -214,92 +214,6 @@ def _build_series_payload(name, obs):
     return payload
 
 
-# ------------------------------------------------------------
-# ForexFactory forecasts (analyst consensus).
-# Public XML export is capped at ~1 request/hour by FF, so cache
-# aggressively and fall back silently on rate-limit HTML.
-# ------------------------------------------------------------
-FF_XML_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.xml"
-FF_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                  "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0 Safari/537.36",
-    "Accept": "application/xml, text/xml, */*",
-}
-FF_TITLE_TO_INDICATOR = {
-    "CPI m/m":                       "CPI",
-    "PPI m/m":                       "PPI",
-    "Core PCE Price Index m/m":      "PCE Core",
-    "PCE Price Index m/m":           "PCE Headline",
-    "Non-Farm Employment Change":    "Non-Farm Payrolls",
-    "Unemployment Rate":             "Unemployment Rate",
-    "Unemployment Claims":           "Unemployment Claims",
-    "JOLTS Job Openings":            "JOLTS",
-    "ISM Manufacturing PMI":         "PMI",
-    "CB Consumer Confidence":        "Consumer Confidence",
-    "Prelim UoM Consumer Sentiment": "Consumer Sentiment",
-    "Revised UoM Consumer Sentiment":"Consumer Sentiment",
-}
-
-def _parse_ff_value(s):
-    if not s:
-        return None
-    s = s.strip().replace('%', '')
-    # 200K -> 200000, 4.5M -> 4500000
-    mult = 1
-    if s.endswith('K'): mult, s = 1e3, s[:-1]
-    elif s.endswith('M'): mult, s = 1e6, s[:-1]
-    elif s.endswith('B'): mult, s = 1e9, s[:-1]
-    try:
-        return float(s) * mult
-    except ValueError:
-        return None
-
-@memoize("ff_forecasts", ttl=3600)  # 1 hour — FF's own limit
-def fetch_ff_forecasts():
-    """Returns {indicator_name: {'forecast': float, 'previous': float, 'release_date': 'YYYY-MM-DD'}}."""
-    try:
-        r = requests.get(FF_XML_URL, headers=FF_HEADERS, timeout=HTTP_TIMEOUT)
-        # FF returns 200 + HTML "Rate Limited" page when throttled; check content.
-        body = r.text
-        if not body.lstrip().startswith('<?xml') and '<weeklyevents' not in body:
-            print("[ff] rate-limited or unexpected response")
-            return {}
-    except Exception as e:
-        print(f"[ff] fetch failed: {e}")
-        return {}
-
-    import re
-    out = {}
-    events = re.findall(r'<event>(.*?)</event>', body, re.DOTALL)
-    for ev in events:
-        def get(tag):
-            m = re.search(rf'<{tag}[^/]*?>(?:<!\[CDATA\[)?([^<]*?)(?:\]\]>)?</{tag}>', ev, re.DOTALL)
-            return m.group(1).strip() if m else ''
-        if get('country') != 'USD':
-            continue
-        title = get('title')
-        if title not in FF_TITLE_TO_INDICATOR:
-            continue
-        forecast = _parse_ff_value(get('forecast'))
-        if forecast is None:
-            continue
-        name = FF_TITLE_TO_INDICATOR[title]
-        # Normalize date MM-DD-YYYY -> YYYY-MM-DD
-        raw = get('date')
-        iso = raw
-        try:
-            mo, d, y = raw.split('-')
-            iso = f"{y}-{mo}-{d}"
-        except ValueError:
-            pass
-        out[name] = {
-            'forecast': round(forecast, 3),
-            'previous': _parse_ff_value(get('previous')),
-            'release_date': iso,
-        }
-    return out
-
-
 @memoize("macro", ttl=1800)
 def fetch_macro_data():
     if not _api_key_ok():
@@ -326,27 +240,6 @@ def fetch_macro_data():
             name, payload = f.result()
             if payload:
                 out[name] = payload
-
-    # Merge FF analyst forecasts onto the latest release of each indicator.
-    try:
-        ff = fetch_ff_forecasts()
-    except Exception as e:
-        print(f"[macro] FF merge skipped: {e}")
-        ff = {}
-    for name, payload in out.items():
-        entry = ff.get(name)
-        if not entry:
-            continue
-        hist = payload.get('history') or []
-        if not hist:
-            continue
-        # FF forecasts are m/m for CPI/PPI/PCE; level for rate/count series.
-        payload['ff_forecast'] = entry['forecast']
-        payload['ff_forecast_release_date'] = entry.get('release_date')
-        payload['ff_forecast_source'] = 'ForexFactory'
-        # Attach to the latest history row too, so the frontend table can pick it up.
-        hist[-1]['forecast'] = entry['forecast']
-        hist[-1]['forecast_source'] = 'ff'
     return out
 
 
@@ -395,19 +288,14 @@ def fetch_rates_data():
 
 
 # ============================================================
-# FedWatch — computed from CME Fed Funds futures (ZQ), which
-# is the same input CME uses to publish the FedWatch tool.
+# FedWatch — heuristic estimate from FRED.
+#
+# CME's real FedWatch feed is only available by scraping their site,
+# which they block via IP + explicitly prohibit under their Terms of
+# Use. Rather than fight that, we compute a transparent directional
+# estimate from the short-end Treasury curve and label it clearly.
+# For live market-implied probabilities, users go to CME's own tool.
 # ============================================================
-CME_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/121.0 Safari/537.36",
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html",
-    "Origin": "https://www.cmegroup.com",
-}
-# 30-Day Fed Funds futures. Product 305, listing group "G".
-CME_ZQ_URL = "https://www.cmegroup.com/CmeWS/mvc/Quotes/Future/305/G"
 
 # FOMC meeting decision dates (day 2 of each meeting). Extend as needed.
 FOMC_MEETINGS = [
@@ -416,10 +304,6 @@ FOMC_MEETINGS = [
     "2027-01-27", "2027-03-17", "2027-04-28", "2027-06-16",
     "2027-07-28", "2027-09-15", "2027-10-27", "2027-12-08",
 ]
-
-# CME futures month codes
-MONTH_CODE = {'F': 1, 'G': 2, 'H': 3, 'J': 4, 'K': 5, 'M': 6,
-              'N': 7, 'Q': 8, 'U': 9, 'V': 10, 'X': 11, 'Z': 12}
 
 
 def _current_fed_target():
@@ -444,201 +328,92 @@ def _current_effr():
     return None
 
 
-def _parse_zq_last(quote):
-    """CME 'last' can be a string like '95.9600' or missing. Return float or None."""
-    for k in ("last", "priorSettle", "settle", "prior"):
-        v = quote.get(k)
-        if v in (None, "", "-"):
-            continue
-        try:
-            return float(str(v).replace(",", ""))
-        except ValueError:
-            continue
+def _short_end_yield():
+    """Use 3M T-bill (DGS3MO) as the short-end proxy for market-implied direction."""
+    try:
+        obs = fred_observations("DGS3MO", datetime.now() - timedelta(days=15), datetime.now())
+        if obs:
+            return obs[-1]["value"]
+    except Exception:
+        pass
     return None
 
 
-def _fetch_zq_curve():
-    """Returns dict {(year, month): implied_rate_pct}. Empty on failure."""
-    try:
-        r = requests.get(CME_ZQ_URL, headers=CME_HEADERS, timeout=HTTP_TIMEOUT)
-        r.raise_for_status()
-        payload = r.json()
-    except Exception as e:
-        print(f"[zq] fetch failed: {e}")
-        return {}
-
-    quotes = payload.get("quotes") if isinstance(payload, dict) else None
-    if not quotes:
-        return {}
-
-    curve = {}
-    for q in quotes:
-        code = q.get("quoteCode") or q.get("code") or ""
-        # ZQ<month><year>, e.g. ZQV6 = Oct 2026, ZQF7 = Jan 2027.
-        if not code.startswith("ZQ") or len(code) < 4:
-            continue
-        month_char = code[2]
-        year_digit = code[3:]
-        if month_char not in MONTH_CODE or not year_digit.isdigit():
-            continue
-        m = MONTH_CODE[month_char]
-        # Convert single-digit year to full year (bias toward current decade)
-        this_year = datetime.now().year
-        yd = int(year_digit)
-        # Try nearest full year matching last digit(s)
-        base_decade = (this_year // 10) * 10
-        candidates = [base_decade + yd, base_decade + yd + 10, base_decade + yd - 10]
-        y = min(candidates, key=lambda cy: abs(cy - this_year))
-        price = _parse_zq_last(q)
-        if price is None:
-            continue
-        curve[(y, m)] = round(100.0 - price, 4)
-    return curve
-
-
-def _days_in_month(y, m):
-    if m == 12:
-        return 31
-    return (datetime(y, m + 1, 1) - datetime(y, m, 1)).days
-
-
-def _implied_post_meeting_rate(zq, meeting_date, current_rate):
-    """
-    CME FedWatch method: for a meeting in month M on day D,
-    price_M = avg daily FF rate over M
-            = (D-1)/N * R_pre + (N - D + 1)/N * R_post
-    R_pre = the effective rate that will prevail on days 1..D-1 of month M
-          = R from the previous FOMC (or current rate if the previous meeting was in an earlier month).
-    We approximate R_pre with the current EFFR (or the implied rate from month M-1's ZQ if that month has no meeting).
-    Returns implied post-meeting rate (%) or None.
-    """
-    y, m, d = meeting_date.year, meeting_date.month, meeting_date.day
-    key = (y, m)
-    if key not in zq:
-        return None
-    price_m = zq[key]  # avg implied rate over month m
-    n = _days_in_month(y, m)
-
-    # R_pre approximation: implied rate from month M-1 futures (if available)
-    prev_key = (y, m - 1) if m > 1 else (y - 1, 12)
-    r_pre = zq.get(prev_key, current_rate)
-
-    # price_m = (d-1)/n * r_pre + (n - d + 1)/n * r_post
-    r_post = (price_m * n - (d - 1) * r_pre) / (n - d + 1)
-    return r_post
-
-
-def _implied_rate_to_probs(implied, current_range):
-    """
-    Distribute implied rate over adjacent 25bp target-rate buckets.
-
-    current_range = (lower_bps, upper_bps). Buckets are ±3 steps (25bp) around current.
-    We use a two-bucket linear interpolation centered on the implied rate,
-    which is the standard textbook way to convert implied FF to target-rate probs.
-    """
-    lo, hi = current_range
-    mid = (lo + hi) / 2.0  # bps
-    implied_bps = implied * 100
-
-    # Which two 25bp midpoints bracket implied?
-    # Bucket midpoints are ..., mid-25, mid, mid+25, ...
-    step = 25.0
-    k = (implied_bps - mid) / step
-    k_lo = int(k // 1)  # floor
-    k_hi = k_lo + 1
-    frac = k - k_lo
-
-    def bucket_range(k_idx):
-        center = mid + k_idx * step
-        return int(round(center - 12.5)), int(round(center + 12.5))
-
-    b_lo = bucket_range(k_lo)
-    b_hi = bucket_range(k_hi)
-
-    probs = {
-        f"{b_lo[0]}-{b_lo[1]}": round((1 - frac) * 100, 2),
-        f"{b_hi[0]}-{b_hi[1]}": round(frac * 100, 2),
-    }
-    # Drop zero buckets
-    probs = {k_: v for k_, v in probs.items() if v > 0.05}
-    # Renormalize
-    total = sum(probs.values())
-    if total > 0:
-        probs = {k_: round(v * 100 / total, 2) for k_, v in probs.items()}
-    return probs
-
-
-def _upcoming_meetings(n=8):
+def _next_meeting_date():
     today = datetime.now().date().isoformat()
     upcoming = [m for m in FOMC_MEETINGS if m >= today]
-    return upcoming[:n]
+    return upcoming[0] if upcoming else None
 
 
-@memoize("fedwatch", ttl=900)
+@memoize("fedwatch", ttl=1800)
 def fetch_fedwatch_data():
+    """
+    Estimate the next FOMC's target-rate distribution from FRED.
+
+    Method (deliberately simple, transparent, no CME data):
+      1. Get current Fed target range (DFEDTARL/DFEDTARU) and EFFR (DFF).
+      2. Compare 3M T-bill yield (DGS3MO) to the target midpoint.
+         The short bill mostly prices in the next 1-2 meetings.
+      3. If short yield >> target: market leans hike. If <<: market leans cut.
+         Linear tilt over ±25bp around the current bucket.
+    """
     cur_range = _current_fed_target() or (350, 375)
+    lo, hi = cur_range
+    mid_pct = (lo + hi) / 200.0  # convert bps to %
+
     effr = _current_effr()
-    zq = _fetch_zq_curve()
-    meetings = _upcoming_meetings()
+    short = _short_end_yield()
 
-    meeting_payloads = []
-    if zq and effr is not None:
-        for m_str in meetings:
-            md = datetime.strptime(m_str, "%Y-%m-%d")
-            implied = _implied_post_meeting_rate(zq, md, effr)
-            if implied is None:
-                continue
-            probs = _implied_rate_to_probs(implied, cur_range)
-            if not probs:
-                continue
-            probs = dict(sorted(probs.items(), key=lambda x: int(x[0].split('-')[0])))
-            most_likely = max(probs.items(), key=lambda x: x[1])
-            meeting_payloads.append({
-                "date": md.strftime("%d %b %Y"),
-                "date_iso": m_str,
-                "implied_rate": round(implied, 3),
-                "target_rate_probabilities": probs,
-                "most_likely_change": most_likely[0],
-                "most_likely_probability": most_likely[1],
-            })
+    # Directional tilt from short-end vs current target midpoint.
+    # >0 => hike-leaning; <0 => cut-leaning; ~0 => hold.
+    if short is not None:
+        tilt = short - mid_pct  # in %; ~0.25 = fully one hike priced in
+    else:
+        tilt = 0.0
 
-    if not meeting_payloads:
-        # Honest placeholder — do NOT pretend to be CME.
-        lo, hi = cur_range
-        probs = {
-            f"{lo-25}-{hi-25}": 30.0,
-            f"{lo}-{hi}":       55.0,
-            f"{lo+25}-{hi+25}": 15.0,
-        }
-        probs = dict(sorted(probs.items(), key=lambda x: int(x[0].split('-')[0])))
-        ml = max(probs.items(), key=lambda x: x[1])
-        upcoming = _upcoming_meetings(1)
-        next_date = "TBD"
-        if upcoming:
-            next_date = datetime.strptime(upcoming[0], "%Y-%m-%d").strftime("%d %b %Y")
-        return {
-            "next_meeting_date": next_date,
-            "target_rate_probabilities": probs,
-            "most_likely_change": ml[0],
-            "most_likely_probability": ml[1],
-            "current_target_rate": f"{lo}-{hi}",
-            "current_fed_rate": round(effr, 2) if effr is not None else None,
-            "meetings": [],
-            "source": "Indicative — CME feed unavailable",
-            "note": "Live CME Fed Funds futures feed unreachable. Values are heuristic, not market-implied.",
-        }
+    # Cap tilt at ±25bp for the distribution; anything larger just concentrates
+    # probability in the adjacent bucket.
+    t = max(-0.25, min(0.25, tilt)) / 0.25  # normalized to [-1, +1]
 
-    # Next-meeting fields (for the existing frontend card)
-    nxt = meeting_payloads[0]
+    # Base weights for HOLD, HIKE, CUT, tilted by t.
+    if t >= 0:
+        p_hold = round(0.70 - 0.35 * t, 3)
+        p_hike = round(0.10 + 0.55 * t, 3)
+        p_cut  = round(1.0 - p_hold - p_hike, 3)
+    else:
+        p_hold = round(0.70 + 0.35 * t, 3)  # t is negative here
+        p_cut  = round(0.10 - 0.55 * t, 3)
+        p_hike = round(1.0 - p_hold - p_cut, 3)
+
+    p_hold, p_hike, p_cut = (max(0.02, p) for p in (p_hold, p_hike, p_cut))
+    total = p_hold + p_hike + p_cut
+    p_hold, p_hike, p_cut = (round(p * 100 / total, 2) for p in (p_hold, p_hike, p_cut))
+
+    probs = {
+        f"{lo-25}-{hi-25}": p_cut,
+        f"{lo}-{hi}":       p_hold,
+        f"{lo+25}-{hi+25}": p_hike,
+    }
+    probs = dict(sorted(probs.items(), key=lambda x: int(x[0].split('-')[0])))
+    most_likely = max(probs.items(), key=lambda x: x[1])
+
+    nxt_iso = _next_meeting_date()
+    nxt_display = "TBD"
+    if nxt_iso:
+        nxt_display = datetime.strptime(nxt_iso, "%Y-%m-%d").strftime("%d %b %Y")
+
     return {
-        "next_meeting_date": nxt["date"],
-        "target_rate_probabilities": nxt["target_rate_probabilities"],
-        "most_likely_change": nxt["most_likely_change"],
-        "most_likely_probability": nxt["most_likely_probability"],
-        "current_target_rate": f"{cur_range[0]}-{cur_range[1]}",
+        "next_meeting_date": nxt_display,
+        "target_rate_probabilities": probs,
+        "most_likely_change": most_likely[0],
+        "most_likely_probability": most_likely[1],
+        "current_target_rate": f"{lo}-{hi}",
         "current_fed_rate": round(effr, 2) if effr is not None else None,
-        "meetings": meeting_payloads,
-        "source": "Computed from CME Fed Funds futures (ZQ)",
+        "short_end_yield": round(short, 3) if short is not None else None,
+        "meetings": [],
+        "source": "Heuristic — 3M T-bill vs. Fed target (FRED)",
+        "note": "Estimate only. For market-implied probabilities, see CME FedWatch: "
+                "https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html",
     }
 
 
